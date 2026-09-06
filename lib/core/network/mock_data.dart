@@ -10,7 +10,7 @@ class MockData {
       category: 'Flagship',
       venue: 'Central Arena (SAC Ground)',
       time: '02:00 PM - 06:00 PM',
-      date: 'Oct 11, 2025',
+      date: 'Oct 11, 2026',
       prizePool: '₹ 75,000',
       teamSize: '2 - 5 Members',
       description:
@@ -26,7 +26,7 @@ class MockData {
       category: 'Flagship',
       venue: 'NLHC Hall 1',
       time: '06:00 PM - 06:00 PM (24h)',
-      date: 'Oct 10-11, 2025',
+      date: 'Oct 10-11, 2026',
       prizePool: '₹ 60,000',
       teamSize: '2 - 4 Members',
       description:
@@ -42,7 +42,7 @@ class MockData {
       category: 'Robotics',
       venue: 'Central Arena (SAC Ground)',
       time: '02:00 PM - 06:00 PM',
-      date: 'Oct 10, 2025',
+      date: 'Oct 10, 2026',
       prizePool: '₹ 50,000',
       teamSize: '2 - 5 Members',
       description:
@@ -58,7 +58,7 @@ class MockData {
       category: 'Robotics',
       venue: 'SAC Ground Room 3',
       time: '10:00 AM - 01:00 PM',
-      date: 'Oct 10, 2025',
+      date: 'Oct 10, 2026',
       prizePool: '₹ 30,000',
       teamSize: '2 - 4 Members',
       description:
@@ -73,7 +73,7 @@ class MockData {
       category: 'Robotics',
       venue: 'Robotics Arena',
       time: '11:00 AM - 03:00 PM',
-      date: 'Oct 12, 2025',
+      date: 'Oct 12, 2026',
       prizePool: '₹ 25,000',
       teamSize: '2 - 4 Members',
       description:
@@ -88,7 +88,7 @@ class MockData {
       category: 'Coding',
       venue: 'Computer Center Lab 2',
       time: '10:00 AM - 02:00 PM',
-      date: 'Oct 11, 2025',
+      date: 'Oct 11, 2026',
       prizePool: '₹ 35,000',
       teamSize: '1 - 3 Members',
       description:
@@ -103,7 +103,7 @@ class MockData {
       category: 'Coding',
       venue: 'NLHC Hall 2',
       time: '01:00 PM - 04:00 PM',
-      date: 'Oct 12, 2025',
+      date: 'Oct 12, 2026',
       prizePool: '₹ 25,000',
       teamSize: '1 - 3 Members',
       description:
@@ -118,7 +118,7 @@ class MockData {
       category: 'Flagship',
       venue: 'NVCTI Incubation Center',
       time: '18-Hour Marathon',
-      date: 'Oct 11-12, 2025',
+      date: 'Oct 11-12, 2026',
       prizePool: '₹ 45,000',
       teamSize: '2 - 4 Members',
       description:
@@ -130,11 +130,11 @@ class MockData {
     ),
     EventItem(
       id: 'consultrix',
-      title: 'Consultrix 2025',
+      title: 'Consultrix 2026',
       category: 'Management',
       venue: 'Management Studies Hall',
       time: '02:00 PM - 05:00 PM',
-      date: 'Oct 10, 2025',
+      date: 'Oct 10, 2026',
       prizePool: '₹ 35,000',
       teamSize: '2 - 4 Members',
       description:
@@ -149,7 +149,7 @@ class MockData {
       category: 'Management',
       venue: 'EDC Auditorium',
       time: '10:00 AM - 01:00 PM',
-      date: 'Oct 11, 2025',
+      date: 'Oct 11, 2026',
       prizePool: '₹ 30,000',
       teamSize: '1 - 3 Members',
       description:
@@ -164,7 +164,7 @@ class MockData {
       category: 'Electronics',
       venue: 'VLSI Simulation Lab',
       time: '11:30 AM - 02:30 PM',
-      date: 'Oct 10, 2025',
+      date: 'Oct 10, 2026',
       prizePool: '₹ 25,000',
       teamSize: '1 - 3 Members',
       description:
@@ -179,7 +179,7 @@ class MockData {
       category: 'Electronics',
       venue: 'Seminar Hall 3',
       time: '01:00 PM - 05:00 PM',
-      date: 'Oct 11, 2025',
+      date: 'Oct 11, 2026',
       prizePool: '₹ 30,000',
       teamSize: '4 - 5 Members',
       description:
@@ -194,7 +194,7 @@ class MockData {
       category: 'Design',
       venue: 'Design Studio Lab',
       time: '03:00 PM - 06:00 PM',
-      date: 'Oct 10, 2025',
+      date: 'Oct 10, 2026',
       prizePool: '₹ 20,000',
       teamSize: '1 - 2 Members',
       description:
@@ -209,7 +209,7 @@ class MockData {
       category: 'Design',
       venue: 'CAD Center',
       time: '10:00 AM - 02:00 PM',
-      date: 'Oct 12, 2025',
+      date: 'Oct 12, 2026',
       prizePool: '₹ 25,000',
       teamSize: '1 - 3 Members',
       description:
@@ -326,10 +326,10 @@ class MockData {
   static final List<AnnouncementItem> announcements = [
     AnnouncementItem(
       id: 'ann_1',
-      title: "Welcome to CONCETTO '25!",
+      title: "Welcome to CONCETTO '26!",
       description:
           'Centenary Edition is here with the theme "Fantasy Wired Through a Century\'s Core". Over 100+ events and ₹ Lakhs in prizes await!',
-      timestamp: DateTime(2025, 10, 1, 10, 0),
+      timestamp: DateTime(2026, 10, 1, 10, 0),
       tag: 'FEST',
     ),
     AnnouncementItem(
@@ -337,7 +337,7 @@ class MockData {
       title: 'RoboWars 8kg & 15kg Registrations Open',
       description:
           'Arena slots are filling fast! Secure your bot registration before the deadline on Oct 7.',
-      timestamp: DateTime(2025, 10, 2, 14, 30),
+      timestamp: DateTime(2026, 10, 2, 14, 30),
       tag: 'URGENT',
     ),
     AnnouncementItem(
@@ -345,7 +345,7 @@ class MockData {
       title: 'MasterStack Hackathon Tracks Released',
       description:
           'Hackathon problem statements for Web3, SpaceML, and Campus Systems are live on the portal.',
-      timestamp: DateTime(2025, 10, 3, 18, 0),
+      timestamp: DateTime(2026, 10, 3, 18, 0),
       tag: 'HACKATHON',
     ),
     AnnouncementItem(
@@ -353,7 +353,7 @@ class MockData {
       title: 'Accommodation Portal Live',
       description:
           'Outstation participants can now apply for on-campus hostel stay during the festival days.',
-      timestamp: DateTime(2025, 10, 4, 9, 0),
+      timestamp: DateTime(2026, 10, 4, 9, 0),
       tag: 'INFO',
     ),
   ];

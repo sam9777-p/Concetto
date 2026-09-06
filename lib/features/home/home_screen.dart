@@ -41,7 +41,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   // Countdown timer state
   late Timer _countdownTimer;
   Duration _timeRemaining = Duration.zero;
-  final DateTime _festTargetDate = DateTime(2025, 10, 10, 9, 0, 0);
+  final DateTime _festTargetDate = DateTime(2026, 10, 10, 9, 0, 0);
 
   @override
   void initState() {
@@ -210,7 +210,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                 Icon(Icons.bolt, size: 14, color: primaryColor),
                 const SizedBox(width: 4),
                 Text(
-                  'OCT 10 - 12, 2025',
+                  'OCT 10 - 12, 2026',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -978,7 +978,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
               ),
               const SizedBox(height: 14),
               const Text(
-                'Enjoy a comfortable hostel stay on the IIT (ISM) Dhanbad campus throughout the festival days (October 10-12, 2025).',
+                'Enjoy a comfortable hostel stay on the IIT (ISM) Dhanbad campus throughout the festival days (October 10-12, 2026).',
                 style: TextStyle(color: Colors.white70, height: 1.4),
               ),
               const SizedBox(height: 12),

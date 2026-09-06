@@ -56,7 +56,7 @@ class AuthNotifier extends StateNotifier<AttendeeProfile> {
       email: 'guest@concetto.in',
       college: 'Guest Participant',
       phone: '+91 98765 43210',
-      passId: 'CON-2025-G842',
+      passId: 'CON-2026-G842',
       isGuest: true,
       registeredEventIds: ['robowars_15kg', 'masterstack'],
     );
@@ -78,7 +78,7 @@ class AuthNotifier extends StateNotifier<AttendeeProfile> {
         email: email,
         college: 'Registered Participant',
         phone: user?.phoneNumber ?? '+91 85030 86164',
-        passId: 'CON-2025-${(user?.uid.substring(0, 4) ?? "7492").toUpperCase()}',
+        passId: 'CON-2026-${(user?.uid.substring(0, 4) ?? "7492").toUpperCase()}',
         isGuest: false,
         registeredEventIds: state.registeredEventIds,
       );
@@ -91,7 +91,7 @@ class AuthNotifier extends StateNotifier<AttendeeProfile> {
         email: email,
         college: 'Registered Participant',
         phone: '+91 85030 86164',
-        passId: 'CON-2025-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
+        passId: 'CON-2026-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
         isGuest: false,
         registeredEventIds: state.registeredEventIds,
       );
@@ -119,7 +119,7 @@ class AuthNotifier extends StateNotifier<AttendeeProfile> {
         email: email,
         college: college,
         phone: phone,
-        passId: 'CON-2025-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
+        passId: 'CON-2026-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
         isGuest: false,
         registeredEventIds: state.registeredEventIds,
       );
@@ -131,7 +131,7 @@ class AuthNotifier extends StateNotifier<AttendeeProfile> {
         email: email,
         college: college,
         phone: phone,
-        passId: 'CON-2025-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
+        passId: 'CON-2026-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
         isGuest: false,
         registeredEventIds: state.registeredEventIds,
       );
@@ -145,7 +145,7 @@ class AuthNotifier extends StateNotifier<AttendeeProfile> {
       email: 'guest@concetto.in',
       college: college ?? 'Visiting Participant',
       phone: '+91 85030 86164',
-      passId: 'CON-2025-G${DateTime.now().millisecondsSinceEpoch.toString().substring(9)}',
+      passId: 'CON-2026-G${DateTime.now().millisecondsSinceEpoch.toString().substring(9)}',
       isGuest: true,
       registeredEventIds: state.registeredEventIds,
     );

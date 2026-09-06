@@ -122,7 +122,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   Image.asset('assets/logo_final.webp', height: 32),
                   const SizedBox(width: 8),
                   Text(
-                    "CONCETTO '25 PASS",
+                    "CONCETTO '26 PASS",
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -234,7 +234,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'VALID: OCT 10 - 12, 2025',
+                'VALID: OCT 10 - 12, 2026',
                 style: TextStyle(fontSize: 10, color: Colors.white54, letterSpacing: 0.8),
               ),
               Text(
@@ -530,7 +530,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           const SizedBox(height: 10),
           const Text(
-            'Hostel rooms are available for registered outstation participants from October 9 to October 13, 2025 at IIT (ISM) Dhanbad.',
+            'Hostel rooms are available for registered outstation participants from October 9 to October 13, 2026 at IIT (ISM) Dhanbad.',
             style: TextStyle(fontSize: 12, color: Colors.white70, height: 1.4),
           ),
           const SizedBox(height: 10),
