@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/network/auth_provider.dart';
 import '../../core/network/repositories.dart';
+import '../../core/theme/app_theme.dart';
 import '../../models/core_team_member.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -50,35 +54,50 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. Digital Fest Pass
-            _buildDigitalFestPass(user, primaryColor),
+            _buildDigitalFestPass(user, primaryColor)
+                .animate()
+                .fadeIn(duration: 400.ms)
+                .slideY(begin: 0.05, end: 0),
 
             const SizedBox(height: 20),
 
             // 2. Auth Action Button
             if (user.isGuest)
               _buildAuthActionButton(context, primaryColor)
+                  .animate()
+                  .fadeIn(duration: 400.ms, delay: 100.ms)
             else
-              _buildUserStatusBanner(user, primaryColor),
+              _buildUserStatusBanner(user, primaryColor)
+                  .animate()
+                  .fadeIn(duration: 400.ms, delay: 100.ms),
 
             const SizedBox(height: 32),
 
             // 3. Core Team Directory
-            _buildTeamDirectorySection(teamAsync, primaryColor, secondaryColor),
+            _buildTeamDirectorySection(teamAsync, primaryColor, secondaryColor)
+                .animate()
+                .fadeIn(duration: 400.ms, delay: 200.ms),
 
             const SizedBox(height: 32),
 
             // 4. Festival Sponsors Section
-            _buildSponsorsSection(primaryColor),
+            _buildSponsorsSection(primaryColor)
+                .animate()
+                .fadeIn(duration: 400.ms, delay: 300.ms),
 
             const SizedBox(height: 32),
 
             // 5. Accommodation & Campus Guide
-            _buildAccommodationGuide(primaryColor),
+            _buildAccommodationGuide(primaryColor)
+                .animate()
+                .fadeIn(duration: 400.ms, delay: 400.ms),
 
             const SizedBox(height: 32),
 
             // 6. Helpdesk & Emergency Contact
-            _buildHelpdeskCard(primaryColor, secondaryColor),
+            _buildHelpdeskCard(primaryColor, secondaryColor)
+                .animate()
+                .fadeIn(duration: 400.ms, delay: 500.ms),
 
             const SizedBox(height: 40),
           ],
@@ -92,20 +111,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [
-            const Color(0xFF1C0805),
-            const Color(0xFF0F0403),
+            Color(0xFF1E0805),
+            Color(0xFF0F0403),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border.all(color: primaryColor.withValues(alpha: 0.5), width: 1.5),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.55), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: primaryColor.withValues(alpha: 0.2),
-            blurRadius: 16,
-            spreadRadius: 2,
+            color: primaryColor.withValues(alpha: 0.16),
+            blurRadius: 18,
+            spreadRadius: 1,
           ),
         ],
       ),
@@ -113,6 +132,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Virtual Lanyard Slot
+          Center(
+            child: Container(
+              width: 44,
+              height: 5,
+              margin: const EdgeInsets.only(bottom: 14),
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(3),
+                border: Border.all(color: Colors.white24, width: 0.8),
+              ),
+            ),
+          ),
+
           // Header Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -123,7 +156,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const SizedBox(width: 8),
                   Text(
                     "CONCETTO '26 PASS",
-                    style: TextStyle(
+                    style: GoogleFonts.orbitron(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
@@ -136,22 +169,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: user.isGuest
-                      ? Colors.amber.withValues(alpha: 0.2)
-                      : Colors.greenAccent.withValues(alpha: 0.2),
+                      ? Colors.amber.withValues(alpha: 0.15)
+                      : const Color(0xFF00E676).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
-                    color: user.isGuest ? Colors.amber : Colors.greenAccent,
+                    color: user.isGuest ? Colors.amber : const Color(0xFF00E676),
                     width: 0.8,
                   ),
                 ),
-                child: Text(
-                  user.isGuest ? 'GUEST PASS' : 'VERIFIED',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    color: user.isGuest ? Colors.amber : Colors.greenAccent,
-                    letterSpacing: 0.8,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: user.isGuest ? Colors.amber : const Color(0xFF00E676),
+                        shape: BoxShape.circle,
+                      ),
+                    )
+                        .animate(onPlay: (c) => c.repeat(reverse: true))
+                        .fade(begin: 0.4, end: 1.0, duration: 800.ms),
+                    const SizedBox(width: 6),
+                    Text(
+                      user.isGuest ? 'GUEST PASS' : 'VERIFIED PASS',
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: user.isGuest ? Colors.amber : const Color(0xFF00E676),
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -168,58 +217,104 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   children: [
                     Text(
                       user.name,
-                      style: const TextStyle(
-                        fontSize: 20,
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       user.college,
-                      style: const TextStyle(fontSize: 12, color: Colors.white70),
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.metallicMuted,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'PASS IDENTIFIER',
-                      style: TextStyle(
+                      'PASS IDENTIFIER (TAP TO COPY)',
+                      style: GoogleFonts.rajdhani(
                         fontSize: 9,
                         letterSpacing: 1.2,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                         color: primaryColor,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      user.passId,
-                      style: TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: primaryColor,
-                        letterSpacing: 1,
+                    const SizedBox(height: 4),
+                    InkWell(
+                      onTap: () {
+                        Clipboard.setData(ClipboardData(text: user.passId));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                const Icon(Icons.check_circle, color: Color(0xFF00E676), size: 16),
+                                const SizedBox(width: 8),
+                                Text('Copied ${user.passId} to clipboard!'),
+                              ],
+                            ),
+                            backgroundColor: const Color(0xFF140604),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: primaryColor.withValues(alpha: 0.35), width: 0.8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              user.passId,
+                              style: GoogleFonts.orbitron(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: primaryColor,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Icon(Icons.copy, size: 12, color: primaryColor.withValues(alpha: 0.8)),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
 
-              // Visual QR Badge
+              const SizedBox(width: 12),
+
+              // Visual QR Badge with Framed Corner Brackets
               Container(
-                width: 86,
-                height: 86,
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: primaryColor, width: 2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: primaryColor.withValues(alpha: 0.7), width: 1.2),
                 ),
-                child: CustomPaint(
-                  painter: MockQRPainter(primaryColor: primaryColor),
+                child: Container(
+                  width: 84,
+                  height: 84,
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: CustomPaint(
+                    painter: MockQRPainter(primaryColor: primaryColor),
+                  ),
                 ),
               ),
             ],
@@ -233,14 +328,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'VALID: OCT 10 - 12, 2026',
-                style: TextStyle(fontSize: 10, color: Colors.white54, letterSpacing: 0.8),
+                style: GoogleFonts.rajdhani(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white54,
+                  letterSpacing: 0.8,
+                ),
               ),
               Text(
                 'IIT (ISM) DHANBAD',
-                style: TextStyle(
-                  fontSize: 10,
+                style: GoogleFonts.rajdhani(
+                  fontSize: 11,
                   fontWeight: FontWeight.bold,
                   color: primaryColor,
                   letterSpacing: 0.8,
@@ -354,19 +454,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF100605),
+        color: const Color(0xFF110604),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: primaryColor.withValues(alpha: 0.25)),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.3), width: 0.8),
+        boxShadow: [
+          BoxShadow(
+            color: primaryColor.withValues(alpha: 0.05),
+            blurRadius: 8,
+          ),
+        ],
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 24,
-            backgroundImage: NetworkImage(member.imageUrl),
-            backgroundColor: primaryColor.withValues(alpha: 0.2),
-            child: member.imageUrl.isEmpty
-                ? Icon(Icons.person, color: primaryColor)
-                : null,
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: primaryColor.withValues(alpha: 0.6), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: primaryColor.withValues(alpha: 0.2),
+                  blurRadius: 6,
+                ),
+              ],
+            ),
+            child: CircleAvatar(
+              radius: 22,
+              backgroundImage: NetworkImage(member.imageUrl),
+              backgroundColor: primaryColor.withValues(alpha: 0.15),
+              child: member.imageUrl.isEmpty
+                  ? Icon(Icons.person, color: primaryColor, size: 20)
+                  : null,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -375,13 +494,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               children: [
                 Text(
                   member.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  style: GoogleFonts.rajdhani(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: Colors.white,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '${member.role} • ${member.vertical}',
-                  style: TextStyle(
-                    fontSize: 11,
+                  style: GoogleFonts.rajdhani(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                     color: primaryColor.withValues(alpha: 0.9),
                   ),
                 ),
@@ -389,7 +513,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const SizedBox(height: 2),
                   Text(
                     member.year,
-                    style: const TextStyle(fontSize: 10, color: Colors.white54),
+                    style: GoogleFonts.rajdhani(fontSize: 11, color: AppTheme.metallicMuted),
                   ),
                 ],
               ],
@@ -403,8 +527,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 color: primaryColor,
                 tooltip: 'Copy Email',
                 onPressed: () {
+                  Clipboard.setData(ClipboardData(text: member.email));
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Email: ${member.email}')),
+                    SnackBar(
+                      content: Text('Copied email: ${member.email}'),
+                      backgroundColor: const Color(0xFF140604),
+                    ),
                   );
                 },
               ),
@@ -413,8 +541,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 color: primaryColor,
                 tooltip: 'Copy Phone',
                 onPressed: () {
+                  Clipboard.setData(ClipboardData(text: member.phone));
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Phone: ${member.phone}')),
+                    SnackBar(
+                      content: Text('Copied phone: ${member.phone}'),
+                      backgroundColor: const Color(0xFF140604),
+                    ),
                   );
                 },
               ),

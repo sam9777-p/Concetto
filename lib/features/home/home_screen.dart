@@ -2,9 +2,12 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/network/repositories.dart';
+import '../../core/theme/app_theme.dart';
 import '../../models/event_item.dart';
 import '../../models/announcement_item.dart';
 
@@ -137,42 +140,61 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                   const SizedBox(height: 12),
 
                   // Header / Logo Bar
-                  _buildHeader(primaryColor, secondaryColor),
+                  _buildHeader(primaryColor, secondaryColor)
+                      .animate()
+                      .fadeIn(duration: 400.ms)
+                      .slideY(begin: -0.05, end: 0),
 
                   const SizedBox(height: 20),
 
                   // Centenary Theme Banner
-                  _buildThemeBanner(primaryColor, secondaryColor),
+                  _buildThemeBanner(primaryColor, secondaryColor)
+                      .animate()
+                      .fadeIn(duration: 450.ms, delay: 100.ms)
+                      .slideY(begin: 0.05, end: 0),
 
                   const SizedBox(height: 24),
 
                   // Countdown Timer
-                  _buildCountdownTimer(primaryColor),
+                  _buildCountdownTimer(primaryColor)
+                      .animate()
+                      .fadeIn(duration: 450.ms, delay: 180.ms)
+                      .slideY(begin: 0.05, end: 0),
 
                   const SizedBox(height: 28),
 
                   // Live Announcements Stream
-                  _buildAnnouncementsSection(announcementsAsync, primaryColor),
+                  _buildAnnouncementsSection(announcementsAsync, primaryColor)
+                      .animate()
+                      .fadeIn(duration: 450.ms, delay: 260.ms),
 
                   const SizedBox(height: 28),
 
                   // Key Stats Bar (Why Concetto?)
-                  _buildStatsBar(primaryColor),
+                  _buildStatsBar(primaryColor)
+                      .animate()
+                      .fadeIn(duration: 450.ms, delay: 340.ms),
 
                   const SizedBox(height: 32),
 
                   // Featured Flagship Events Carousel
-                  _buildFeaturedEventsSection(eventsAsync, primaryColor),
+                  _buildFeaturedEventsSection(eventsAsync, primaryColor)
+                      .animate()
+                      .fadeIn(duration: 450.ms, delay: 420.ms),
 
                   const SizedBox(height: 32),
 
                   // Quick Action Hub (Events, Schedule, Pass, Accommodation)
-                  _buildQuickActionHub(context, primaryColor),
+                  _buildQuickActionHub(context, primaryColor)
+                      .animate()
+                      .fadeIn(duration: 450.ms, delay: 500.ms),
 
                   const SizedBox(height: 32),
 
                   // About Fest & Centenary Footer Card
-                  _buildAboutSection(primaryColor, secondaryColor),
+                  _buildAboutSection(primaryColor, secondaryColor)
+                      .animate()
+                      .fadeIn(duration: 450.ms, delay: 580.ms),
 
                   const SizedBox(height: 40),
                 ],
@@ -199,11 +221,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             ],
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: primaryColor.withValues(alpha: 0.15),
+              color: const Color(0xFF140604),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: primaryColor.withValues(alpha: 0.4)),
+              border: Border.all(color: primaryColor.withValues(alpha: 0.45)),
+              boxShadow: [
+                BoxShadow(
+                  color: primaryColor.withValues(alpha: 0.12),
+                  blurRadius: 8,
+                ),
+              ],
             ),
             child: Row(
               children: [
@@ -211,9 +239,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                 const SizedBox(width: 4),
                 Text(
                   'OCT 10 - 12, 2026',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
+                  style: GoogleFonts.rajdhani(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                     color: primaryColor,
                     letterSpacing: 0.8,
                   ),
@@ -325,9 +353,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
               const SizedBox(width: 6),
               Text(
                 'TIME UNTIL LAUNCH',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                style: GoogleFonts.rajdhani(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,
                   color: primaryColor,
                 ),
@@ -354,15 +382,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
 
   Widget _buildDigitBox(String digits, String label, Color primaryColor) {
     return Container(
-      width: 72,
+      width: 74,
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF120504),
+        color: const Color(0xFF130604),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: primaryColor.withValues(alpha: 0.5), width: 1),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.45), width: 0.8),
         boxShadow: [
           BoxShadow(
-            color: primaryColor.withValues(alpha: 0.15),
+            color: primaryColor.withValues(alpha: 0.12),
             blurRadius: 10,
             spreadRadius: 1,
           ),
@@ -372,22 +400,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
         children: [
           Text(
             digits,
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
+            style: GoogleFonts.orbitron(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
               color: primaryColor,
-              letterSpacing: 1,
+              letterSpacing: 1.2,
+              shadows: [
+                Shadow(
+                  color: primaryColor.withValues(alpha: 0.5),
+                  blurRadius: 8,
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
+            style: GoogleFonts.rajdhani(
               fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: Colors.white70,
-              letterSpacing: 0.8,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.metallicMuted,
+              letterSpacing: 1.2,
             ),
           ),
         ],
@@ -403,7 +436,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
         fontWeight: FontWeight.bold,
         color: primaryColor.withValues(alpha: 0.7),
       ),
-    );
+    ).animate(onPlay: (controller) => controller.repeat(reverse: true)).fade(
+          begin: 0.25,
+          end: 1.0,
+          duration: 900.ms,
+        );
   }
 
   // --- Announcements Section ---
@@ -425,9 +462,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                   const SizedBox(width: 8),
                   Text(
                     'LIVE ANNOUNCEMENTS',
-                    style: TextStyle(
+                    style: GoogleFonts.rajdhani(
                       fontSize: 14,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
                       letterSpacing: 1.2,
                       color: primaryColor,
                     ),
@@ -438,10 +475,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                 width: 8,
                 height: 8,
                 decoration: const BoxDecoration(
-                  color: Colors.greenAccent,
+                  color: Color(0xFF00E676),
                   shape: BoxShape.circle,
                 ),
-              ),
+              )
+                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .scale(
+                    begin: const Offset(0.7, 0.7),
+                    end: const Offset(1.3, 1.3),
+                    duration: 1000.ms,
+                  )
+                  .fade(begin: 0.5, end: 1.0),
             ],
           ),
         ),

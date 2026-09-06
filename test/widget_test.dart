@@ -20,5 +20,12 @@ void main() {
     expect(find.descendant(of: navBarFinder, matching: find.text('Events')), findsOneWidget);
     expect(find.descendant(of: navBarFinder, matching: find.text('Schedule')), findsOneWidget);
     expect(find.descendant(of: navBarFinder, matching: find.text('Profile')), findsOneWidget);
+
+    // Advance time to allow any delayed animations to complete
+    await tester.pump(const Duration(seconds: 1));
+
+    // Teardown widget tree so periodic timers in HomeScreen dispose cleanly
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
   });
 }

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/network/repositories.dart';
+import '../../core/theme/app_theme.dart';
 
 class ScheduleScreen extends ConsumerStatefulWidget {
   const ScheduleScreen({super.key});
@@ -14,9 +17,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   int _selectedDayIndex = 0;
 
   final List<Map<String, String>> _festivalDays = [
-    {'day': 'DAY 1', 'date': 'Oct 10', 'label': 'Friday • Launch'},
-    {'day': 'DAY 2', 'date': 'Oct 11', 'label': 'Saturday • Battles'},
-    {'day': 'DAY 3', 'date': 'Oct 12', 'label': 'Sunday • Grand Finale'},
+    {'day': 'DAY 1', 'date': 'Oct 10', 'label': 'Friday • Launch & Keynotes'},
+    {'day': 'DAY 2', 'date': 'Oct 11', 'label': 'Saturday • Battles & Hackathons'},
+    {'day': 'DAY 3', 'date': 'Oct 12', 'label': 'Sunday • Grand Finale & Pro-Night'},
   ];
 
   @override
@@ -26,12 +29,16 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: AppTheme.scaffoldBg,
+        surfaceTintColor: Colors.transparent,
         title: Text(
           'FESTIVAL TIMELINE',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.5,
-              ),
+          style: GoogleFonts.orbitron(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.5,
+            color: Colors.white,
+          ),
         ),
         centerTitle: false,
       ),
@@ -39,7 +46,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         children: [
           // Day Selector Tabs
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
               children: List.generate(_festivalDays.length, (index) {
                 final dayInfo = _festivalDays[index];
@@ -55,24 +62,24 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                         });
                       },
                       borderRadius: BorderRadius.circular(12),
-                      child: Container(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
-                          color: isSelected
-                              ? primaryColor
-                              : const Color(0xFF100605),
+                          gradient: isSelected ? AppTheme.electricFireGradient : null,
+                          color: isSelected ? null : const Color(0xFF140604),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isSelected
-                                ? primaryColor
+                                ? Colors.transparent
                                 : primaryColor.withValues(alpha: 0.3),
+                            width: 0.8,
                           ),
                           boxShadow: isSelected
                               ? [
                                   BoxShadow(
-                                    color: primaryColor.withValues(alpha: 0.3),
-                                    blurRadius: 8,
-                                    spreadRadius: 1,
+                                    color: primaryColor.withValues(alpha: 0.35),
+                                    blurRadius: 10,
                                   ),
                                 ]
                               : [],
@@ -81,22 +88,22 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                           children: [
                             Text(
                               dayInfo['day']!,
-                              style: TextStyle(
+                              style: GoogleFonts.orbitron(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                letterSpacing: 1,
+                                letterSpacing: 1.2,
                                 color: isSelected ? Colors.black : Colors.white,
                               ),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               dayInfo['date']!,
-                              style: TextStyle(
+                              style: GoogleFonts.rajdhani(
                                 fontSize: 11,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w700,
                                 color: isSelected
                                     ? Colors.black87
-                                    : Colors.white60,
+                                    : AppTheme.metallicMuted,
                               ),
                             ),
                           ],
@@ -111,22 +118,27 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
           // Timeline Banner
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   _festivalDays[_selectedDayIndex]['label']!.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
+                  style: GoogleFonts.rajdhani(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.0,
                     color: primaryColor,
                   ),
                 ),
                 Text(
-                  'All times in IST',
-                  style: const TextStyle(fontSize: 11, color: Colors.white38),
+                  'ALL TIMES IN IST',
+                  style: GoogleFonts.rajdhani(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white38,
+                    letterSpacing: 0.8,
+                  ),
                 ),
               ],
             ),
@@ -138,7 +150,12 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           Expanded(
             child: eventsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) => Center(child: Text('Failed to load schedule: $err')),
+              error: (err, _) => Center(
+                child: Text(
+                  'Failed to load schedule: $err',
+                  style: GoogleFonts.rajdhani(color: Colors.redAccent),
+                ),
+              ),
               data: (events) {
                 final selectedDateFilter = _festivalDays[_selectedDayIndex]['date']!;
 
@@ -159,12 +176,16 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                           const SizedBox(height: 16),
                           Text(
                             'No events scheduled for ${_festivalDays[_selectedDayIndex]['day']}',
-                            style: Theme.of(context).textTheme.titleMedium,
+                            style: GoogleFonts.orbitron(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
+                          Text(
                             'Select another festival day from the tabs above.',
-                            style: TextStyle(color: Colors.white60, fontSize: 12),
+                            style: GoogleFonts.rajdhani(color: Colors.white60, fontSize: 13),
                           ),
                         ],
                       ),
@@ -198,7 +219,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                                     boxShadow: [
                                       BoxShadow(
                                         color: primaryColor.withValues(alpha: 0.6),
-                                        blurRadius: 6,
+                                        blurRadius: 8,
                                         spreadRadius: 1,
                                       ),
                                     ],
@@ -208,7 +229,16 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                                   Expanded(
                                     child: Container(
                                       width: 2,
-                                      color: primaryColor.withValues(alpha: 0.3),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            primaryColor.withValues(alpha: 0.6),
+                                            primaryColor.withValues(alpha: 0.15),
+                                          ],
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                        ),
+                                      ),
                                     ),
                                   ),
                               ],
@@ -227,11 +257,18 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.all(14),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF100605),
+                                    color: const Color(0xFF110604),
                                     borderRadius: BorderRadius.circular(14),
                                     border: Border.all(
-                                      color: primaryColor.withValues(alpha: 0.3),
+                                      color: primaryColor.withValues(alpha: 0.35),
+                                      width: 0.8,
                                     ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: primaryColor.withValues(alpha: 0.06),
+                                        blurRadius: 8,
+                                      ),
+                                    ],
                                   ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,22 +290,23 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                                             ),
                                             child: Text(
                                               event.category.toUpperCase(),
-                                              style: TextStyle(
-                                                fontSize: 9,
-                                                fontWeight: FontWeight.bold,
+                                              style: GoogleFonts.rajdhani(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w800,
                                                 color: primaryColor,
+                                                letterSpacing: 0.8,
                                               ),
                                             ),
                                           ),
                                           Row(
                                             children: [
-                                              Icon(Icons.access_time, size: 12, color: primaryColor),
+                                              Icon(Icons.access_time, size: 13, color: primaryColor),
                                               const SizedBox(width: 4),
                                               Text(
                                                 event.time,
-                                                style: TextStyle(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.bold,
+                                                style: GoogleFonts.rajdhani(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w700,
                                                   color: primaryColor,
                                                 ),
                                               ),
@@ -279,9 +317,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                                       const SizedBox(height: 8),
                                       Text(
                                         event.title,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
+                                        style: GoogleFonts.rajdhani(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w700,
                                           color: Colors.white,
                                         ),
                                       ),
@@ -291,11 +329,15 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                                         children: [
                                           Row(
                                             children: [
-                                              const Icon(Icons.location_on, size: 12, color: Colors.grey),
+                                              const Icon(Icons.location_on_outlined, size: 13, color: Colors.grey),
                                               const SizedBox(width: 4),
                                               Text(
                                                 event.venue,
-                                                style: const TextStyle(fontSize: 11, color: Colors.white60),
+                                                style: GoogleFonts.rajdhani(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Colors.white60,
+                                                ),
                                               ),
                                             ],
                                           ),
@@ -310,7 +352,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                           ),
                         ],
                       ),
-                    );
+                    ).animate().fadeIn(duration: 250.ms, delay: (index * 40).clamp(0, 350).ms).slideX(begin: 0.04, end: 0);
                   },
                 );
               },
