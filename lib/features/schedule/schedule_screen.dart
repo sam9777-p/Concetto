@@ -69,7 +69,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                           Expanded(
                             child: Container(
                               width: 2,
-                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: 0.3),
                             ),
                           ),
                         ],
@@ -80,7 +82,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                           child: ListTile(
                             title: Text('Event ${index + 1}'),
                             subtitle: const Text('10:00 AM - 11:30 AM'),
-                            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                            trailing: const Icon(
+                              Icons.arrow_forward_ios,
+                              size: 16,
+                            ),
                           ),
                         ),
                       ),

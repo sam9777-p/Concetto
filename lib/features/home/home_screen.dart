@@ -1,124 +1,153 @@
+import 'dart:math' as math;
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../core/theme/app_theme.dart';
-import '../../models/announcement_item.dart';
 
-class HomeScreen extends ConsumerWidget {
+// 1. Define the Star Model
+class Star {
+  final double x;
+  final double y;
+  final double size;
+  final bool isCross;
+  final double twinkleSpeed;
+  final Color color;
+
+  Star({
+    required this.x,
+    required this.y,
+    required this.size,
+    required this.isCross,
+    required this.twinkleSpeed,
+    required this.color,
+  });
+}
+
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+  late final AnimationController _starController;
+  List<Star> _stars = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _starController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 10),
+    )..repeat();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_stars.isEmpty) {
+      _generateStars(MediaQuery.of(context).size);
+    }
+  }
+
+  void _generateStars(Size size) {
+    final random = math.Random(42);
+    for (int i = 0; i < 80; i++) {
+      final isCross = random.nextDouble() > 0.85; // 15% chance to be a cross
+      _stars.add(
+        Star(
+          x: random.nextDouble() * size.width,
+          y: random.nextDouble() * size.height,
+          size: isCross ? random.nextDouble() * 3 + 2 : random.nextDouble() * 1.5 + 0.5,
+          isCross: isCross,
+          twinkleSpeed: random.nextDouble() * 3 + 1,
+          color: isCross
+              ? const Color(0xFFFF5722).withOpacity(0.6) // Orange tint for crosses
+              : Colors.white.withOpacity(random.nextDouble() * 0.5 + 0.3),
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _starController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Hero Banner
-            Container(
-              width: double.infinity,
-              height: 300,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppTheme.neonOrange,
-                    AppTheme.scaffoldBg,
+      backgroundColor: const Color(0xFF070202),
+      body: Stack(
+        children: [
+          // Twinkling Starfield Layer
+          AnimatedBuilder(
+            animation: _starController,
+            builder: (context, child) {
+              return CustomPaint(
+                size: MediaQuery.of(context).size,
+                painter: StarfieldPainter(
+                  animationValue: _starController.value,
+                  stars: _stars,
+                ),
+              );
+            },
+          ),
+
+          // ... (Keep your Planet, Orb, and Navbar widgets here) ...
+
+          // Static Logo Layer (No Transform.translate)
+          SafeArea(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset('assets/logo_final.webp', height: 90),
+                    const SizedBox(width: 4),
+                    Image.asset('assets/logo_hero.webp', height: 75),
                   ],
                 ),
-              ),
-              child: Center(
-                child: Text(
-                  'CONCETTO',
-                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                        fontSize: 48,
-                        letterSpacing: 8,
-                      ),
-                ),
-              ),
+              ],
             ),
-
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'QUICK LINKS',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildQuickLink(context, Icons.calendar_month, 'Events'),
-                      _buildQuickLink(context, Icons.group, 'Team'),
-                      _buildQuickLink(context, Icons.info, 'About'),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                  Text(
-                    'LATEST ANNOUNCEMENTS',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 16),
-                  StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('announcements')
-                        .orderBy('timestamp', descending: true)
-                        .limit(5)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      final docs = snapshot.data!.docs;
-                      if (docs.isEmpty) {
-                        return const Center(child: Text('No announcements yet.'));
-                      }
-
-                      return ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: docs.length,
-                        itemBuilder: (context, index) {
-                          final item = AnnouncementItem.fromJson(docs[index].data() as Map<String, dynamic>, docs[index].id);
-                          return Card(
-                            child: ListTile(
-                              title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                              subtitle: Text(item.description),
-                              trailing: Text(
-                                '${item.timestamp.day}/${item.timestamp.month}',
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+}
 
-  Widget _buildQuickLink(BuildContext context, IconData icon, String label) {
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 30,
-          backgroundColor: AppTheme.translucentDark,
-          child: Icon(icon, color: AppTheme.neonOrange),
-        ),
-        const SizedBox(height: 8),
-        Text(label, style: Theme.of(context).textTheme.bodyMedium),
-      ],
-    );
+// 2. The Custom Painter
+class StarfieldPainter extends CustomPainter {
+  final double animationValue;
+  final List<Star> stars;
+
+  StarfieldPainter({required this.animationValue, required this.stars});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (var star in stars) {
+      // Calculate twinkling opacity using a sine wave
+      final twinkle = (math.sin(animationValue * math.pi * 2 * star.twinkleSpeed) + 1) / 2;
+      final currentOpacity = (star.color.opacity * twinkle).clamp(0.1, 1.0);
+
+      final paint = Paint()
+        ..color = star.color.withOpacity(currentOpacity)
+        ..strokeWidth = 1.2
+        ..strokeCap = StrokeCap.round;
+
+      if (star.isCross) {
+        // Draw + shape
+        canvas.drawLine(Offset(star.x - star.size, star.y), Offset(star.x + star.size, star.y), paint);
+        canvas.drawLine(Offset(star.x, star.y - star.size), Offset(star.x, star.y + star.size), paint);
+      } else {
+        // Draw circular dot
+        canvas.drawCircle(Offset(star.x, star.y), star.size, paint);
+      }
+    }
   }
+
+  @override
+  bool shouldRepaint(covariant StarfieldPainter oldDelegate) => true;
 }
