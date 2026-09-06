@@ -45,3 +45,20 @@ app.*.map.json
 /android/app/release
 # Widget Preview related
 .widget_preview/
+
+# Keystores, signing keys, and secrets
+*.keystore
+*.jks
+*.p12
+*.key
+*.mobileprovision
+*service-account*.json
+.env*
+
+# Firebase credentials and configuration
+firebase.json
+lib/firebase.json
+lib/firebase_options.dart
+**/google-services.json
+**/GoogleService-Info.plist
+

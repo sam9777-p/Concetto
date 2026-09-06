@@ -5,6 +5,8 @@ class CoreTeamMember {
   final String phone;
   final String email;
   final String imageUrl;
+  final String year;
+  final int order;
 
   CoreTeamMember({
     required this.name,
@@ -13,6 +15,8 @@ class CoreTeamMember {
     required this.phone,
     required this.email,
     required this.imageUrl,
+    this.year = '',
+    this.order = 99,
   });
 
   factory CoreTeamMember.fromJson(Map<String, dynamic> json) {
@@ -23,6 +27,8 @@ class CoreTeamMember {
       phone: json['phone'] ?? '',
       email: json['email'] ?? '',
       imageUrl: json['imageUrl'] ?? '',
+      year: json['year'] ?? '',
+      order: json['order'] ?? 99,
     );
   }
 
@@ -34,6 +40,8 @@ class CoreTeamMember {
       'phone': phone,
       'email': email,
       'imageUrl': imageUrl,
+      'year': year,
+      'order': order,
     };
   }
 }

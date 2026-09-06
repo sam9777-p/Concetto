@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 // 1. Define the Star Model
@@ -30,7 +29,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late final AnimationController _starController;
-  List<Star> _stars = [];
+  final List<Star> _stars = [];
 
   @override
   void initState() {
@@ -61,8 +60,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           isCross: isCross,
           twinkleSpeed: random.nextDouble() * 3 + 1,
           color: isCross
-              ? const Color(0xFFFF5722).withOpacity(0.6) // Orange tint for crosses
-              : Colors.white.withOpacity(random.nextDouble() * 0.5 + 0.3),
+              ? const Color(0xFFFF5722).withValues(alpha: 0.6) // Orange tint for crosses
+              : Colors.white.withValues(alpha: random.nextDouble() * 0.5 + 0.3),
         ),
       );
     }
@@ -130,10 +129,10 @@ class StarfieldPainter extends CustomPainter {
     for (var star in stars) {
       // Calculate twinkling opacity using a sine wave
       final twinkle = (math.sin(animationValue * math.pi * 2 * star.twinkleSpeed) + 1) / 2;
-      final currentOpacity = (star.color.opacity * twinkle).clamp(0.1, 1.0);
+      final currentOpacity = (star.color.a * twinkle).clamp(0.1, 1.0);
 
       final paint = Paint()
-        ..color = star.color.withOpacity(currentOpacity)
+        ..color = star.color.withValues(alpha: currentOpacity)
         ..strokeWidth = 1.2
         ..strokeCap = StrokeCap.round;
 
