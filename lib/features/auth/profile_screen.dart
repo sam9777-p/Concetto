@@ -7,6 +7,8 @@ import '../../core/network/auth_provider.dart';
 import '../../core/network/repositories.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/core_team_member.dart';
+import '../admin/admin_dashboard_screen.dart';
+import '../admin/widgets/admin_login_dialog.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -70,6 +72,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               _buildUserStatusBanner(user, primaryColor)
                   .animate()
                   .fadeIn(duration: 400.ms, delay: 100.ms),
+
+            const SizedBox(height: 18),
+
+            // Organizer Portal Card
+            _buildOrganizerPortalCard(context, primaryColor)
+                .animate()
+                .fadeIn(duration: 400.ms, delay: 150.ms),
 
             const SizedBox(height: 32),
 
@@ -401,6 +410,101 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // --- 2b. Organizer & Club Portal ---
+  Widget _buildOrganizerPortalCard(BuildContext context, Color primaryColor) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.cardSurface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.neonOrange.withValues(alpha: 0.4), width: 1),
+        gradient: AppTheme.darkCardGradient,
+        boxShadow: AppTheme.neonGlow(opacity: 0.15, blur: 10),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () {
+            AdminLoginDialog.show(
+              context,
+              onSuccess: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const AdminDashboardScreen(),
+                  ),
+                );
+              },
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.neonOrange.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppTheme.neonOrange.withValues(alpha: 0.5)),
+                  ),
+                  child: const Icon(Icons.admin_panel_settings_outlined, color: AppTheme.neonOrange, size: 26),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'ORGANIZER PORTAL',
+                            style: GoogleFonts.orbitron(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.1,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppTheme.cyberAmber.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: AppTheme.cyberAmber, width: 0.8),
+                            ),
+                            child: Text(
+                              'CLUB HEADS',
+                              style: GoogleFonts.rajdhani(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.cyberAmber,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Manage, add, and publish festival events',
+                        style: GoogleFonts.rajdhani(
+                          fontSize: 13,
+                          color: AppTheme.metallicMuted,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios, size: 14, color: AppTheme.neonOrange),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -7,6 +7,9 @@ import '../features/schedule/schedule_screen.dart';
 import '../features/auth/profile_screen.dart';
 import '../models/event_item.dart';
 
+import '../features/admin/admin_dashboard_screen.dart';
+import '../features/admin/event_editor_screen.dart';
+
 class MainWrapper extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 
@@ -60,6 +63,30 @@ class MainWrapper extends StatelessWidget {
 final goRouter = GoRouter(
   initialLocation: '/',
   routes: [
+    GoRoute(
+      path: '/admin',
+      builder: (context, state) => const AdminDashboardScreen(),
+      routes: [
+        GoRoute(
+          path: 'new',
+          builder: (context, state) => const EventEditorScreen(),
+        ),
+        GoRoute(
+          path: 'edit',
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>?;
+            final event = extra?['event'] as EventItem?;
+            final passcode = extra?['passcode'] as String?;
+            final isMaster = extra?['isMaster'] as bool? ?? false;
+            return EventEditorScreen(
+              initialEvent: event,
+              authorizedPasscode: passcode,
+              isMasterAdmin: isMaster,
+            );
+          },
+        ),
+      ],
+    ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
         return MainWrapper(navigationShell: navigationShell);

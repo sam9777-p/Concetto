@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../core/theme/app_theme.dart';
 import '../../models/event_item.dart';
+import '../admin/widgets/event_passcode_prompt.dart';
+import '../admin/event_editor_screen.dart';
 
 class EventDetailScreen extends StatelessWidget {
   final EventItem event;
@@ -44,6 +48,28 @@ class EventDetailScreen extends StatelessWidget {
               ),
             ),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.edit_note, color: Colors.white),
+                tooltip: 'Edit Event (Coordinator / Admin)',
+                onPressed: () {
+                  EventPasscodePrompt.show(
+                    context,
+                    event: event,
+                    actionTitle: 'Edit Event',
+                    onAuthorized: (passcode, isMaster) {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => EventEditorScreen(
+                            initialEvent: event,
+                            authorizedPasscode: passcode,
+                            isMasterAdmin: isMaster,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
               IconButton(
                 icon: const Icon(Icons.share),
                 tooltip: 'Share Event',
@@ -96,7 +122,34 @@ class EventDetailScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
+
+                  // Organizing Club Pill
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.cyberAmber.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: AppTheme.cyberAmber, width: 0.8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.shield_outlined, size: 14, color: AppTheme.cyberAmber),
+                        const SizedBox(width: 5),
+                        Text(
+                          'ORGANIZED BY ${event.organizerClub.toUpperCase()}',
+                          style: GoogleFonts.rajdhani(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.cyberAmber,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
 
                   // Metadata Badges Wrap
                   Wrap(

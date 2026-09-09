@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/network/repositories.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/event_item.dart';
+import '../admin/admin_dashboard_screen.dart';
+import '../admin/widgets/admin_login_dialog.dart';
 
 class EventsScreen extends ConsumerStatefulWidget {
   const EventsScreen({super.key});
@@ -65,6 +67,22 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
         ),
         centerTitle: false,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.admin_panel_settings_outlined, color: AppTheme.cyberAmber),
+            tooltip: 'Organizer Portal',
+            onPressed: () {
+              AdminLoginDialog.show(
+                context,
+                onSuccess: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const AdminDashboardScreen(),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh events',
@@ -423,7 +441,18 @@ class EventCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 2),
+                  Text(
+                    event.organizerClub,
+                    style: GoogleFonts.rajdhani(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.cyberAmber,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
                   Row(
                     children: [
                       Icon(Icons.calendar_today, size: 12, color: primaryColor),
