@@ -6,6 +6,7 @@ import '../features/events/event_detail_screen.dart';
 import '../features/schedule/schedule_screen.dart';
 import '../features/auth/profile_screen.dart';
 import '../models/event_item.dart';
+import '../features/splash/splash_screen.dart';
 
 import '../features/admin/admin_dashboard_screen.dart';
 import '../features/admin/event_editor_screen.dart';
@@ -61,8 +62,12 @@ class MainWrapper extends StatelessWidget {
 }
 
 final goRouter = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/splash',
   routes: [
+    GoRoute(
+      path: '/splash',
+      builder: (context, state) => const SplashScreen(),
+    ),
     GoRoute(
       path: '/admin',
       builder: (context, state) => const AdminDashboardScreen(),
