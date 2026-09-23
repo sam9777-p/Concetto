@@ -7,7 +7,7 @@ class MockData {
     EventItem(
       id: 'pmx180dc_caseblitz',
       title: 'CaseBlitz \'26',
-      category: 'Flagship',
+      category: 'Management',
       organizerClub: 'Product Management & 180DC',
       venue: 'NVCTI Incubation & NLHC Classrooms',
       time: '09:00 AM - 04:00 PM (Overnight)',
@@ -70,7 +70,7 @@ class MockData {
     EventItem(
       id: 'questree__26',
       title: 'QuesTree \'26',
-      category: 'Club',
+      category: 'Management',
       organizerClub: 'Fintech Club',
       venue: 'NLHC Hall 1',
       time: '09:00 AM - 10:00 AM',
@@ -133,7 +133,7 @@ class MockData {
     EventItem(
       id: 'vibehack__26',
       title: 'VibeHack \'26 (DevDash)',
-      category: 'Club',
+      category: 'Coding',
       organizerClub: 'CyberLabs WebD',
       venue: 'NLHC Classrooms',
       time: '10:00 AM - 11:00 AM',
@@ -175,7 +175,7 @@ class MockData {
     EventItem(
       id: 'code_the_cosmos',
       title: 'Code The Cosmos',
-      category: 'Club',
+      category: 'Coding',
       organizerClub: 'ASTC (Astronomy Club)',
       venue: 'NLHC Hall 2',
       time: '11:00 AM - 12:00 PM',
@@ -217,7 +217,7 @@ class MockData {
     EventItem(
       id: 'gate_craft',
       title: 'Gate Craft',
-      category: 'Club',
+      category: 'Electronics',
       organizerClub: 'Electronics & IoT Society',
       venue: 'NLHC Classrooms',
       time: '12:00 PM - 01:00 PM',
@@ -259,7 +259,7 @@ class MockData {
     EventItem(
       id: 'aeroglide',
       title: 'AeroGlide (Mechismu)',
-      category: 'Club',
+      category: 'Robotics',
       organizerClub: 'Mechismu Aeromodelling',
       venue: 'Lower Ground / Oval Ground',
       time: '02:00 PM - 03:00 PM',
@@ -301,7 +301,7 @@ class MockData {
     EventItem(
       id: 'forklift__26',
       title: 'ForkLift \'26 (Blockchain)',
-      category: 'Club',
+      category: 'Coding',
       organizerClub: 'CyberLabs Blockchain',
       venue: 'NLHC Hall 3',
       time: '03:00 PM - 04:00 PM',
@@ -322,7 +322,7 @@ class MockData {
     EventItem(
       id: 'quantum_mania',
       title: 'Quantum Mania',
-      category: 'Club',
+      category: 'Coding',
       organizerClub: 'QARC (Quantum Computing)',
       venue: 'NLHC Hall 4',
       time: '04:00 PM - 05:00 PM',
@@ -364,7 +364,7 @@ class MockData {
     EventItem(
       id: 'logic_odyssey',
       title: 'Logic Odyssey',
-      category: 'Club',
+      category: 'Coding',
       organizerClub: 'C3 (Coding Club)',
       venue: 'Computer Center Lab 1',
       time: '05:00 PM - 06:00 PM',
@@ -427,7 +427,7 @@ class MockData {
     EventItem(
       id: 'tinas__26',
       title: 'TiNAS \'26 (Infosec CTF)',
-      category: 'Club',
+      category: 'Coding',
       organizerClub: 'CyberLabs Infosec',
       venue: 'Computer Center Lab 2',
       time: '09:00 AM - 10:00 AM',
@@ -448,7 +448,7 @@ class MockData {
     EventItem(
       id: 'sparkathon',
       title: 'Sparkathon 2.0',
-      category: 'Departmental',
+      category: 'Electronics',
       organizerClub: 'Society of Electronics Engineers (SEE)',
       venue: 'NLHC Classrooms',
       time: '09:00 AM - 10:00 AM',
@@ -490,7 +490,7 @@ class MockData {
     EventItem(
       id: 'escape_room',
       title: 'Escape Room (Maths Club)',
-      category: 'Club',
+      category: 'Departmental',
       organizerClub: 'Maths Club',
       venue: 'NLHC Classrooms',
       time: '10:00 AM - 11:00 AM',
@@ -511,7 +511,7 @@ class MockData {
     EventItem(
       id: 'edge_ai_challenge',
       title: 'Edge AI Challenge',
-      category: 'Club',
+      category: 'Electronics',
       organizerClub: 'Electronics & IoT Society',
       venue: 'NLHC Lab 2',
       time: '11:00 AM - 12:00 PM',
@@ -553,7 +553,7 @@ class MockData {
     EventItem(
       id: 'hands_on_workshop_day2',
       title: 'Hands-on Tech Workshop',
-      category: 'Workshop',
+      category: 'Coding',
       organizerClub: 'Technical Council',
       venue: 'NLHC Audio-Visual Hall',
       time: '11:00 AM - 12:00 PM',
@@ -574,7 +574,7 @@ class MockData {
     EventItem(
       id: 'angd_3d_animation',
       title: 'Then. Now. Next. (AnGD 3D)',
-      category: 'Club',
+      category: 'Design',
       organizerClub: 'AnGD (Animation Society)',
       venue: 'Online / Hybrid NLHC',
       time: '12:00 PM - 01:00 PM',
@@ -616,7 +616,7 @@ class MockData {
     EventItem(
       id: 'chakravyuh',
       title: 'ChakraVyuh (RoboISM)',
-      category: 'Club',
+      category: 'Robotics',
       organizerClub: 'RoboISM',
       venue: 'Robotics Arena (SAC)',
       time: '02:00 PM - 03:00 PM',
@@ -679,7 +679,7 @@ class MockData {
     EventItem(
       id: 'convcup__26',
       title: 'ConvCup \'26 (ML)',
-      category: 'Club',
+      category: 'Coding',
       organizerClub: 'CyberLabs ML',
       venue: 'NLHC Classrooms',
       time: '03:00 PM - 04:00 PM',
@@ -700,7 +700,7 @@ class MockData {
     EventItem(
       id: 'autonav',
       title: 'AutoNav (Autonomous RC)',
-      category: 'Club',
+      category: 'Robotics',
       organizerClub: 'Mechismu',
       venue: 'Mechismu Workshop Arena',
       time: '04:00 PM - 05:00 PM',
@@ -742,7 +742,7 @@ class MockData {
     EventItem(
       id: 'q_blueprint',
       title: 'Q-Blueprint',
-      category: 'Club',
+      category: 'Coding',
       organizerClub: 'QARC (Quantum Club)',
       venue: 'NLHC Hall 1',
       time: '05:00 PM - 06:00 PM',
@@ -763,7 +763,7 @@ class MockData {
     EventItem(
       id: 'equity_auction',
       title: 'Equity Auction',
-      category: 'Club',
+      category: 'Management',
       organizerClub: 'Fintech Club',
       venue: 'Online & NLHC',
       time: '06:00 PM - 07:00 PM',
@@ -805,7 +805,7 @@ class MockData {
     EventItem(
       id: 'pixel_perfect__26',
       title: 'Pixel Perfect \'26 (UI/UX)',
-      category: 'Club',
+      category: 'Design',
       organizerClub: 'CyberLabs UI/UX',
       venue: 'NLHC Classrooms',
       time: '09:00 AM - 10:00 AM',
@@ -868,7 +868,7 @@ class MockData {
     EventItem(
       id: 'robowars',
       title: 'ROBO WARS — Main Elimination Rounds',
-      category: 'Flagship',
+      category: 'Robotics',
       organizerClub: 'RoboISM',
       venue: 'RoboWars Armored Arena (SAC Ground)',
       time: '10:00 AM - 12:00 PM',
@@ -889,7 +889,7 @@ class MockData {
     EventItem(
       id: 'emerging_tech_workshop_day3',
       title: 'Next-Gen AI & Robotics Workshop',
-      category: 'Workshop',
+      category: 'Robotics',
       organizerClub: 'Technical Council',
       venue: 'NLHC Audio-Visual Hall',
       time: '10:00 AM - 11:00 AM',
@@ -910,7 +910,7 @@ class MockData {
     EventItem(
       id: 'sbt_quiz',
       title: 'SBT National Quiz',
-      category: 'Club',
+      category: 'Departmental',
       organizerClub: 'Quiz Club',
       venue: 'GJLT Seminar Hall',
       time: '11:00 AM - 12:00 PM',
@@ -931,7 +931,7 @@ class MockData {
     EventItem(
       id: 'fault_hunt',
       title: 'Fault Hunt',
-      category: 'Departmental',
+      category: 'Electronics',
       organizerClub: 'Society of Electronics Engineers (SEE)',
       venue: 'Electronics Dept Labs',
       time: '11:00 AM - 12:00 PM',
@@ -952,7 +952,7 @@ class MockData {
     EventItem(
       id: 'appsurd__26',
       title: 'AppSurD \'26 (Mobile AppD)',
-      category: 'Club',
+      category: 'Coding',
       organizerClub: 'CyberLabs AppD',
       venue: 'Computer Center Lab 1',
       time: '12:00 PM - 01:00 PM',
@@ -994,7 +994,7 @@ class MockData {
     EventItem(
       id: 'code_wars',
       title: 'Code Wars',
-      category: 'Club',
+      category: 'Coding',
       organizerClub: 'C3 (Coding Club)',
       venue: 'Computer Center Lab 2',
       time: '02:00 PM - 03:00 PM',
@@ -1057,7 +1057,7 @@ class MockData {
     EventItem(
       id: 'angd_game_jam',
       title: 'RRR - A Game Jam (AnGD)',
-      category: 'Club',
+      category: 'Design',
       organizerClub: 'AnGD (Animation Society)',
       venue: 'Hybrid / NLHC Hall 1',
       time: '04:00 PM - 05:00 PM',
@@ -1099,7 +1099,7 @@ class MockData {
     EventItem(
       id: 'robo_wars___grand_final',
       title: 'ROBO WARS — THE GRAND FINALE',
-      category: 'Flagship',
+      category: 'Robotics',
       organizerClub: 'RoboISM',
       venue: 'RoboWars Armored Arena (SAC Ground)',
       time: '05:00 PM - 06:30 PM',
@@ -1136,27 +1136,6 @@ class MockData {
       coordinatorEmail: 'concetto@iitism.ac.in',
       coordinatorPhone: '',
       isFlagship: true,
-      isWatchableOnly: true,
-    ),
-    EventItem(
-      id: 'prom_night_pre',
-      title: 'Prom Night \'26',
-      category: 'Stage',
-      organizerClub: 'Concetto Social Wing',
-      venue: 'SAC Main Floor',
-      time: '07:00 PM - 10:00 PM',
-      date: 'Oct 7, 2026',
-      prizePool: '',
-      teamSize: '',
-      description: 'The official pre-fest ball and social evening of Concetto\'26. Music, dance, formal red carpet entry, and celebration to kick off the festive spirit.',
-      posterUrl: 'https://concetto-ashen.vercel.app/events/general.png',
-      registrationUrl: '',
-      rulebookUrl: '',
-      coordinatorName: 'Social Wing',
-      coordinatorContact: 'concetto@iitism.ac.in',
-      coordinatorEmail: 'concetto@iitism.ac.in',
-      coordinatorPhone: '',
-      isFlagship: false,
       isWatchableOnly: true,
     ),
     EventItem(

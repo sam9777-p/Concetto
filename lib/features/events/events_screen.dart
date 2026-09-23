@@ -387,6 +387,44 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
         matchesCategory = true;
       } else if (selectedCategory == 'Pre-Events') {
         matchesCategory = isPreEvent;
+      } else if (selectedCategory == 'Flagship') {
+        matchesCategory = event.isFlagship || event.category.toLowerCase() == 'flagship';
+      } else if (selectedCategory == 'Robotics') {
+        matchesCategory = event.category.toLowerCase() == 'robotics' ||
+            event.organizerClub.toLowerCase().contains('robo') ||
+            event.title.toLowerCase().contains('robo') ||
+            event.title.toLowerCase().contains('autonav') ||
+            event.title.toLowerCase().contains('aeroglide');
+      } else if (selectedCategory == 'Electronics') {
+        matchesCategory = event.category.toLowerCase() == 'electronics' ||
+            event.organizerClub.toLowerCase().contains('electronic') ||
+            event.organizerClub.toLowerCase().contains('see') ||
+            event.title.toLowerCase().contains('sparkathon') ||
+            event.title.toLowerCase().contains('gate craft') ||
+            event.title.toLowerCase().contains('fault hunt');
+      } else if (selectedCategory == 'Management') {
+        matchesCategory = event.category.toLowerCase() == 'management' ||
+            event.organizerClub.toLowerCase().contains('management') ||
+            event.organizerClub.toLowerCase().contains('180dc') ||
+            event.organizerClub.toLowerCase().contains('fintech') ||
+            event.title.toLowerCase().contains('caseblitz') ||
+            event.title.toLowerCase().contains('questree') ||
+            event.title.toLowerCase().contains('equity auction');
+      } else if (selectedCategory == 'Design') {
+        matchesCategory = event.category.toLowerCase() == 'design' ||
+            event.organizerClub.toLowerCase().contains('ui/ux') ||
+            event.organizerClub.toLowerCase().contains('angd') ||
+            event.organizerClub.toLowerCase().contains('animation') ||
+            event.title.toLowerCase().contains('pixel perfect') ||
+            event.title.toLowerCase().contains('game jam');
+      } else if (selectedCategory == 'Coding') {
+        matchesCategory = event.category.toLowerCase() == 'coding' ||
+            event.organizerClub.toLowerCase().contains('cyberlabs') ||
+            event.organizerClub.toLowerCase().contains('coding') ||
+            event.organizerClub.toLowerCase().contains('c3') ||
+            event.title.toLowerCase().contains('hack') ||
+            event.title.toLowerCase().contains('code') ||
+            event.title.toLowerCase().contains('ctf');
       } else {
         matchesCategory = event.category.toLowerCase() == selectedCategory.toLowerCase();
       }
@@ -485,6 +523,10 @@ class EventCard extends StatelessWidget {
     if (cat.contains('management')) return const Color(0xFF00E676);
     if (cat.contains('electronics')) return const Color(0xFFE040FB);
     if (cat.contains('design')) return const Color(0xFFFFD600);
+    if (cat.contains('stage')) return const Color(0xFFFF8A80);
+    if (cat.contains('pre')) return const Color(0xFFFF5252);
+    if (cat.contains('departmental')) return const Color(0xFF40C4FF);
+    if (cat.contains('fun')) return const Color(0xFFFFD54F);
     return const Color(0xFFFF4500);
   }
 
