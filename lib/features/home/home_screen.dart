@@ -1576,30 +1576,18 @@ extension _HomeScreenHelpers on _HomeScreenState {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(Icons.format_quote_rounded, size: 18, color: primaryColor),
-                  const SizedBox(width: 8),
-                  Text(
-                    'VOICES OF CONCETTO • PATRON MESSAGES',
-                    style: GoogleFonts.rajdhani(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.3,
-                      color: primaryColor,
-                    ),
+              Icon(Icons.format_quote_rounded, size: 18, color: primaryColor),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'VOICES OF CONCETTO • PATRON MESSAGES',
+                  style: GoogleFonts.rajdhani(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.3,
+                    color: primaryColor,
                   ),
-                ],
-              ),
-              Text(
-                'TAP TO EXPAND',
-                style: GoogleFonts.rajdhani(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: primaryColor.withValues(alpha: 0.8),
-                  letterSpacing: 0.8,
                 ),
               ),
             ],
@@ -1912,30 +1900,18 @@ extension _HomeScreenHelpers on _HomeScreenState {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(Icons.photo_library_rounded, size: 18, color: primaryColor),
-                  const SizedBox(width: 8),
-                  Text(
-                    'CONCETTO GLIMPSES • MOMENTS',
-                    style: GoogleFonts.rajdhani(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.3,
-                      color: primaryColor,
-                    ),
+              Icon(Icons.photo_library_rounded, size: 18, color: primaryColor),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'CONCETTO GLIMPSES • MOMENTS',
+                  style: GoogleFonts.rajdhani(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.3,
+                    color: primaryColor,
                   ),
-                ],
-              ),
-              Text(
-                'TAP TO VIEW',
-                style: GoogleFonts.rajdhani(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: primaryColor.withValues(alpha: 0.8),
-                  letterSpacing: 0.8,
                 ),
               ),
             ],
