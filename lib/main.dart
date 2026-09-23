@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Concetto',
+      title: "Concetto'26",
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       routerConfig: goRouter,

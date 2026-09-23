@@ -41,11 +41,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   late final AnimationController _starController;
   final List<Star> _stars = [];
 
-  // Countdown timer state
-  late Timer _countdownTimer;
-  Duration _timeRemaining = Duration.zero;
-  final DateTime _festTargetDate = DateTime(2026, 10, 10, 9, 0, 0);
-
   @override
   void initState() {
     super.initState();
@@ -53,22 +48,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
       vsync: this,
       duration: const Duration(seconds: 10),
     )..repeat();
-
-    _updateTimeRemaining();
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      _updateTimeRemaining();
-    });
-  }
-
-  void _updateTimeRemaining() {
-    final now = DateTime.now();
-    // For a future target date or simulated upcoming fest
-    final difference = _festTargetDate.difference(now);
-    if (mounted) {
-      setState(() {
-        _timeRemaining = difference.isNegative ? Duration.zero : difference;
-      });
-    }
   }
 
   @override
@@ -101,7 +80,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   @override
   void dispose() {
     _starController.dispose();
-    _countdownTimer.cancel();
     super.dispose();
   }
 
@@ -116,28 +94,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
       backgroundColor: const Color(0xFF070202),
       body: Stack(
         children: [
-          // Twinkling Starfield Layer
-          AnimatedBuilder(
-            animation: _starController,
-            builder: (context, child) {
-              return CustomPaint(
-                size: MediaQuery.of(context).size,
-                painter: StarfieldPainter(
-                  animationValue: _starController.value,
-                  stars: _stars,
-                ),
-              );
-            },
+          // Twinkling Starfield Layer (isolated with RepaintBoundary)
+          RepaintBoundary(
+            child: AnimatedBuilder(
+              animation: _starController,
+              builder: (context, child) {
+                return CustomPaint(
+                  size: MediaQuery.of(context).size,
+                  painter: StarfieldPainter(
+                    animationValue: _starController.value,
+                    stars: _stars,
+                  ),
+                );
+              },
+            ),
           ),
 
-          // Scrollable Content Layer
+          // Scrollable Content Layer (isolated with RepaintBoundary)
           SafeArea(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 12),
+            child: RepaintBoundary(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 12),
 
                   // Header / Logo Bar
                   _buildHeader(primaryColor, secondaryColor)
@@ -156,7 +137,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                   const SizedBox(height: 24),
 
                   // Countdown Timer
-                  _buildCountdownTimer(primaryColor)
+                  ConcettoCountdownTimer(primaryColor: primaryColor)
                       .animate()
                       .fadeIn(duration: 450.ms, delay: 180.ms)
                       .slideY(begin: 0.05, end: 0),
@@ -201,27 +182,83 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   // --- Header ---
   Widget _buildHeader(Color primaryColor, Color secondaryColor) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Image.asset('assets/logo_final.webp', height: 48),
-              const SizedBox(width: 8),
-              Image.asset('assets/logo_hero.webp', height: 40),
-            ],
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: primaryColor.withValues(alpha: 0.5)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryColor.withValues(alpha: 0.25),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(9),
+                    child: Image.asset(
+                      'assets/images/logo_square.png',
+                      height: 40,
+                      width: 40,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Image.asset(
+                        'assets/logo_final.webp',
+                        height: 40,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "CONCETTO '26",
+                        style: GoogleFonts.orbitron(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: 1.2,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        "IIT (ISM) DHANBAD",
+                        style: GoogleFonts.rajdhani(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: primaryColor,
+                          letterSpacing: 1.0,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
+          const SizedBox(width: 8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: const Color(0xFF140604),
               borderRadius: BorderRadius.circular(20),
@@ -234,13 +271,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
               ],
             ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.bolt, size: 14, color: primaryColor),
+                Icon(Icons.bolt, size: 13, color: primaryColor),
                 const SizedBox(width: 4),
                 Text(
-                  'OCT 10 - 12, 2026',
+                  'OCT 08 - 11',
                   style: GoogleFonts.rajdhani(
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: primaryColor,
                     letterSpacing: 0.8,
@@ -314,12 +352,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             ),
             const SizedBox(height: 12),
             Text(
-              'Fantasy Wired Through a Century\'s Core',
+              'Centauri Synapse',
               style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.5,
                     height: 1.2,
                   ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Forged Over a Century, Soaring Towards Infinity',
+              style: GoogleFonts.rajdhani(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: primaryColor,
+                letterSpacing: 1.0,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -335,8 +383,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     );
   }
 
-  // --- Countdown Timer ---
-  Widget _buildCountdownTimer(Color primaryColor) {
+}
+
+// --- Isolated High-Performance Countdown Timer Widget ---
+class ConcettoCountdownTimer extends StatefulWidget {
+  final Color primaryColor;
+
+  const ConcettoCountdownTimer({super.key, required this.primaryColor});
+
+  @override
+  State<ConcettoCountdownTimer> createState() => _ConcettoCountdownTimerState();
+}
+
+class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
+  late Timer _timer;
+  Duration _timeRemaining = Duration.zero;
+  final DateTime _festTargetDate = DateTime(2026, 10, 8, 9, 0, 0);
+
+  @override
+  void initState() {
+    super.initState();
+    _calcRemaining();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _calcRemaining());
+  }
+
+  void _calcRemaining() {
+    final diff = _festTargetDate.difference(DateTime.now());
+    if (mounted) {
+      setState(() {
+        _timeRemaining = diff.isNegative ? Duration.zero : diff;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final days = _timeRemaining.inDays;
     final hours = _timeRemaining.inHours % 24;
     final minutes = _timeRemaining.inMinutes % 60;
@@ -349,7 +436,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
         children: [
           Row(
             children: [
-              Icon(Icons.timer_outlined, size: 16, color: primaryColor),
+              Icon(Icons.timer_outlined, size: 16, color: widget.primaryColor),
               const SizedBox(width: 6),
               Text(
                 'TIME UNTIL LAUNCH',
@@ -357,7 +444,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,
-                  color: primaryColor,
+                  color: widget.primaryColor,
                 ),
               ),
             ],
@@ -366,13 +453,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildDigitBox(days.toString().padLeft(2, '0'), 'DAYS', primaryColor),
-              _buildTimerSeparator(primaryColor),
-              _buildDigitBox(hours.toString().padLeft(2, '0'), 'HOURS', primaryColor),
-              _buildTimerSeparator(primaryColor),
-              _buildDigitBox(minutes.toString().padLeft(2, '0'), 'MINS', primaryColor),
-              _buildTimerSeparator(primaryColor),
-              _buildDigitBox(seconds.toString().padLeft(2, '0'), 'SECS', primaryColor),
+              _buildDigitBox(days.toString().padLeft(2, '0'), 'DAYS'),
+              _buildTimerSeparator(),
+              _buildDigitBox(hours.toString().padLeft(2, '0'), 'HOURS'),
+              _buildTimerSeparator(),
+              _buildDigitBox(minutes.toString().padLeft(2, '0'), 'MINS'),
+              _buildTimerSeparator(),
+              _buildDigitBox(seconds.toString().padLeft(2, '0'), 'SECS'),
             ],
           ),
         ],
@@ -380,17 +467,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     );
   }
 
-  Widget _buildDigitBox(String digits, String label, Color primaryColor) {
+  Widget _buildDigitBox(String digits, String label) {
     return Container(
       width: 74,
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFF130604),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: primaryColor.withValues(alpha: 0.45), width: 0.8),
+        border: Border.all(color: widget.primaryColor.withValues(alpha: 0.45), width: 0.8),
         boxShadow: [
           BoxShadow(
-            color: primaryColor.withValues(alpha: 0.12),
+            color: widget.primaryColor.withValues(alpha: 0.12),
             blurRadius: 10,
             spreadRadius: 1,
           ),
@@ -403,12 +490,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             style: GoogleFonts.orbitron(
               fontSize: 24,
               fontWeight: FontWeight.w700,
-              color: primaryColor,
+              color: widget.primaryColor,
               letterSpacing: 1.2,
               shadows: [
                 Shadow(
-                  color: primaryColor.withValues(alpha: 0.5),
-                  blurRadius: 8,
+                  color: widget.primaryColor.withValues(alpha: 0.7),
+                  blurRadius: 12,
                 ),
               ],
             ),
@@ -428,20 +515,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     );
   }
 
-  Widget _buildTimerSeparator(Color primaryColor) {
+  Widget _buildTimerSeparator() {
     return Text(
       ':',
       style: TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.bold,
-        color: primaryColor.withValues(alpha: 0.7),
+        color: widget.primaryColor.withValues(alpha: 0.7),
       ),
-    ).animate(onPlay: (controller) => controller.repeat(reverse: true)).fade(
-          begin: 0.25,
-          end: 1.0,
-          duration: 900.ms,
-        );
+    );
   }
+}
+
+extension _HomeScreenHelpers on _HomeScreenState {
 
   // --- Announcements Section ---
   Widget _buildAnnouncementsSection(

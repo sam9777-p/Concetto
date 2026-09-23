@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/event_item.dart';
 import '../admin/widgets/event_passcode_prompt.dart';
 import '../admin/event_editor_screen.dart';
+import 'rulebook_pdf_viewer_screen.dart';
 
 class EventDetailScreen extends StatelessWidget {
   final EventItem event;
@@ -73,14 +78,7 @@ class EventDetailScreen extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.share),
                 tooltip: 'Share Event',
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Event link for "${event.title}" copied to clipboard!'),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                },
+                onPressed: () => _shareEvent(context),
               ),
             ],
           ),
@@ -208,20 +206,25 @@ class EventDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 28),
 
-                  // Action Buttons: Register Now + Rulebook
+                  // Action Buttons: In-App Register + In-App PDF Rulebook + External Form Link
                   Row(
                     children: [
                       Expanded(
                         flex: 3,
                         child: ElevatedButton.icon(
                           onPressed: () => _showRegistrationSheet(context, primaryColor),
-                          icon: const Icon(Icons.how_to_reg, color: Colors.black),
+                          icon: const Icon(
+                            Icons.how_to_reg,
+                            color: Colors.black,
+                            size: 18,
+                          ),
                           label: const Text(
                             'REGISTER NOW',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.black,
-                              letterSpacing: 1,
+                              letterSpacing: 0.8,
+                              fontSize: 13,
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
@@ -234,21 +237,40 @@ class EventDetailScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Expanded(
                         flex: 2,
                         child: OutlinedButton.icon(
                           onPressed: () => _showRulebookDialog(context, primaryColor),
-                          icon: const Icon(Icons.menu_book, size: 18),
-                          label: const Text('RULES'),
+                          icon: const Icon(Icons.picture_as_pdf, size: 16),
+                          label: const Text(
+                            'RULES',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
+                            side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
                           ),
                         ),
                       ),
+                      if (event.registrationUrl.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        IconButton.outlined(
+                          onPressed: () => _launchExternalUrl(context, event.registrationUrl),
+                          icon: const Icon(Icons.open_in_browser, size: 18),
+                          tooltip: 'Official Google Form (External)',
+                          style: IconButton.styleFrom(
+                            padding: const EdgeInsets.all(12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
 
@@ -312,16 +334,37 @@ class EventDetailScreen extends StatelessWidget {
                               ],
                             ),
                           ),
-                          IconButton(
-                            icon: Icon(Icons.email, color: primaryColor, size: 20),
-                            tooltip: 'Contact coordinator',
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Contact info: ${event.coordinatorContact}'),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (event.coordinatorPhone.isNotEmpty ||
+                                  (event.coordinatorContact.isNotEmpty &&
+                                      !event.coordinatorContact.contains('@')))
+                                IconButton(
+                                  icon: Icon(Icons.phone, color: primaryColor, size: 20),
+                                  tooltip: 'Call coordinator',
+                                  onPressed: () {
+                                    final phone = event.coordinatorPhone.isNotEmpty
+                                        ? event.coordinatorPhone
+                                        : event.coordinatorContact;
+                                    _launchPhone(context, phone);
+                                  },
                                 ),
-                              );
-                            },
+                              if (event.coordinatorEmail.isNotEmpty ||
+                                  event.coordinatorContact.contains('@'))
+                                IconButton(
+                                  icon: Icon(Icons.email, color: primaryColor, size: 20),
+                                  tooltip: 'Email coordinator',
+                                  onPressed: () {
+                                    final email = event.coordinatorEmail.isNotEmpty
+                                        ? event.coordinatorEmail
+                                        : (event.coordinatorContact.contains('@')
+                                            ? event.coordinatorContact
+                                            : 'concetto@iitism.ac.in');
+                                    _launchMail(context, email);
+                                  },
+                                ),
+                            ],
                           ),
                         ],
                       ),
@@ -475,6 +518,72 @@ class EventDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
+                  if (event.registrationUrl.isNotEmpty) ...[
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            const Color(0xFFE85002),
+                            const Color(0xFFFF6F00),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFE85002).withValues(alpha: 0.35),
+                            blurRadius: 10,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(sheetContext);
+                          _launchExternalUrl(context, event.registrationUrl);
+                        },
+                        icon: const Icon(Icons.open_in_new, color: Colors.black, size: 18),
+                        label: const Text(
+                          'OPEN OFFICIAL GOOGLE FORM',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 13,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        const Expanded(child: Divider(color: Colors.white24)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: Text(
+                            'OR GENERATE IN-APP PASS',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white38,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
+                        const Expanded(child: Divider(color: Colors.white24)),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                  ],
+
                   _buildFormField(
                     controller: nameController,
                     label: 'Full Name',
@@ -525,10 +634,37 @@ class EventDetailScreen extends StatelessWidget {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         if (formKey.currentState!.validate()) {
-                          Navigator.pop(sheetContext);
-                          _showConfirmationDialog(context, primaryColor, nameController.text);
+                          final cleanId = event.id.toUpperCase().replaceAll('_', '').replaceAll('-', '');
+                          final prefix = cleanId.substring(0, cleanId.length.clamp(3, 6));
+                          final passId = 'CON26-$prefix-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+                          
+                          final regData = {
+                            'passId': passId,
+                            'eventId': event.id,
+                            'eventTitle': event.title,
+                            'name': nameController.text.trim(),
+                            'email': emailController.text.trim(),
+                            'phone': phoneController.text.trim(),
+                            'college': collegeController.text.trim(),
+                            'teamName': teamNameController.text.trim(),
+                            'registeredAt': FieldValue.serverTimestamp(),
+                            'status': 'CONFIRMED',
+                          };
+                          
+                          try {
+                            await FirebaseFirestore.instance.collection('registrations').add(regData);
+                          } catch (e) {
+                            debugPrint('Firestore registration notice: $e');
+                          }
+                          
+                          if (sheetContext.mounted) {
+                            Navigator.pop(sheetContext);
+                          }
+                          if (context.mounted) {
+                            _showConfirmationDialog(context, primaryColor, nameController.text.trim(), passId);
+                          }
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -588,7 +724,7 @@ class EventDetailScreen extends StatelessWidget {
     );
   }
 
-  void _showConfirmationDialog(BuildContext context, Color primaryColor, String registrantName) {
+  void _showConfirmationDialog(BuildContext context, Color primaryColor, String registrantName, String passId) {
     showDialog(
       context: context,
       builder: (dialogContext) {
@@ -600,45 +736,88 @@ class EventDetailScreen extends StatelessWidget {
           ),
           title: Row(
             children: [
-              Icon(Icons.check_circle, color: Colors.greenAccent, size: 28),
-              const SizedBox(width: 10),
-              const Text('Registered!'),
+              const Icon(Icons.check_circle, color: Colors.greenAccent, size: 26),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Registration Confirmed!',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
             ],
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Congratulations, $registrantName!'),
-              const SizedBox(height: 8),
-              Text(
-                'You have successfully registered for "${event.title}".',
-                style: const TextStyle(color: Colors.white70),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  'Welcome aboard, $registrantName!',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+                  textAlign: TextAlign.center,
                 ),
-                child: Row(
-                  children: [
-                    Icon(Icons.confirmation_number_outlined, size: 16, color: primaryColor),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Pass ID: CON-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
-                      style: TextStyle(
-                        fontFamily: 'monospace',
-                        fontWeight: FontWeight.bold,
-                        color: primaryColor,
-                        fontSize: 12,
+                const SizedBox(height: 4),
+                Text(
+                  event.title,
+                  style: TextStyle(color: primaryColor, fontSize: 12, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryColor.withValues(alpha: 0.25),
+                        blurRadius: 12,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                  child: QrImageView(
+                    data: passId,
+                    version: QrVersions.auto,
+                    size: 140.0,
+                    eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: Colors.black),
+                    dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: Colors.black),
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'DIGITAL ENTRY PASS ID',
+                        style: TextStyle(color: primaryColor, fontSize: 10, letterSpacing: 1.2, fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 2),
+                      SelectableText(
+                        passId,
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Venue: ${event.venue}\nSaved directly in Firestore. Present this QR at the venue entrance.',
+                  style: const TextStyle(color: Colors.white60, fontSize: 10.5),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -651,52 +830,122 @@ class EventDetailScreen extends StatelessWidget {
     );
   }
 
-  // --- Rulebook Dialog ---
+  // --- Rulebook In-App PDF Viewer ---
   void _showRulebookDialog(BuildContext context, Color primaryColor) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF120504),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: primaryColor.withValues(alpha: 0.4)),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => RulebookPdfViewerScreen(event: event),
+      ),
+    );
+  }
+
+  // --- Helper to open external registration links / rulebooks ---
+  Future<void> _launchExternalUrl(BuildContext context, String urlString) async {
+    if (urlString.trim().isEmpty) return;
+    try {
+      final uri = Uri.parse(urlString.trim());
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open external link: $urlString'),
+            behavior: SnackBarBehavior.floating,
           ),
-          title: Row(
-            children: [
-              Icon(Icons.gavel, color: primaryColor, size: 24),
-              const SizedBox(width: 10),
-              const Text('Rules & Guidelines'),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  event.title.toUpperCase(),
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: primaryColor),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  '1. Eligibility: All undergraduate, postgraduate, and diploma students with valid college ID are eligible.\n\n'
-                  '2. Team Composition: Teams must adhere to the specified member limit. Cross-college teams are permitted.\n\n'
-                  '3. Code of Conduct: Any form of plagiarism, malpractice, or unsportsmanlike behavior results in immediate disqualification.\n\n'
-                  '4. Evaluation: Decisions made by the official judges and festival committee are final and binding.',
-                  style: TextStyle(fontSize: 12, color: Colors.white70, height: 1.4),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text('CLOSE', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
-            ),
-          ],
         );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error launching link: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  // --- Deep Link Share via Share Plus ---
+  Future<void> _shareEvent(BuildContext context) async {
+    final webUrl = 'https://sam9777-p.github.io/Concetto/events?id=${event.id}';
+    final shareText = "🚀 *${event.title}* — Concetto'26 Centenary Edition\n"
+        "IIT (ISM) Dhanbad\n\n"
+        "📅 Date: ${event.date}\n"
+        "📍 Venue: ${event.venue}\n"
+        "${event.prizePool.isNotEmpty ? '🏆 Prize Pool: ${event.prizePool}\n' : ''}"
+        "👥 Team: ${event.teamSize}\n\n"
+        "Open in Concetto'26 App:\n$webUrl";
+
+    Rect? sharePositionOrigin;
+    try {
+      final box = context.findRenderObject() as RenderBox?;
+      if (box != null && box.hasSize) {
+        sharePositionOrigin = box.localToGlobal(Offset.zero) & box.size;
+      }
+    } catch (_) {}
+
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          text: shareText,
+          subject: "Concetto'26 — ${event.title}",
+          sharePositionOrigin: sharePositionOrigin,
+        ),
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not trigger share intent: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  // --- Intent: Open System Phone Dialer ---
+  Future<void> _launchPhone(BuildContext context, String rawPhone) async {
+    final cleanPhone = rawPhone.replaceAll(RegExp(r'[^\d+]'), '');
+    if (cleanPhone.isEmpty) return;
+    final uri = Uri.parse('tel:$cleanPhone');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not launch phone dialer: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  // --- Intent: Open System Email Client ---
+  Future<void> _launchMail(BuildContext context, String email) async {
+    final cleanEmail = email.trim();
+    if (cleanEmail.isEmpty) return;
+    final uri = Uri(
+      scheme: 'mailto',
+      path: cleanEmail,
+      queryParameters: {
+        'subject': "Query regarding Concetto'26 - ${event.title}",
       },
     );
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not launch mail client: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 }

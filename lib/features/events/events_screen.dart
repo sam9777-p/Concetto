@@ -86,7 +86,20 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh events',
-            onPressed: () => ref.invalidate(eventsProvider),
+            onPressed: () async {
+              try {
+                final _ = await ref.refresh(eventsProvider.future);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Events refreshed successfully'),
+                      duration: Duration(seconds: 1),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              } catch (_) {}
+            },
           ),
         ],
       ),
@@ -199,102 +212,144 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
             child: RefreshIndicator(
               color: primaryColor,
               onRefresh: () async {
-                ref.invalidate(eventsProvider);
+                try {
+                  final _ = await ref.refresh(eventsProvider.future);
+                } catch (_) {}
               },
               child: eventsAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, _) => Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.error_outline, color: Colors.redAccent, size: 40),
-                        const SizedBox(height: 12),
-                        Text('Failed to load events: $err', textAlign: TextAlign.center),
-                        const SizedBox(height: 16),
-                        OutlinedButton(
-                          onPressed: () => ref.invalidate(eventsProvider),
-                          child: const Text('RETRY'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                data: (events) {
-                  final selectedCategory = _categories[_selectedCategoryIndex];
-
-                  // Filter by category & search query
-                  final filteredEvents = events.where((event) {
-                    final matchesCategory = selectedCategory == 'All' ||
-                        event.category.toLowerCase() == selectedCategory.toLowerCase();
-
-                    final matchesSearch = _searchQuery.isEmpty ||
-                        event.title.toLowerCase().contains(_searchQuery) ||
-                        event.description.toLowerCase().contains(_searchQuery) ||
-                        event.venue.toLowerCase().contains(_searchQuery);
-
-                    return matchesCategory && matchesSearch;
-                  }).toList();
-
-                  if (filteredEvents.isEmpty) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.search_off, size: 56, color: primaryColor.withValues(alpha: 0.5)),
-                            const SizedBox(height: 16),
-                            Text(
-                              _searchQuery.isNotEmpty
-                                    ? 'No events matching "$_searchQuery"'
-                                  : 'No events found in $selectedCategory',
-                              style: Theme.of(context).textTheme.titleMedium,
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Try selecting another category or clearing your search.',
-                              style: Theme.of(context).textTheme.bodySmall,
-                              textAlign: TextAlign.center,
-                            ),
-                            if (_searchQuery.isNotEmpty) ...[
-                              const SizedBox(height: 16),
-                              OutlinedButton(
-                                onPressed: () => _searchController.clear(),
-                                child: const Text('CLEAR SEARCH'),
-                              ),
-                            ],
-                          ],
+                loading: () {
+                  final previous = eventsAsync.valueOrNull;
+                  if (previous != null && previous.isNotEmpty) {
+                    return _buildEventsView(context, previous, primaryColor);
+                  }
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.5,
+                        child: Center(
+                          child: CircularProgressIndicator(color: primaryColor),
                         ),
                       ),
-                    );
-                  }
-
-                  return GridView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 320,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: 0.68,
-                    ),
-                    itemCount: filteredEvents.length,
-                    itemBuilder: (context, index) {
-                      final event = filteredEvents[index];
-                      return EventCard(event: event)
-                          .animate()
-                          .fadeIn(duration: 250.ms, delay: (index * 40).clamp(0, 400).ms);
-                    },
+                    ],
                   );
                 },
+                error: (err, _) {
+                  final previous = eventsAsync.valueOrNull;
+                  if (previous != null && previous.isNotEmpty) {
+                    return _buildEventsView(context, previous, primaryColor);
+                  }
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.5,
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.error_outline, color: Colors.redAccent, size: 40),
+                                const SizedBox(height: 12),
+                                Text('Failed to load events: $err', textAlign: TextAlign.center),
+                                const SizedBox(height: 16),
+                                OutlinedButton(
+                                  onPressed: () => ref.invalidate(eventsProvider),
+                                  child: const Text('RETRY'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+                data: (events) => _buildEventsView(context, events, primaryColor),
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildEventsView(BuildContext context, List<EventItem> events, Color primaryColor) {
+    final selectedCategory = _categories[_selectedCategoryIndex];
+
+    // Filter by category & search query
+    final filteredEvents = events.where((event) {
+      final matchesCategory = selectedCategory == 'All' ||
+          event.category.toLowerCase() == selectedCategory.toLowerCase();
+
+      final matchesSearch = _searchQuery.isEmpty ||
+          event.title.toLowerCase().contains(_searchQuery) ||
+          event.description.toLowerCase().contains(_searchQuery) ||
+          event.venue.toLowerCase().contains(_searchQuery);
+
+      return matchesCategory && matchesSearch;
+    }).toList();
+
+    if (filteredEvents.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        children: [
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.5,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.search_off, size: 56, color: primaryColor.withValues(alpha: 0.5)),
+                    const SizedBox(height: 16),
+                    Text(
+                      _searchQuery.isNotEmpty
+                          ? 'No events matching "$_searchQuery"'
+                          : 'No events found in $selectedCategory',
+                      style: Theme.of(context).textTheme.titleMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Try selecting another category or clearing your search.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                    if (_searchQuery.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      OutlinedButton(
+                        onPressed: () => _searchController.clear(),
+                        child: const Text('CLEAR SEARCH'),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return GridView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 320,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        childAspectRatio: 0.68,
+      ),
+      itemCount: filteredEvents.length,
+      itemBuilder: (context, index) {
+        final event = filteredEvents[index];
+        return EventCard(event: event)
+            .animate()
+            .fadeIn(duration: 250.ms, delay: (index * 40).clamp(0, 400).ms);
+      },
     );
   }
 }

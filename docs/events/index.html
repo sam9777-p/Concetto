@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concetto'26 — Centenary Edition | Event Redirect</title>
+    <link rel="icon" type="image/png" href="https://concetto-ashen.vercel.app/logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #070709;
+            color: #ffffff;
+            font-family: 'Rajdhani', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background-image: 
+                radial-gradient(circle at 50% 20%, rgba(255, 69, 0, 0.15), transparent 60%),
+                radial-gradient(circle at 80% 80%, rgba(255, 140, 0, 0.08), transparent 50%);
+        }
+        .container {
+            max-width: 480px;
+            width: 100%;
+            background: rgba(18, 7, 5, 0.85);
+            border: 1px solid rgba(255, 69, 0, 0.35);
+            border-radius: 20px;
+            padding: 32px 24px;
+            text-align: center;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 69, 0, 0.15);
+            backdrop-filter: blur(12px);
+        }
+        .logo {
+            width: 88px;
+            height: 88px;
+            margin: 0 auto 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 20px;
+            background: #110504;
+            border: 1.5px solid #ff4500;
+            box-shadow: 0 0 20px rgba(255, 69, 0, 0.4);
+            overflow: hidden;
+        }
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .tag {
+            display: inline-block;
+            background: rgba(255, 69, 0, 0.18);
+            border: 1px solid #ff4500;
+            color: #ff6a00;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
+            letter-spacing: 1.2px;
+            color: #ffffff;
+            margin-bottom: 8px;
+            text-shadow: 0 0 12px rgba(255, 69, 0, 0.5);
+        }
+        .event-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px dashed rgba(255, 69, 0, 0.4);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+        .event-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: #ff5722;
+            margin-bottom: 4px;
+        }
+        .event-sub {
+            font-size: 13px;
+            color: #aaaaaa;
+        }
+        .btn-launch {
+            display: block;
+            width: 100%;
+            background: linear-gradient(135deg, #ff4500, #ff8c00);
+            color: #000000;
+            text-decoration: none;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 13px;
+            letter-spacing: 1.2px;
+            padding: 14px 20px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 18px rgba(255, 69, 0, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-launch:active {
+            transform: scale(0.98);
+        }
+        .status-text {
+            font-size: 12px;
+            color: #888888;
+            margin-top: 10px;
+        }
+        .footer-note {
+            margin-top: 24px;
+            font-size: 11px;
+            color: #555555;
+            letter-spacing: 0.8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="https://concetto-ashen.vercel.app/logo.png" alt="Concetto'26 Logo" onerror="this.src='https://raw.githubusercontent.com/sam9777-p/Concetto/main/assets/images/logosmall.png'">
+        </div>
+        <div class="tag">IIT (ISM) Dhanbad • Centenary Edition</div>
+        <h1>CONCETTO '26</h1>
+        <p style="font-size: 13px; color: #b3b3b3;">Centauri Synapse — Forged Over a Century, Soaring Towards Infinity</p>
+
+        <div class="event-card">
+            <div class="event-title" id="displayEventTitle">Connecting to Event...</div>
+            <div class="event-sub" id="displayEventSub">Event ID: <span id="displayEventId">loading...</span></div>
+        </div>
+
+        <button class="btn-launch" id="launchBtn" onclick="launchApp()">OPEN IN CONCETTO '26 APP</button>
+        <p class="status-text" id="statusMessage">Launching app directly...</p>
+
+        <div class="footer-note">
+            OCTOBER 08 – 11, 2026 • EASTERN INDIA'S LARGEST TECHNO-MANAGEMENT FEST
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        let eventId = urlParams.get('id');
+
+        if (!eventId) {
+            const parts = window.location.pathname.split('/').filter(Boolean);
+            if (parts.length > 0 && parts[parts.length - 1] !== 'events' && parts[parts.length - 1] !== 'index.html') {
+                eventId = parts[parts.length - 1];
+            }
+        }
+
+        if (!eventId) {
+            eventId = 'caseblitz_26';
+        }
+
+        const formattedTitle = eventId
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase());
+
+        document.getElementById('displayEventId').innerText = eventId;
+        document.getElementById('displayEventTitle').innerText = formattedTitle;
+        document.getElementById('displayEventSub').innerText = "Official Concetto'26 Competitive Arena";
+
+        const appDeepLink = "concetto://events/" + eventId;
+
+        function launchApp() {
+            window.location.href = appDeepLink;
+            document.getElementById('statusMessage').innerText = "If the app didn't open automatically, please tap the button above or install the app.";
+        }
+
+        // Auto redirect on mobile devices
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                launchApp();
+            }, 600);
+        });
+    </script>
+</body>
+</html>

@@ -9,6 +9,9 @@ import '../models/event_item.dart';
 
 import '../features/admin/admin_dashboard_screen.dart';
 import '../features/admin/event_editor_screen.dart';
+import '../features/splash/splash_screen.dart';
+import '../features/store/store_screen.dart';
+import '../core/network/mock_data.dart';
 
 class MainWrapper extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
@@ -49,6 +52,11 @@ class MainWrapper extends StatelessWidget {
               label: 'Schedule',
             ),
             NavigationDestination(
+              icon: Icon(Icons.shopping_bag_outlined),
+              selectedIcon: Icon(Icons.shopping_bag),
+              label: 'Store',
+            ),
+            NavigationDestination(
               icon: Icon(Icons.badge_outlined),
               selectedIcon: Icon(Icons.badge),
               label: 'Profile',
@@ -61,8 +69,49 @@ class MainWrapper extends StatelessWidget {
 }
 
 final goRouter = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/splash',
+  redirect: (context, state) {
+    final path = state.uri.path;
+    
+    // 1. Handle GitHub Pages prefix /Concetto/events...
+    if (path.startsWith('/Concetto/events') || path.startsWith('/Concetto')) {
+      final id = state.uri.queryParameters['id'];
+      if (id != null && id.isNotEmpty) {
+        return '/events/$id';
+      }
+      final sub = path.replaceFirst('/Concetto', '');
+      if (sub.startsWith('/events/') && sub.length > 8) {
+        return sub;
+      }
+      return '/events';
+    }
+
+    // 2. Handle custom scheme paths like /sparkathon where host was 'events'
+    if (path != '/' &&
+        path != '/splash' &&
+        path != '/admin' &&
+        !path.startsWith('/events') &&
+        !path.startsWith('/schedule') &&
+        !path.startsWith('/store') &&
+        !path.startsWith('/merch') &&
+        !path.startsWith('/profile') &&
+        !path.startsWith('/admin')) {
+      final cleanSegment = path.startsWith('/') ? path.substring(1) : path;
+      final isEvent = MockData.events.any(
+        (e) => e.id.toLowerCase() == cleanSegment.toLowerCase(),
+      );
+      if (isEvent) {
+        return '/events/$cleanSegment';
+      }
+    }
+
+    return null;
+  },
   routes: [
+    GoRoute(
+      path: '/splash',
+      builder: (context, state) => const SplashScreen(),
+    ),
     GoRoute(
       path: '/admin',
       builder: (context, state) => const AdminDashboardScreen(),
@@ -109,7 +158,42 @@ final goRouter = GoRouter(
                 GoRoute(
                   path: 'detail',
                   builder: (context, state) {
-                    final event = state.extra as EventItem;
+                    EventItem? event = state.extra as EventItem?;
+                    if (event == null) {
+                      final id = state.uri.queryParameters['id'];
+                      if (id != null && id.isNotEmpty) {
+                        try {
+                          event = MockData.events.firstWhere(
+                            (e) => e.id.toLowerCase() == id.toLowerCase(),
+                          );
+                        } catch (_) {
+                          event = null;
+                        }
+                      }
+                    }
+                    if (event == null) {
+                      return const EventsScreen();
+                    }
+                    return EventDetailScreen(event: event);
+                  },
+                ),
+                GoRoute(
+                  path: ':id',
+                  builder: (context, state) {
+                    final id = state.pathParameters['id'];
+                    EventItem? event;
+                    if (id != null && id.isNotEmpty) {
+                      try {
+                        event = MockData.events.firstWhere(
+                          (e) => e.id.toLowerCase() == id.toLowerCase(),
+                        );
+                      } catch (_) {
+                        event = null;
+                      }
+                    }
+                    if (event == null) {
+                      return const EventsScreen();
+                    }
                     return EventDetailScreen(event: event);
                   },
                 ),
@@ -122,6 +206,14 @@ final goRouter = GoRouter(
             GoRoute(
               path: '/schedule',
               builder: (context, state) => const ScheduleScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/store',
+              builder: (context, state) => const MerchandiseScreen(),
             ),
           ],
         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -18,6 +19,20 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  String _selectedTeamFilter = 'All';
+
+  final List<String> _teamFilters = const [
+    'All',
+    'Faculty',
+    'Advisors',
+    'Secretariat',
+    'Events',
+    'Sponsorship',
+    'Public Relations',
+    'Tech & Dev',
+    'Operations',
+  ];
+
   @override
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).colorScheme.primary;
@@ -80,12 +95,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 .animate()
                 .fadeIn(duration: 400.ms, delay: 150.ms),
 
+            const SizedBox(height: 28),
+
+            // Official About Us & Centenary Heritage Section
+            _buildAboutUsSection(primaryColor, secondaryColor)
+                .animate()
+                .fadeIn(duration: 400.ms, delay: 180.ms),
+
             const SizedBox(height: 32),
 
             // 3. Core Team Directory
             _buildTeamDirectorySection(teamAsync, primaryColor, secondaryColor)
                 .animate()
-                .fadeIn(duration: 400.ms, delay: 200.ms),
+                .fadeIn(duration: 400.ms, delay: 220.ms),
 
             const SizedBox(height: 32),
 
@@ -458,18 +480,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
                             'ORGANIZER PORTAL',
                             style: GoogleFonts.orbitron(
-                              fontSize: 14,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              letterSpacing: 1.1,
+                              letterSpacing: 1.0,
                               color: Colors.white,
                             ),
                           ),
-                          const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
@@ -509,6 +533,165 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  // --- Official About Us & Centenary Heritage Section ---
+  Widget _buildAboutUsSection(Color primaryColor, Color secondaryColor) {
+    final glimpses = [
+      {'img': 'assets/about/glimpse1.png', 'title': 'Flagship Arena'},
+      {'img': 'assets/about/glimpse2.png', 'title': 'Drone & Robotics'},
+      {'img': 'assets/about/glimpse3.png', 'title': 'Overnight Hackathon'},
+      {'img': 'assets/about/glimpse4.png', 'title': 'Design Workshop'},
+      {'img': 'assets/about/glimpse5.png', 'title': 'Exhibition & Stunt'},
+      {'img': 'assets/about/glimpse6.png', 'title': 'Star Night Grandeur'},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.auto_awesome, size: 18, color: primaryColor),
+            const SizedBox(width: 8),
+            Text(
+              'ABOUT CONCETTO \'26',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+                color: primaryColor,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF110604),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: primaryColor.withValues(alpha: 0.3), width: 0.8),
+            boxShadow: [
+              BoxShadow(
+                color: primaryColor.withValues(alpha: 0.06),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: primaryColor.withValues(alpha: 0.4)),
+                    ),
+                    child: Text(
+                      'CENTAURI SYNAPSE • 1926-2026',
+                      style: GoogleFonts.orbitron(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.bold,
+                        color: primaryColor,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Eastern India\'s Largest Techno-Management Fest',
+                style: GoogleFonts.rajdhani(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'CONCETTO is the renowned annual techno-management fest hosted by IIT (ISM) Dhanbad. Celebrating the historic centenary milestone of the institution (1926 - 2026), Concetto\'26 unites over 20,000 innovators across 39 premier competitive arenas, workshops, guest lectures, and cultural showcases.',
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.45,
+                  color: Colors.white.withValues(alpha: 0.85),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'GLIMPSES OF CONCETTO',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.0,
+                  color: primaryColor,
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 120,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: glimpses.length,
+                  separatorBuilder: (context, index) => const SizedBox(width: 10),
+                  itemBuilder: (context, index) {
+                    final item = glimpses[index];
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Stack(
+                        children: [
+                          Image.asset(
+                            item['img']!,
+                            width: 160,
+                            height: 120,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              width: 160,
+                              height: 120,
+                              color: const Color(0xFF1E0A08),
+                              child: const Icon(Icons.image, color: Colors.white24),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.black.withValues(alpha: 0.85),
+                                  ],
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                ),
+                              ),
+                              child: Text(
+                                item['title']!,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   // --- 3. Core Team Directory ---
   Widget _buildTeamDirectorySection(
     AsyncValue<List<CoreTeamMember>> teamAsync,
@@ -533,19 +716,77 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ],
         ),
+        const SizedBox(height: 12),
+
+        // Vertical Filter Chips
+        SizedBox(
+          height: 36,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _teamFilters.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final filter = _teamFilters[index];
+              final isSelected = _selectedTeamFilter == filter;
+              return ChoiceChip(
+                label: Text(
+                  filter,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    color: isSelected ? Colors.black : Colors.white70,
+                  ),
+                ),
+                selected: isSelected,
+                selectedColor: primaryColor,
+                backgroundColor: const Color(0xFF140604),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(
+                    color: isSelected ? primaryColor : Colors.white.withValues(alpha: 0.15),
+                  ),
+                ),
+                onSelected: (selected) {
+                  if (selected) {
+                    setState(() {
+                      _selectedTeamFilter = filter;
+                    });
+                  }
+                },
+              );
+            },
+          ),
+        ),
         const SizedBox(height: 14),
+
         teamAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (err, _) => Text('Error loading team: $err'),
           data: (team) {
-            return ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: team.length,
-              itemBuilder: (context, index) {
-                final member = team[index];
-                return _buildTeamMemberCard(member, primaryColor);
-              },
+            final filteredTeam = team.where((m) {
+              if (_selectedTeamFilter == 'All') return true;
+              final v = m.vertical.toLowerCase();
+              if (_selectedTeamFilter == 'Faculty') return v.contains('faculty') || v.contains('convenor') || v.contains('treasurer');
+              if (_selectedTeamFilter == 'Advisors') return v.contains('advisory') || v.contains('advisor');
+              if (_selectedTeamFilter == 'Secretariat') return v.contains('secretariat') || v.contains('coordinator');
+              if (_selectedTeamFilter == 'Events') return v.contains('event');
+              if (_selectedTeamFilter == 'Sponsorship') return v.contains('sponsorship') || v.contains('prom') || v.contains('market') || v.contains('fin');
+              if (_selectedTeamFilter == 'Public Relations') return v.contains('public');
+              if (_selectedTeamFilter == 'Tech & Dev') return v.contains('development') || v.contains('web') || v.contains('app') || v.contains('design');
+              if (_selectedTeamFilter == 'Operations') return v.contains('operation') || v.contains('security') || v.contains('hospitality') || v.contains('doc');
+              return true;
+            }).toList();
+
+            return RepaintBoundary(
+              child: ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: filteredTeam.length,
+                itemBuilder: (context, index) {
+                  final member = filteredTeam[index];
+                  return _buildTeamMemberCard(member, primaryColor);
+                },
+              ),
             );
           },
         ),
@@ -568,94 +809,108 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: primaryColor.withValues(alpha: 0.6), width: 1.5),
-              boxShadow: [
-                BoxShadow(
-                  color: primaryColor.withValues(alpha: 0.2),
-                  blurRadius: 6,
-                ),
-              ],
-            ),
-            child: CircleAvatar(
-              radius: 22,
-              backgroundImage: NetworkImage(member.imageUrl),
-              backgroundColor: primaryColor.withValues(alpha: 0.15),
-              child: member.imageUrl.isEmpty
-                  ? Icon(Icons.person, color: primaryColor, size: 20)
-                  : null,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  member.name,
-                  style: GoogleFonts.rajdhani(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${member.role} • ${member.vertical}',
-                  style: GoogleFonts.rajdhani(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: primaryColor.withValues(alpha: 0.9),
-                  ),
-                ),
-                if (member.year.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    member.year,
-                    style: GoogleFonts.rajdhani(fontSize: 11, color: AppTheme.metallicMuted),
-                  ),
-                ],
-              ],
-            ),
-          ),
           Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
-                icon: const Icon(Icons.email_outlined, size: 18),
-                color: primaryColor,
-                tooltip: 'Copy Email',
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: member.email));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Copied email: ${member.email}'),
-                      backgroundColor: const Color(0xFF140604),
+              Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: primaryColor.withValues(alpha: 0.6), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: primaryColor.withValues(alpha: 0.2),
+                      blurRadius: 6,
                     ),
-                  );
-                },
+                  ],
+                ),
+                child: CircleAvatar(
+                  radius: 22,
+                  backgroundImage: member.imageUrl.startsWith('assets/')
+                      ? AssetImage(member.imageUrl) as ImageProvider
+                      : (member.imageUrl.isNotEmpty ? NetworkImage(member.imageUrl) : null),
+                  backgroundColor: primaryColor.withValues(alpha: 0.15),
+                  child: member.imageUrl.isEmpty
+                      ? Icon(Icons.person, color: primaryColor, size: 20)
+                      : null,
+                ),
               ),
-              IconButton(
-                icon: const Icon(Icons.phone_outlined, size: 18),
-                color: primaryColor,
-                tooltip: 'Copy Phone',
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: member.phone));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Copied phone: ${member.phone}'),
-                      backgroundColor: const Color(0xFF140604),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      member.name,
+                      style: GoogleFonts.rajdhani(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: Colors.white,
+                      ),
                     ),
-                  );
-                },
+                    const SizedBox(height: 2),
+                    Text(
+                      '${member.role} • ${member.vertical}',
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: primaryColor.withValues(alpha: 0.9),
+                      ),
+                    ),
+                    if (member.year.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        member.year,
+                        style: GoogleFonts.rajdhani(fontSize: 11, color: AppTheme.metallicMuted),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (member.email.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.email_outlined, size: 18),
+                      color: primaryColor,
+                      tooltip: 'Send Email (${member.email})',
+                      onPressed: () => _launchMail(context, member.email),
+                    ),
+                  if (member.phone.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.phone_outlined, size: 18),
+                      color: primaryColor,
+                      tooltip: 'Call Phone (${member.phone})',
+                      onPressed: () => _launchPhone(context, member.phone),
+                    ),
+                ],
               ),
             ],
           ),
+          if (member.quote.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(8),
+                border: Border(left: BorderSide(color: primaryColor, width: 2.5)),
+              ),
+              child: Text(
+                '"${member.quote}"',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.white70,
+                  height: 1.35,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -815,28 +1070,58 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              const Icon(Icons.phone, size: 14, color: Colors.white60),
-              const SizedBox(width: 8),
-              const Text('+91 85030 86164 / +91 326 223 5400', style: TextStyle(fontSize: 11)),
-            ],
+          InkWell(
+            onTap: () => _launchPhone(context, '+918503086164'),
+            borderRadius: BorderRadius.circular(6),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Icon(Icons.phone, size: 14, color: primaryColor),
+                  const SizedBox(width: 8),
+                  const Text(
+                    '+91 85030 86164 / +91 326 223 5400',
+                    style: TextStyle(fontSize: 11, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
           ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              const Icon(Icons.email, size: 14, color: Colors.white60),
-              const SizedBox(width: 8),
-              const Text('concetto@iitism.ac.in', style: TextStyle(fontSize: 11)),
-            ],
+          const SizedBox(height: 2),
+          InkWell(
+            onTap: () => _launchMail(context, 'concetto@iitism.ac.in'),
+            borderRadius: BorderRadius.circular(6),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Icon(Icons.email, size: 14, color: primaryColor),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'concetto@iitism.ac.in',
+                    style: TextStyle(fontSize: 11, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
           ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              const Icon(Icons.public, size: 14, color: Colors.white60),
-              const SizedBox(width: 8),
-              const Text('https://concetto.in', style: TextStyle(fontSize: 11)),
-            ],
+          const SizedBox(height: 2),
+          InkWell(
+            onTap: () => _launchExternalUrl('https://concetto.in'),
+            borderRadius: BorderRadius.circular(6),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Icon(Icons.public, size: 14, color: primaryColor),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'https://concetto.in',
+                    style: TextStyle(fontSize: 11, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -1000,6 +1285,55 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         );
       },
     );
+  }
+
+  Future<void> _launchPhone(BuildContext context, String rawPhone) async {
+    final cleanPhone = rawPhone.replaceAll(RegExp(r'[^\d+]'), '');
+    if (cleanPhone.isEmpty) return;
+    final uri = Uri.parse('tel:$cleanPhone');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open phone dialer: $e'),
+            backgroundColor: const Color(0xFF140604),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _launchMail(BuildContext context, String email) async {
+    final cleanEmail = email.trim();
+    if (cleanEmail.isEmpty) return;
+    final uri = Uri(
+      scheme: 'mailto',
+      path: cleanEmail,
+      queryParameters: {
+        'subject': "Query regarding Concetto'26 Organizing Committee",
+      },
+    );
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open mail app: $e'),
+            backgroundColor: const Color(0xFF140604),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _launchExternalUrl(String url) async {
+    final uri = Uri.parse(url);
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {}
   }
 }
 

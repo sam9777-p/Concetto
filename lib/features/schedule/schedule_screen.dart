@@ -17,9 +17,10 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   int _selectedDayIndex = 0;
 
   final List<Map<String, String>> _festivalDays = [
-    {'day': 'DAY 1', 'date': 'Oct 10', 'label': 'Friday • Launch & Keynotes'},
-    {'day': 'DAY 2', 'date': 'Oct 11', 'label': 'Saturday • Battles & Hackathons'},
-    {'day': 'DAY 3', 'date': 'Oct 12', 'label': 'Sunday • Grand Finale & Pro-Night'},
+    {'day': 'DAY 0', 'date': 'Oct 8', 'label': 'Wednesday • Inauguration & CaseBlitz'},
+    {'day': 'DAY 1', 'date': 'Oct 9', 'label': 'Thursday • Keynotes & Competitions'},
+    {'day': 'DAY 2', 'date': 'Oct 10', 'label': 'Friday • Battles & Hackathons'},
+    {'day': 'DAY 3', 'date': 'Oct 11', 'label': 'Saturday • Grand Finale & Star Night'},
   ];
 
   @override

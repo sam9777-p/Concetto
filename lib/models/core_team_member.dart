@@ -6,16 +6,18 @@ class CoreTeamMember {
   final String email;
   final String imageUrl;
   final String year;
+  final String quote;
   final int order;
 
   CoreTeamMember({
     required this.name,
     required this.role,
     required this.vertical,
-    required this.phone,
-    required this.email,
+    this.phone = '',
+    this.email = '',
     required this.imageUrl,
     this.year = '',
+    this.quote = '',
     this.order = 99,
   });
 
@@ -28,6 +30,7 @@ class CoreTeamMember {
       email: json['email'] ?? '',
       imageUrl: json['imageUrl'] ?? '',
       year: json['year'] ?? '',
+      quote: json['quote'] ?? '',
       order: json['order'] ?? 99,
     );
   }
@@ -41,6 +44,7 @@ class CoreTeamMember {
       'email': email,
       'imageUrl': imageUrl,
       'year': year,
+      'quote': quote,
       'order': order,
     };
   }
