@@ -30,24 +30,33 @@ class EventDetailScreen extends StatelessWidget {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  CachedNetworkImage(
-                    imageUrl: event.posterUrl,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      color: const Color(0xFF140604),
-                      child: const Center(
-                        child: SizedBox(
-                          width: 32,
-                          height: 32,
-                          child: CircularProgressIndicator(strokeWidth: 2.5, color: AppTheme.neonOrange),
+                  event.posterUrl.startsWith('assets/')
+                      ? Image.asset(
+                          event.posterUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            color: Colors.black,
+                            child: const Icon(Icons.bolt, size: 50, color: Colors.white24),
+                          ),
+                        )
+                      : CachedNetworkImage(
+                          imageUrl: event.posterUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: const Color(0xFF140604),
+                            child: const Center(
+                              child: SizedBox(
+                                width: 32,
+                                height: 32,
+                                child: CircularProgressIndicator(strokeWidth: 2.5, color: AppTheme.neonOrange),
+                              ),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: Colors.black,
+                            child: const Icon(Icons.bolt, size: 50, color: Colors.white24),
+                          ),
                         ),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      color: Colors.black,
-                      child: const Icon(Icons.bolt, size: 50, color: Colors.white24),
-                    ),
-                  ),
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(

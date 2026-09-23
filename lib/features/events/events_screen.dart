@@ -31,6 +31,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
     'Electronics',
     'Management',
     'Departmental',
+    'Clubs',
     'Design',
     'Stage',
   ];
@@ -392,6 +393,12 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
         matchesCategory = event.isFlagship ||
             event.category.toLowerCase() == 'flagship' ||
             event.tags.any((t) => t.toLowerCase() == 'flagship');
+      } else if (selectedCategory == 'Departmental') {
+        matchesCategory = event.category.toLowerCase() == 'departmental' ||
+            event.tags.any((t) => t.toLowerCase() == 'departmental');
+      } else if (selectedCategory == 'Clubs' || selectedCategory == 'Club') {
+        matchesCategory = event.category.toLowerCase() == 'club' ||
+            event.tags.any((t) => t.toLowerCase() == 'club' || t.toLowerCase() == 'clubs');
       } else if (selectedCategory == 'Robotics') {
         matchesCategory = event.category.toLowerCase() == 'robotics' ||
             event.tags.any((t) => t.toLowerCase() == 'robotics') ||
@@ -572,24 +579,33 @@ class EventCard extends StatelessWidget {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: CachedNetworkImage(
-                      imageUrl: event.posterUrl,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: const Color(0xFF140604),
-                        child: const Center(
-                          child: SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.neonOrange),
+                    child: event.posterUrl.startsWith('assets/')
+                        ? Image.asset(
+                            event.posterUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              color: const Color(0xFF1A0A08),
+                              child: const Icon(Icons.bolt, color: Colors.white24, size: 28),
+                            ),
+                          )
+                        : CachedNetworkImage(
+                            imageUrl: event.posterUrl,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              color: const Color(0xFF140604),
+                              child: const Center(
+                                child: SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.neonOrange),
+                                ),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              color: const Color(0xFF1A0A08),
+                              child: const Icon(Icons.bolt, color: Colors.white24, size: 28),
+                            ),
                           ),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: const Color(0xFF1A0A08),
-                        child: const Icon(Icons.bolt, color: Colors.white24, size: 28),
-                      ),
-                    ),
                   ),
                   Positioned.fill(
                     child: Container(

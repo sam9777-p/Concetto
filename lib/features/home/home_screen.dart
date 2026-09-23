@@ -1376,24 +1376,33 @@ extension _HomeScreenHelpers on _HomeScreenState {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: CachedNetworkImage(
-                      imageUrl: event.posterUrl,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: const Color(0xFF140604),
-                        child: const Center(
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.neonOrange),
+                    child: event.posterUrl.startsWith('assets/')
+                        ? Image.asset(
+                            event.posterUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              color: Colors.black45,
+                              child: const Icon(Icons.bolt, color: Colors.white38, size: 24),
+                            ),
+                          )
+                        : CachedNetworkImage(
+                            imageUrl: event.posterUrl,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              color: const Color(0xFF140604),
+                              child: const Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.neonOrange),
+                                ),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              color: Colors.black45,
+                              child: const Icon(Icons.bolt, color: Colors.white38, size: 24),
+                            ),
                           ),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: Colors.black45,
-                        child: const Icon(Icons.bolt, color: Colors.white38, size: 24),
-                      ),
-                    ),
                   ),
                   // Dark gradient overlay for text readability
                   Positioned.fill(
@@ -2465,4 +2474,4 @@ class StarfieldPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant StarfieldPainter oldDelegate) => true;
-}
+}

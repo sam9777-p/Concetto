@@ -438,15 +438,24 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                                                   child: Stack(
                                                     fit: StackFit.expand,
                                                     children: [
-                                                      CachedNetworkImage(
-                                                        imageUrl: event.posterUrl,
-                                                        fit: BoxFit.cover,
-                                                        placeholder: (_, _) => Container(color: const Color(0xFF140604)),
-                                                        errorWidget: (_, _, _) => Container(
-                                                          color: const Color(0xFF1A0A08),
-                                                          child: const Icon(Icons.bolt, color: Colors.white24, size: 24),
-                                                        ),
-                                                      ),
+                                                      event.posterUrl.startsWith('assets/')
+                                                           ? Image.asset(
+                                                               event.posterUrl,
+                                                               fit: BoxFit.cover,
+                                                               errorBuilder: (_, _, _) => Container(
+                                                                 color: const Color(0xFF1A0A08),
+                                                                 child: const Icon(Icons.bolt, color: Colors.white24, size: 24),
+                                                               ),
+                                                             )
+                                                           : CachedNetworkImage(
+                                                               imageUrl: event.posterUrl,
+                                                               fit: BoxFit.cover,
+                                                               placeholder: (_, _) => Container(color: const Color(0xFF140604)),
+                                                               errorWidget: (_, _, _) => Container(
+                                                                 color: const Color(0xFF1A0A08),
+                                                                 child: const Icon(Icons.bolt, color: Colors.white24, size: 24),
+                                                               ),
+                                                             ),
                                                       Container(
                                                         decoration: BoxDecoration(
                                                           gradient: LinearGradient(
