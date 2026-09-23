@@ -313,19 +313,22 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
                     const SizedBox(height: 16),
 
                     // Size Selection
-                    Row(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Select Size: ',
+                          'SELECT SIZE:',
                           style: GoogleFonts.rajdhani(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.0,
                             color: Colors.white70,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
+                          runSpacing: 8,
                           children: _sizes.map((size) {
                             final isSelected = _selectedSize == size;
                             return ChoiceChip(
