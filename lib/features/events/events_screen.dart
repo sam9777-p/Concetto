@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/network/repositories.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/event_item.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../admin/admin_dashboard_screen.dart';
 import '../admin/widgets/admin_login_dialog.dart';
 
@@ -516,12 +517,22 @@ class EventCard extends StatelessWidget {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: Image.network(
-                      event.posterUrl,
+                    child: CachedNetworkImage(
+                      imageUrl: event.posterUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
+                      placeholder: (context, url) => Container(
+                        color: const Color(0xFF140604),
+                        child: const Center(
+                          child: SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.neonOrange),
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
                         color: const Color(0xFF1A0A08),
-                        child: const Icon(Icons.image_not_supported, color: Colors.white24),
+                        child: const Icon(Icons.bolt, color: Colors.white24, size: 28),
                       ),
                     ),
                   ),

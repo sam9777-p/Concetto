@@ -8,6 +8,7 @@ import '../../core/theme/app_theme.dart';
 import '../../models/event_item.dart';
 import '../admin/widgets/event_passcode_prompt.dart';
 import '../admin/event_editor_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'rulebook_pdf_viewer_screen.dart';
 
 class EventDetailScreen extends StatelessWidget {
@@ -29,12 +30,22 @@ class EventDetailScreen extends StatelessWidget {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
-                    event.posterUrl,
+                  CachedNetworkImage(
+                    imageUrl: event.posterUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
+                    placeholder: (context, url) => Container(
+                      color: const Color(0xFF140604),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: CircularProgressIndicator(strokeWidth: 2.5, color: AppTheme.neonOrange),
+                        ),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
                       color: Colors.black,
-                      child: const Icon(Icons.image_not_supported, size: 50, color: Colors.white54),
+                      child: const Icon(Icons.bolt, size: 50, color: Colors.white24),
                     ),
                   ),
                   Container(

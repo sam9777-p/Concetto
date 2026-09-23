@@ -189,7 +189,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(20),
                             child: Image.asset(
-                              'assets/images/logo_transparent.png',
+                              'assets/images/logo_square.png',
                               fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) {
                                 return const Icon(

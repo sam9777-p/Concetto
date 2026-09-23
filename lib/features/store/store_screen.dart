@@ -384,13 +384,16 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
                       child: ElevatedButton.icon(
                         onPressed: () => _launchMerchOrderForm(context),
                         icon: const Icon(Icons.shopping_bag, color: Colors.black, size: 20),
-                        label: Text(
-                          'ORDER NOW ($_selectedSize) • OPEN FORM',
-                          style: GoogleFonts.orbitron(
-                            color: Colors.black,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 12.5,
-                            letterSpacing: 0.8,
+                        label: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'ORDER NOW ($_selectedSize) • OPEN FORM',
+                            style: GoogleFonts.orbitron(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 12.5,
+                              letterSpacing: 0.8,
+                            ),
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
@@ -535,15 +538,18 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 6,
             children: [
               Text(
                 title,
                 style: GoogleFonts.orbitron(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  letterSpacing: 1.0,
+                  letterSpacing: 0.8,
                   color: accentColor,
                 ),
               ),
@@ -635,13 +641,16 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
             child: OutlinedButton.icon(
               onPressed: () => _showPassBookingSheet(context, title, price, accentColor),
               icon: Icon(Icons.bookmark_add, size: 16, color: accentColor),
-              label: Text(
-                'BOOK $title',
-                style: GoogleFonts.orbitron(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.8,
-                  color: Colors.white,
+              label: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  'BOOK $title',
+                  style: GoogleFonts.orbitron(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8,
+                    color: Colors.white,
+                  ),
                 ),
               ),
               style: OutlinedButton.styleFrom(

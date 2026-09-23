@@ -182,21 +182,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Image.asset('assets/images/logo_transparent.png', height: 32),
-                  const SizedBox(width: 8),
-                  Text(
-                    "CONCETTO '26 PASS",
-                    style: GoogleFonts.orbitron(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                      color: primaryColor,
+              Expanded(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset('assets/images/logo_transparent.png', height: 32),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          "CONCETTO '26 PASS",
+                          style: GoogleFonts.orbitron(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                            color: primaryColor,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -393,9 +402,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       child: OutlinedButton.icon(
         onPressed: () => _showAuthModal(context, primaryColor),
         icon: const Icon(Icons.login),
-        label: const Text(
-          'SIGN IN / REGISTER FEST ACCOUNT',
-          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+        label: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'SIGN IN / REGISTER FEST ACCOUNT',
+            style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+          ),
         ),
         style: OutlinedButton.styleFrom(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

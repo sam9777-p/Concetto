@@ -180,19 +180,30 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
               child: NotificationListener<ScrollNotification>(
                 onNotification: (notification) {
                   if (_isTransitioning) return false;
-                  if (notification is OverscrollNotification) {
-                    if (notification.overscroll > 15 && _selectedDayIndex < _festivalDays.length - 1) {
+
+                  if (notification is ScrollUpdateNotification) {
+                    final m = notification.metrics;
+                    if (m.pixels > m.maxScrollExtent + 28 && _selectedDayIndex < _festivalDays.length - 1) {
                       _changeDay(_selectedDayIndex + 1, direction: 1);
                       return true;
-                    } else if (notification.overscroll < -15 && _selectedDayIndex > 0) {
+                    }
+                    if (m.pixels < m.minScrollExtent - 28 && _selectedDayIndex > 0) {
+                      _changeDay(_selectedDayIndex - 1, direction: -1);
+                      return true;
+                    }
+                  } else if (notification is OverscrollNotification) {
+                    if (notification.overscroll > 12 && _selectedDayIndex < _festivalDays.length - 1) {
+                      _changeDay(_selectedDayIndex + 1, direction: 1);
+                      return true;
+                    } else if (notification.overscroll < -12 && _selectedDayIndex > 0) {
                       _changeDay(_selectedDayIndex - 1, direction: -1);
                       return true;
                     }
                   } else if (notification is ScrollEndNotification) {
                     final m = notification.metrics;
-                    if (m.extentAfter == 0 && m.pixels > m.maxScrollExtent + 20 && _selectedDayIndex < _festivalDays.length - 1) {
+                    if (m.pixels > m.maxScrollExtent + 15 && _selectedDayIndex < _festivalDays.length - 1) {
                       _changeDay(_selectedDayIndex + 1, direction: 1);
-                    } else if (m.extentBefore == 0 && m.pixels < -20 && _selectedDayIndex > 0) {
+                    } else if (m.pixels < m.minScrollExtent - 15 && _selectedDayIndex > 0) {
                       _changeDay(_selectedDayIndex - 1, direction: -1);
                     }
                   }
@@ -264,61 +275,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                         return ListView.builder(
                           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
                           physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                          itemCount: dayEvents.length + 1,
+                          itemCount: dayEvents.length,
                           itemBuilder: (context, index) {
-                            if (index == dayEvents.length) {
-                              // Next Day or Finale Card
-                              final hasNext = _selectedDayIndex < _festivalDays.length - 1;
-                              final nextDay = hasNext ? _festivalDays[_selectedDayIndex + 1] : null;
-
-                              return Padding(
-                                padding: const EdgeInsets.only(top: 8, bottom: 20),
-                                child: InkWell(
-                                  onTap: hasNext
-                                      ? () => _changeDay(_selectedDayIndex + 1, direction: 1)
-                                      : null,
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                                    decoration: BoxDecoration(
-                                      color: hasNext
-                                          ? primaryColor.withValues(alpha: 0.1)
-                                          : Colors.amber.withValues(alpha: 0.08),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: hasNext
-                                            ? primaryColor.withValues(alpha: 0.3)
-                                            : Colors.amber.withValues(alpha: 0.3),
-                                        width: 1.0,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          hasNext ? Icons.arrow_downward : Icons.stars_rounded,
-                                          size: 16,
-                                          color: hasNext ? primaryColor : Colors.amber,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          hasNext
-                                              ? 'SCROLL UP OR TAP FOR ${nextDay!['day']} (${nextDay['date']}) →'
-                                              : '★ YOU HAVE REACHED THE GRAND FINALE OF CONCETTO \'26 ★',
-                                          style: GoogleFonts.rajdhani(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w700,
-                                            letterSpacing: 1.0,
-                                            color: hasNext ? primaryColor : Colors.amber,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }
-
                             final event = dayEvents[index];
                             final isLast = index == dayEvents.length - 1;
 

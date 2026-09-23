@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import '../../core/network/repositories.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/event_item.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/announcement_item.dart';
 
 // 1. Define the Star Model
@@ -864,12 +865,22 @@ extension _HomeScreenHelpers on _HomeScreenState {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: Image.network(
-                      event.posterUrl,
+                    child: CachedNetworkImage(
+                      imageUrl: event.posterUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
+                      placeholder: (context, url) => Container(
+                        color: const Color(0xFF140604),
+                        child: const Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.neonOrange),
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
                         color: Colors.black45,
-                        child: const Icon(Icons.image_not_supported, color: Colors.white38),
+                        child: const Icon(Icons.bolt, color: Colors.white38, size: 24),
                       ),
                     ),
                   ),
@@ -1120,18 +1131,24 @@ extension _HomeScreenHelpers on _HomeScreenState {
               ),
               const SizedBox(height: 12),
               const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(Icons.check_circle_outline, size: 16, color: Colors.greenAccent),
                   SizedBox(width: 8),
-                  Text('On-campus boys and girls hostel rooms', style: TextStyle(fontSize: 12)),
+                  Expanded(
+                    child: Text('On-campus boys and girls hostel rooms', style: TextStyle(fontSize: 12)),
+                  ),
                 ],
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(Icons.check_circle_outline, size: 16, color: Colors.greenAccent),
                   SizedBox(width: 8),
-                  Text('Convenient proximity to all festival venues', style: TextStyle(fontSize: 12)),
+                  Expanded(
+                    child: Text('Convenient proximity to all festival venues', style: TextStyle(fontSize: 12)),
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
