@@ -67,5 +67,13 @@
             <action android:name="android.intent.action.VIEW"/>
             <data android:scheme="mailto"/>
         </intent>
+        <intent>
+            <action android:name="android.intent.action.INSERT"/>
+            <data android:mimeType="vnd.android.cursor.dir/event"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="content" android:host="com.android.calendar"/>
+        </intent>
     </queries>
 </manifest>

@@ -1188,7 +1188,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
         'role': '2nd Co-convener',
         'image': 'assets/about/prof_arun_udai.png',
         'quote':
-            'India is now driven by a strong thrust towards startups, indigenous manufacturing, digital public infrastructure, and self-reliance in critical technologies, including medical and defence technologies. This transformation is creating unprecedented opportunities for young innovators to turn ideas into technologies, products, and enterprises that address real-world challenges.\nCONCETTO 2026 provides a platform where curiosity meets technology, creativity meets entrepreneurship, and ideas evolve into meaningful solutions. As IIT (ISM) Dhanbad celebrates a century of excellence, I invite students, researchers, innovators, and industry enthusiasts to use this platform to experiment, collaborate, compete, and create.\nLet us nurture a spirit of innovation that is not limited to solving problems, but aspires to build technologies and enterprises for a self-reliant, technologically empowered India.\n\nWelcome to CONCETTO 2026!\n\n— Arun Dayal\n2nd Co-convener',
+            'India is now driven by a strong thrust towards startups, indigenous manufacturing, digital public infrastructure, and self-reliance in critical technologies, including medical and defence technologies. This transformation is creating unprecedented opportunities for young innovators to turn ideas into technologies, products, and enterprises that address real-world challenges.\nCONCETTO 2026 provides a platform where curiosity meets technology, creativity meets entrepreneurship, and ideas evolve into meaningful solutions. As IIT (ISM) Dhanbad celebrates a century of excellence, I invite students, researchers, innovators, and industry enthusiasts to use this platform to experiment, collaborate, compete, and create.\nLet us nurture a spirit of innovation that is not limited to solving problems, but aspires to build technologies and enterprises for a self-reliant, technologically empowered India.\n\nWelcome to CONCETTO 2026!',
       },
       {
         'name': 'Rahul Kumar',
@@ -1236,7 +1236,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 185,
+          height: 195,
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             scrollDirection: Axis.horizontal,
@@ -1245,72 +1245,239 @@ extension _HomeScreenHelpers on _HomeScreenState {
             separatorBuilder: (_, _) => const SizedBox(width: 14),
             itemBuilder: (context, i) {
               final q = quotes[i];
-              return Container(
-                width: 290,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF110504),
+              return Material(
+                color: Colors.transparent,
+                child: InkWell(
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+                  onTap: () => _showLeadershipMessageDialog(context, q, primaryColor),
+                  child: Container(
+                    width: 290,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF110504),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundImage: AssetImage(q['image']!),
-                          backgroundColor: primaryColor.withValues(alpha: 0.2),
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 18,
+                              backgroundImage: AssetImage(q['image']!),
+                              backgroundColor: primaryColor.withValues(alpha: 0.2),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    q['name']!,
+                                    style: GoogleFonts.rajdhani(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    q['role']!,
+                                    style: GoogleFonts.rajdhani(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: primaryColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(height: 10),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                q['name']!,
-                                style: GoogleFonts.rajdhani(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                q['role']!,
-                                style: GoogleFonts.rajdhani(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: primaryColor,
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            '"${q['quote']}"',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontStyle: FontStyle.italic,
+                              color: Colors.white70,
+                              height: 1.35,
+                            ),
+                            maxLines: 4,
+                            overflow: TextOverflow.ellipsis,
                           ),
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                              'Read full speech',
+                              style: GoogleFonts.rajdhani(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: primaryColor,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.arrow_forward_rounded,
+                              size: 12,
+                              color: primaryColor,
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    Expanded(
-                      child: Text(
-                        '"${q['quote']}"',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontStyle: FontStyle.italic,
-                          color: Colors.white70,
-                          height: 1.35,
-                        ),
-                        maxLines: 5,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               );
             },
           ),
         ),
       ],
+    );
+  }
+
+  void _showLeadershipMessageDialog(
+    BuildContext context,
+    Map<String, String> q,
+    Color primaryColor,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 480, maxHeight: 560),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF140808),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: primaryColor.withValues(alpha: 0.4),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: primaryColor.withValues(alpha: 0.15),
+                  blurRadius: 24,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 24,
+                      backgroundImage: AssetImage(q['image']!),
+                      backgroundColor: primaryColor.withValues(alpha: 0.2),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            q['name']!,
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            q['role']!,
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
+                const SizedBox(height: 14),
+                Flexible(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.format_quote_rounded,
+                              size: 18,
+                              color: primaryColor.withValues(alpha: 0.8),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'MESSAGE FOR CONCETTO 2026',
+                              style: GoogleFonts.rajdhani(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                                color: primaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          q['quote']!,
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            height: 1.6,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    icon: Icon(Icons.check_rounded, size: 16, color: primaryColor),
+                    label: Text(
+                      'CLOSE',
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: primaryColor,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

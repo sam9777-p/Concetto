@@ -447,14 +447,7 @@ class EventDetailScreen extends StatelessWidget {
                     width: double.infinity,
                     height: 52,
                     child: OutlinedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('"${event.title}" saved to your calendar!'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
+                      onPressed: () => _addToCalendar(context),
                       icon: const Icon(Icons.calendar_today, size: 18),
                       label: const Text('ADD TO CALENDAR'),
                       style: OutlinedButton.styleFrom(
@@ -917,6 +910,91 @@ class EventDetailScreen extends StatelessWidget {
         builder: (_) => RulebookPdfViewerScreen(event: event),
       ),
     );
+  }
+
+  // --- Real Add to Calendar Intent ---
+  Future<void> _addToCalendar(BuildContext context) async {
+    try {
+      int day = 9;
+      if (event.date.contains('Oct 8')) day = 8;
+      if (event.date.contains('Oct 9')) day = 9;
+      if (event.date.contains('Oct 10')) day = 10;
+      if (event.date.contains('Oct 11')) day = 11;
+      if (event.date.contains('Oct 12')) day = 12;
+
+      int startHour = 10;
+      int startMin = 0;
+      int endHour = 13;
+      int endMin = 0;
+
+      final timeParts = event.time.split('-');
+      if (timeParts.isNotEmpty) {
+        final startMatch = RegExp(r'(\d+):?(\d*)\s*(AM|PM)', caseSensitive: false).firstMatch(timeParts[0]);
+        if (startMatch != null) {
+          int h = int.tryParse(startMatch.group(1) ?? '10') ?? 10;
+          int m = int.tryParse(startMatch.group(2) ?? '0') ?? 0;
+          final ampm = (startMatch.group(3) ?? 'AM').toUpperCase();
+          if (ampm == 'PM' && h < 12) h += 12;
+          if (ampm == 'AM' && h == 12) h = 0;
+          startHour = h;
+          startMin = m;
+          endHour = (startHour + 2).clamp(0, 23);
+        }
+      }
+      if (timeParts.length > 1) {
+        final endMatch = RegExp(r'(\d+):?(\d*)\s*(AM|PM)', caseSensitive: false).firstMatch(timeParts[1]);
+        if (endMatch != null) {
+          int h = int.tryParse(endMatch.group(1) ?? '13') ?? 13;
+          int m = int.tryParse(endMatch.group(2) ?? '0') ?? 0;
+          final ampm = (endMatch.group(3) ?? 'PM').toUpperCase();
+          if (ampm == 'PM' && h < 12) h += 12;
+          if (ampm == 'AM' && h == 12) h = 0;
+          endHour = h;
+          endMin = m;
+        }
+      }
+
+      final startLocal = DateTime(2026, 10, day, startHour, startMin);
+      final endLocal = DateTime(2026, 10, day, endHour, endMin);
+      final startUtc = startLocal.subtract(const Duration(hours: 5, minutes: 30));
+      final endUtc = endLocal.subtract(const Duration(hours: 5, minutes: 30));
+
+      String formatUtc(DateTime dt) {
+        return '${dt.year}${dt.month.toString().padLeft(2, '0')}${dt.day.toString().padLeft(2, '0')}T${dt.hour.toString().padLeft(2, '0')}${dt.minute.toString().padLeft(2, '0')}00Z';
+      }
+
+      final startStr = formatUtc(startUtc);
+      final endStr = formatUtc(endUtc);
+
+      final title = Uri.encodeComponent('CONCETTO: ${event.title}');
+      final venue = Uri.encodeComponent(event.venue.isNotEmpty ? '${event.venue}, IIT (ISM) Dhanbad' : 'IIT (ISM) Dhanbad');
+      final desc = Uri.encodeComponent('${event.description}\n\nCategory: ${event.category}\nPrize Pool: ${event.prizePool}\nOrganized by: ${event.organizerClub}\nOfficial Web: https://concetto-ashen.vercel.app');
+
+      final intentUri = Uri.parse('https://calendar.google.com/calendar/render?action=TEMPLATE&text=$title&dates=$startStr/$endStr&details=$desc&location=$venue');
+
+      final launched = await launchUrl(intentUri, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        await launchUrl(intentUri, mode: LaunchMode.platformDefault);
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Opening Calendar for "${event.title}"...'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open calendar: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   // --- Helper to open external registration links / rulebooks ---
