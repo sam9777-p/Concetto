@@ -248,9 +248,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Logo + Fest Branding
-          Flexible(
+          Expanded(
             child: Row(
-              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
                   padding: const EdgeInsets.all(2),
@@ -277,38 +276,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                     borderRadius: BorderRadius.circular(10),
                     child: Image.asset(
                       'assets/images/logo_square.png',
-                      height: 42,
-                      width: 42,
+                      height: 40,
+                      width: 40,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) => Image.asset(
                         'assets/logo_final.webp',
-                        height: 42,
+                        height: 40,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
-                Flexible(
+                const SizedBox(width: 8),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            "CONCETTO '26",
-                            style: GoogleFonts.orbitron(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: 1.2,
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                "CONCETTO '26",
+                                style: GoogleFonts.orbitron(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  letterSpacing: 1.1,
+                                ),
+                              ),
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(width: 4),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                             decoration: BoxDecoration(
                               color: primaryColor.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(4),
@@ -317,7 +320,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                             child: Text(
                               "100 YRS",
                               style: GoogleFonts.rajdhani(
-                                fontSize: 9,
+                                fontSize: 8.5,
                                 fontWeight: FontWeight.w800,
                                 color: primaryColor,
                                 letterSpacing: 0.5,
@@ -329,10 +332,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                       Text(
                         "IIT (ISM) DHANBAD",
                         style: GoogleFonts.rajdhani(
-                          fontSize: 11,
+                          fontSize: 10.5,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.metallicMuted,
-                          letterSpacing: 1.2,
+                          letterSpacing: 1.1,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -527,12 +530,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                       shadowColor: primaryColor.withValues(alpha: 0.6),
                     ),
                     icon: const Icon(Icons.bolt, size: 16, color: Colors.black),
-                    label: Text(
-                      'EXPLORE EVENTS',
-                      style: GoogleFonts.rajdhani(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1,
+                    label: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'EXPLORE EVENTS',
+                        style: GoogleFonts.rajdhani(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1,
+                        ),
                       ),
                     ),
                   ),
@@ -550,12 +556,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                       ),
                     ),
                     icon: Icon(Icons.calendar_month, size: 16, color: primaryColor),
-                    label: Text(
-                      'TIMELINE',
-                      style: GoogleFonts.rajdhani(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1,
+                    label: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'TIMELINE',
+                        style: GoogleFonts.rajdhani(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1,
+                        ),
                       ),
                     ),
                   ),
@@ -659,39 +668,37 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
           ),
           const SizedBox(height: 12),
 
-          // Digits Grid
+          // Responsive Digits Grid
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildDigitBox(days.toString().padLeft(2, '0'), 'DAYS'),
+              Expanded(child: _buildDigitBox(days.toString().padLeft(2, '0'), 'DAYS')),
               _buildTimerSeparator(),
-              _buildDigitBox(hours.toString().padLeft(2, '0'), 'HOURS'),
+              Expanded(child: _buildDigitBox(hours.toString().padLeft(2, '0'), 'HOURS')),
               _buildTimerSeparator(),
-              _buildDigitBox(minutes.toString().padLeft(2, '0'), 'MINS'),
+              Expanded(child: _buildDigitBox(minutes.toString().padLeft(2, '0'), 'MINS')),
               _buildTimerSeparator(),
-              _buildDigitBox(seconds.toString().padLeft(2, '0'), 'SECS', isLive: true),
+              Expanded(child: _buildDigitBox(seconds.toString().padLeft(2, '0'), 'SECS', isLive: true)),
             ],
           ),
           const SizedBox(height: 10),
 
           // Mini Festival Progress Milestone Indicator
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
               color: const Color(0xFF0F0403),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: widget.primaryColor.withValues(alpha: 0.25)),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildDayMilestone('DAY 1', 'OCT 08', true),
+                Expanded(child: _buildDayMilestone('DAY 1', 'OCT 08', true)),
                 _buildMilestoneDivider(),
-                _buildDayMilestone('DAY 2', 'OCT 09', false),
+                Expanded(child: _buildDayMilestone('DAY 2', 'OCT 09', false)),
                 _buildMilestoneDivider(),
-                _buildDayMilestone('DAY 3', 'OCT 10', false),
+                Expanded(child: _buildDayMilestone('DAY 3', 'OCT 10', false)),
                 _buildMilestoneDivider(),
-                _buildDayMilestone('FINALE', 'OCT 11', false),
+                Expanded(child: _buildDayMilestone('FINALE', 'OCT 11', false)),
               ],
             ),
           ),
@@ -702,21 +709,28 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
 
   Widget _buildDayMilestone(String day, String date, bool isCurrent) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          day,
-          style: GoogleFonts.orbitron(
-            fontSize: 9.5,
-            fontWeight: FontWeight.w800,
-            color: isCurrent ? widget.primaryColor : Colors.white60,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            day,
+            style: GoogleFonts.orbitron(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w800,
+              color: isCurrent ? widget.primaryColor : Colors.white60,
+            ),
           ),
         ),
-        Text(
-          date,
-          style: GoogleFonts.rajdhani(
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-            color: isCurrent ? Colors.white : Colors.white38,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            date,
+            style: GoogleFonts.rajdhani(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: isCurrent ? Colors.white : Colors.white38,
+            ),
           ),
         ),
       ],
@@ -725,16 +739,16 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
 
   Widget _buildMilestoneDivider() {
     return Container(
-      width: 16,
+      width: 12,
       height: 1,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
       color: widget.primaryColor.withValues(alpha: 0.35),
     );
   }
 
   Widget _buildDigitBox(String digits, String label, {bool isLive = false}) {
     return Container(
-      width: 74,
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
       decoration: BoxDecoration(
         color: const Color(0xFF140604),
         borderRadius: BorderRadius.circular(12),
@@ -751,30 +765,37 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            digits,
-            style: GoogleFonts.orbitron(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              color: isLive ? const Color(0xFFFF7043) : widget.primaryColor,
-              letterSpacing: 1.2,
-              shadows: [
-                Shadow(
-                  color: widget.primaryColor.withValues(alpha: 0.7),
-                  blurRadius: 12,
-                ),
-              ],
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              digits,
+              style: GoogleFonts.orbitron(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: isLive ? const Color(0xFFFF7043) : widget.primaryColor,
+                letterSpacing: 1.2,
+                shadows: [
+                  Shadow(
+                    color: widget.primaryColor.withValues(alpha: 0.7),
+                    blurRadius: 12,
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 3),
-          Text(
-            label,
-            style: GoogleFonts.rajdhani(
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.metallicMuted,
-              letterSpacing: 1.2,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: GoogleFonts.rajdhani(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.metallicMuted,
+                letterSpacing: 1.2,
+              ),
             ),
           ),
         ],
@@ -783,12 +804,15 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
   }
 
   Widget _buildTimerSeparator() {
-    return Text(
-      ':',
-      style: TextStyle(
-        fontSize: 22,
-        fontWeight: FontWeight.bold,
-        color: widget.primaryColor.withValues(alpha: 0.65),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 3),
+      child: Text(
+        ':',
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: widget.primaryColor.withValues(alpha: 0.65),
+        ),
       ),
     );
   }
@@ -1095,28 +1119,33 @@ extension _HomeScreenHelpers on _HomeScreenState {
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 20, color: primaryColor),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: GoogleFonts.orbitron(
-              fontSize: 14.5,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
+          Icon(icon, size: 18, color: primaryColor),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: GoogleFonts.orbitron(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            label,
-            style: GoogleFonts.rajdhani(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w700,
-              color: Colors.white60,
-              letterSpacing: 0.5,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: GoogleFonts.rajdhani(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: Colors.white60,
+                letterSpacing: 0.5,
+              ),
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -1577,9 +1606,9 @@ extension _HomeScreenHelpers on _HomeScreenState {
           ),
         ),
         const SizedBox(height: 12),
-        // Height 250px so that 5-6 full lines of speech are displayed before "Read full speech"
+        // Height 260px so that 5-6 full lines of speech are displayed comfortably
         SizedBox(
-          height: 250,
+          height: 260,
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             scrollDirection: Axis.horizontal,
@@ -1667,7 +1696,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                               fontSize: 12.5,
                               fontStyle: FontStyle.italic,
                               color: Colors.white.withValues(alpha: 0.85),
-                              height: 1.4,
+                              height: 1.35,
                               fontWeight: FontWeight.w500,
                             ),
                             maxLines: 6,
@@ -1901,7 +1930,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                 ],
               ),
               Text(
-                'EXPERIENCE',
+                'TAP TO VIEW',
                 style: GoogleFonts.rajdhani(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
@@ -1923,78 +1952,232 @@ extension _HomeScreenHelpers on _HomeScreenState {
             separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
               final item = glimpses[index];
-              return Container(
-                width: 250,
-                decoration: BoxDecoration(
+              return Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _showGlimpseViewer(context, item, primaryColor),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: primaryColor.withValues(alpha: 0.35)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.4),
-                      blurRadius: 10,
-                    ),
-                  ],
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: Image.asset(
-                        item['img']!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (ctx, err, stack) => Container(
-                          color: const Color(0xFF140604),
-                          child: const Icon(Icons.image, color: Colors.white24),
+                  child: Container(
+                    width: 250,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: primaryColor.withValues(alpha: 0.35)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.4),
+                          blurRadius: 10,
                         ),
-                      ),
+                      ],
                     ),
-                    Positioned.fill(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withValues(alpha: 0.85),
+                    clipBehavior: Clip.antiAlias,
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: Image.asset(
+                            item['img']!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (ctx, err, stack) => Container(
+                              color: const Color(0xFF140604),
+                              child: const Icon(Icons.image, color: Colors.white24),
+                            ),
+                          ),
+                        ),
+                        Positioned.fill(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.black.withValues(alpha: 0.85),
+                                ],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Quick zoom badge in top right
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.65),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: primaryColor.withValues(alpha: 0.5)),
+                            ),
+                            child: Icon(Icons.fullscreen_rounded, size: 14, color: primaryColor),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 12,
+                          left: 12,
+                          right: 12,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item['title']!,
+                                style: GoogleFonts.rajdhani(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              Text(
+                                item['subtitle']!,
+                                style: GoogleFonts.rajdhani(
+                                  fontSize: 11,
+                                  color: primaryColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                    Positioned(
-                      bottom: 12,
-                      left: 12,
-                      right: 12,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item['title']!,
-                            style: GoogleFonts.rajdhani(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          Text(
-                            item['subtitle']!,
-                            style: GoogleFonts.rajdhani(
-                              fontSize: 11,
-                              color: primaryColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               );
             },
           ),
         ),
       ],
+    );
+  }
+
+  void _showGlimpseViewer(
+    BuildContext context,
+    Map<String, String> item,
+    Color primaryColor,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
+            decoration: BoxDecoration(
+              color: const Color(0xFF140605),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: primaryColor.withValues(alpha: 0.45), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: primaryColor.withValues(alpha: 0.25),
+                  blurRadius: 28,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 12, 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.photo_library_rounded, size: 16, color: primaryColor),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item['title']!,
+                              style: GoogleFonts.rajdhani(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              item['subtitle']!,
+                              style: GoogleFonts.rajdhani(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: primaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
+                Flexible(
+                  child: InteractiveViewer(
+                    panEnabled: true,
+                    minScale: 0.8,
+                    maxScale: 4.0,
+                    child: Center(
+                      child: Image.asset(
+                        item['img']!,
+                        fit: BoxFit.contain,
+                        errorBuilder: (c, e, s) => Container(
+                          height: 250,
+                          color: Colors.black26,
+                          child: const Center(
+                            child: Icon(Icons.broken_image, size: 40, color: Colors.white38),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Pinch to zoom photo',
+                        style: GoogleFonts.rajdhani(
+                          fontSize: 11,
+                          color: Colors.white38,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        icon: Icon(Icons.check_rounded, size: 16, color: primaryColor),
+                        label: Text(
+                          'CLOSE',
+                          style: GoogleFonts.rajdhani(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
