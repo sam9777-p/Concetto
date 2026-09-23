@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,6 +18,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   int _selectedDayIndex = 0;
   int _slideDirection = 1; // 1 = forward, -1 = backward
   bool _isTransitioning = false;
+  double _pullExtent = 0.0;
+  int _pullDirection = 0; // 1 = pulled up at bottom for next day, -1 = pulled down at top for prev day
+  bool _hapticFired = false;
+  static const double _pullThreshold = 75.0;
+  DateTime _lastTransitionTime = DateTime.now();
 
   final List<Map<String, String>> _festivalDays = [
     {'day': 'DAY 0', 'date': 'Oct 8', 'label': 'Wednesday • Inauguration & CaseBlitz'},
@@ -27,12 +33,19 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
   void _changeDay(int newIndex, {required int direction}) {
     if (newIndex < 0 || newIndex >= _festivalDays.length || _isTransitioning) return;
+    final now = DateTime.now();
+    if (now.difference(_lastTransitionTime).inMilliseconds < 500) return;
+
+    _lastTransitionTime = now;
     setState(() {
       _slideDirection = direction;
       _selectedDayIndex = newIndex;
       _isTransitioning = true;
+      _pullExtent = 0.0;
+      _pullDirection = 0;
+      _hapticFired = false;
     });
-    Future.delayed(const Duration(milliseconds: 400), () {
+    Future.delayed(const Duration(milliseconds: 450), () {
       if (mounted) {
         setState(() {
           _isTransitioning = false;
@@ -165,50 +178,113 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
           const SizedBox(height: 8),
 
-          // Dynamic Vertical Timeline with Auto Day Transition
+          // Dynamic Vertical Timeline with Telegram-Style Hard Pull Day Transition
           Expanded(
-            child: GestureDetector(
-              onHorizontalDragEnd: (details) {
-                if (details.primaryVelocity != null) {
-                  if (details.primaryVelocity! < -250 && _selectedDayIndex < _festivalDays.length - 1) {
+            child: Listener(
+              onPointerUp: (event) {
+                if (_isTransitioning) return;
+                if (_pullExtent >= _pullThreshold) {
+                  if (_pullDirection == 1 && _selectedDayIndex < _festivalDays.length - 1) {
                     _changeDay(_selectedDayIndex + 1, direction: 1);
-                  } else if (details.primaryVelocity! > 250 && _selectedDayIndex > 0) {
+                  } else if (_pullDirection == -1 && _selectedDayIndex > 0) {
                     _changeDay(_selectedDayIndex - 1, direction: -1);
                   }
+                } else if (_pullExtent > 0) {
+                  setState(() {
+                    _pullExtent = 0.0;
+                    _pullDirection = 0;
+                    _hapticFired = false;
+                  });
                 }
               },
-              child: NotificationListener<ScrollNotification>(
-                onNotification: (notification) {
-                  if (_isTransitioning) return false;
-
-                  if (notification is ScrollUpdateNotification) {
-                    final m = notification.metrics;
-                    if (m.pixels > m.maxScrollExtent + 28 && _selectedDayIndex < _festivalDays.length - 1) {
+              child: GestureDetector(
+                onHorizontalDragEnd: (details) {
+                  if (details.primaryVelocity != null) {
+                    if (details.primaryVelocity! < -300 && _selectedDayIndex < _festivalDays.length - 1) {
                       _changeDay(_selectedDayIndex + 1, direction: 1);
-                      return true;
-                    }
-                    if (m.pixels < m.minScrollExtent - 28 && _selectedDayIndex > 0) {
-                      _changeDay(_selectedDayIndex - 1, direction: -1);
-                      return true;
-                    }
-                  } else if (notification is OverscrollNotification) {
-                    if (notification.overscroll > 12 && _selectedDayIndex < _festivalDays.length - 1) {
-                      _changeDay(_selectedDayIndex + 1, direction: 1);
-                      return true;
-                    } else if (notification.overscroll < -12 && _selectedDayIndex > 0) {
-                      _changeDay(_selectedDayIndex - 1, direction: -1);
-                      return true;
-                    }
-                  } else if (notification is ScrollEndNotification) {
-                    final m = notification.metrics;
-                    if (m.pixels > m.maxScrollExtent + 15 && _selectedDayIndex < _festivalDays.length - 1) {
-                      _changeDay(_selectedDayIndex + 1, direction: 1);
-                    } else if (m.pixels < m.minScrollExtent - 15 && _selectedDayIndex > 0) {
+                    } else if (details.primaryVelocity! > 300 && _selectedDayIndex > 0) {
                       _changeDay(_selectedDayIndex - 1, direction: -1);
                     }
                   }
-                  return false;
                 },
+                child: Stack(
+                  children: [
+                    NotificationListener<ScrollNotification>(
+                      onNotification: (notification) {
+                        if (_isTransitioning) return false;
+
+                        final now = DateTime.now();
+                        if (now.difference(_lastTransitionTime).inMilliseconds < 500) {
+                          return false;
+                        }
+
+                        if (notification is ScrollUpdateNotification) {
+                          final m = notification.metrics;
+                          // Bottom hard pull (pulling up at bottom of day list)
+                          if (m.pixels > m.maxScrollExtent && _selectedDayIndex < _festivalDays.length - 1) {
+                            final extent = m.pixels - m.maxScrollExtent;
+                            if ((extent - _pullExtent).abs() > 1.5) {
+                              if (extent >= _pullThreshold && !_hapticFired) {
+                                HapticFeedback.lightImpact();
+                                _hapticFired = true;
+                              } else if (extent < _pullThreshold) {
+                                _hapticFired = false;
+                              }
+                              setState(() {
+                                _pullExtent = extent;
+                                _pullDirection = 1;
+                              });
+                            }
+                          }
+                          // Top hard pull (pulling down at top of day list)
+                          else if (m.pixels < m.minScrollExtent && _selectedDayIndex > 0) {
+                            final extent = m.minScrollExtent - m.pixels;
+                            if ((extent - _pullExtent).abs() > 1.5) {
+                              if (extent >= _pullThreshold && !_hapticFired) {
+                                HapticFeedback.lightImpact();
+                                _hapticFired = true;
+                              } else if (extent < _pullThreshold) {
+                                _hapticFired = false;
+                              }
+                              setState(() {
+                                _pullExtent = extent;
+                                _pullDirection = -1;
+                              });
+                            }
+                          }
+                          // In-bounds normal scrolling
+                          else if (_pullExtent > 0 && m.pixels >= m.minScrollExtent && m.pixels <= m.maxScrollExtent) {
+                            setState(() {
+                              _pullExtent = 0.0;
+                              _pullDirection = 0;
+                              _hapticFired = false;
+                            });
+                          }
+                        } else if (notification is OverscrollNotification) {
+                          if (notification.overscroll > 0 && _selectedDayIndex < _festivalDays.length - 1) {
+                            final extent = _pullExtent + notification.overscroll;
+                            if (extent >= _pullThreshold && !_hapticFired) {
+                              HapticFeedback.lightImpact();
+                              _hapticFired = true;
+                            }
+                            setState(() {
+                              _pullExtent = extent;
+                              _pullDirection = 1;
+                            });
+                          } else if (notification.overscroll < 0 && _selectedDayIndex > 0) {
+                            final extent = _pullExtent - notification.overscroll;
+                            if (extent >= _pullThreshold && !_hapticFired) {
+                              HapticFeedback.lightImpact();
+                              _hapticFired = true;
+                            }
+                            setState(() {
+                              _pullExtent = extent;
+                              _pullDirection = -1;
+                            });
+                          }
+                        }
+                        return false;
+                      },
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 350),
                   switchInCurve: Curves.easeOutCubic,
@@ -477,9 +553,79 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                   ),
                 ),
               ),
-            ),
+              _buildPullIndicator(primaryColor),
+            ],
           ),
-        ],
+        ),
+      ),
+    ),
+  ],
+),
+);
+}
+
+  Widget _buildPullIndicator(Color primaryColor) {
+    if (_pullExtent < 15.0 || _pullDirection == 0) return const SizedBox.shrink();
+
+    final isTriggered = _pullExtent >= _pullThreshold;
+    final isNext = _pullDirection == 1;
+    final targetDay = isNext
+        ? (_selectedDayIndex < _festivalDays.length - 1 ? _festivalDays[_selectedDayIndex + 1]['day'] : '')
+        : (_selectedDayIndex > 0 ? _festivalDays[_selectedDayIndex - 1]['day'] : '');
+
+    if (targetDay == null || targetDay.isEmpty) return const SizedBox.shrink();
+
+    return Positioned(
+      top: isNext ? null : 16,
+      bottom: isNext ? 24 : null,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: isTriggered ? primaryColor : const Color(0xFF140604).withValues(alpha: 0.95),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isTriggered ? Colors.white : primaryColor.withValues(alpha: 0.6),
+              width: isTriggered ? 1.5 : 1.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isTriggered ? primaryColor.withValues(alpha: 0.6) : Colors.black54,
+                blurRadius: isTriggered ? 16 : 8,
+                spreadRadius: isTriggered ? 2 : 0,
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedRotation(
+                turns: isTriggered ? 0.5 : 0.0,
+                duration: const Duration(milliseconds: 200),
+                child: Icon(
+                  isNext ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                  size: 18,
+                  color: isTriggered ? Colors.black : primaryColor,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                isTriggered
+                    ? 'Release to view $targetDay'
+                    : (isNext ? 'Pull up for $targetDay' : 'Pull down for $targetDay'),
+                style: GoogleFonts.orbitron(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.8,
+                  color: isTriggered ? Colors.black : Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

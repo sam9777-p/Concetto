@@ -1184,6 +1184,13 @@ extension _HomeScreenHelpers on _HomeScreenState {
             'As we commemorate the Centenary Year of IIT (ISM) Dhanbad, this edition holds a special significance as we celebrate a century of excellence, legacy, and learning. As the Treasurer, I believe that responsible financial management, transparency, and accountability are essential for transforming ideas into meaningful experiences. This fest is the result of collective effort, dedication, and teamwork from every individual involved.',
       },
       {
+        'name': 'Arun Dayal',
+        'role': '2nd Co-convener',
+        'image': 'assets/about/prof_arun_udai.png',
+        'quote':
+            'India is now driven by a strong thrust towards startups, indigenous manufacturing, digital public infrastructure, and self-reliance in critical technologies, including medical and defence technologies. This transformation is creating unprecedented opportunities for young innovators to turn ideas into technologies, products, and enterprises that address real-world challenges.\nCONCETTO 2026 provides a platform where curiosity meets technology, creativity meets entrepreneurship, and ideas evolve into meaningful solutions. As IIT (ISM) Dhanbad celebrates a century of excellence, I invite students, researchers, innovators, and industry enthusiasts to use this platform to experiment, collaborate, compete, and create.\nLet us nurture a spirit of innovation that is not limited to solving problems, but aspires to build technologies and enterprises for a self-reliant, technologically empowered India.\n\nWelcome to CONCETTO 2026!\n\n— Arun Dayal\n2nd Co-convener',
+      },
+      {
         'name': 'Rahul Kumar',
         'role': 'Advisory Committee',
         'image': 'assets/about/rahul_kumar.png',

@@ -881,8 +881,36 @@ class EventDetailScreen extends StatelessWidget {
     );
   }
 
+  static const _availableRulebookIds = {
+    'aethera',
+    'code_wars',
+    'edge_ai_challenge',
+    'equity_auction',
+    'fault_hunt',
+    'logic_odyssey',
+    'mathalon',
+    'questree__26',
+    'aptiquest',
+    'reservoir_making___iadc',
+    'crack_the_crude',
+    'sparkathon',
+    'vibehack__26',
+    'vibehack',
+  };
+
   // --- Rulebook In-App PDF Viewer ---
   void _showRulebookDialog(BuildContext context, Color primaryColor) {
+    final normalizedId = event.id.toLowerCase().replaceAll('-', '_');
+    if (!_availableRulebookIds.contains(normalizedId)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No rulebook for this event found'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute(
