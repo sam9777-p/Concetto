@@ -277,27 +277,58 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 3,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: primaryColor.withValues(alpha: 0.15),
-                                              borderRadius: BorderRadius.circular(6),
-                                              border: Border.all(
-                                                color: primaryColor.withValues(alpha: 0.4),
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 8,
+                                                  vertical: 3,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: primaryColor.withValues(alpha: 0.15),
+                                                  borderRadius: BorderRadius.circular(6),
+                                                  border: Border.all(
+                                                    color: primaryColor.withValues(alpha: 0.4),
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  event.category.toUpperCase(),
+                                                  style: GoogleFonts.rajdhani(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w800,
+                                                    color: primaryColor,
+                                                    letterSpacing: 0.8,
+                                                  ),
+                                                ),
                                               ),
-                                            ),
-                                            child: Text(
-                                              event.category.toUpperCase(),
-                                              style: GoogleFonts.rajdhani(
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.w800,
-                                                color: primaryColor,
-                                                letterSpacing: 0.8,
-                                              ),
-                                            ),
+                                              if (event.isWatchableOnly) ...[
+                                                const SizedBox(width: 6),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 2,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.amber.withValues(alpha: 0.15),
+                                                    borderRadius: BorderRadius.circular(4),
+                                                    border: Border.all(
+                                                      color: Colors.amber.withValues(alpha: 0.5),
+                                                      width: 0.7,
+                                                    ),
+                                                  ),
+                                                  child: Text(
+                                                    'STAGE / OPEN',
+                                                    style: GoogleFonts.rajdhani(
+                                                      fontSize: 9,
+                                                      fontWeight: FontWeight.w800,
+                                                      color: Colors.amber,
+                                                      letterSpacing: 0.5,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
                                           ),
                                           Row(
                                             children: [
@@ -328,20 +359,27 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Row(
-                                            children: [
-                                              const Icon(Icons.location_on_outlined, size: 13, color: Colors.grey),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                event.venue,
-                                                style: GoogleFonts.rajdhani(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w500,
-                                                  color: Colors.white60,
+                                          Expanded(
+                                            child: Row(
+                                              children: [
+                                                const Icon(Icons.location_on_outlined, size: 13, color: Colors.grey),
+                                                const SizedBox(width: 4),
+                                                Expanded(
+                                                  child: Text(
+                                                    event.venue,
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: GoogleFonts.rajdhani(
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.w500,
+                                                      color: Colors.white60,
+                                                    ),
+                                                  ),
                                                 ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
+                                          const SizedBox(width: 8),
                                           const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.white38),
                                         ],
                                       ),

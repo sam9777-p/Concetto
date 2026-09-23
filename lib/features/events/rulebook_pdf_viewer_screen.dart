@@ -33,7 +33,11 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
   }
 
   String get _pdfAssetPath {
-    return 'assets/rulebooks/${widget.event.id}.pdf';
+    final url = widget.event.rulebookUrl.trim();
+    if (url.isNotEmpty && !url.startsWith('http')) {
+      return url;
+    }
+    return 'assets/rulebooks/society_of_electronics_engineers.pdf';
   }
 
   @override

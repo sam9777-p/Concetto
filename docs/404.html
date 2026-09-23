@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concetto'26 — Redirecting...</title>
+  <script>
+    // Intercept SPA URLs or query parameters and route appropriately
+    (function() {
+      const url = new URL(window.location.href);
+      const params = url.searchParams;
+      const id = params.get('id');
+      const pathname = url.pathname;
+
+      // Extract event id from path if formatted like /events/caseblitz
+      let targetId = id;
+      if (!targetId && pathname.includes('/events/')) {
+        const parts = pathname.split('/events/');
+        if (parts[1]) {
+          targetId = parts[1].replace(/\/$/, '');
+        }
+      }
+
+      if (targetId) {
+        // Attempt app intent deeplink
+        window.location.href = "concetto://events?id=" + encodeURIComponent(targetId);
+        setTimeout(function() {
+          window.location.href = "https://sam9777-p.github.io/Concetto/events/index.html?id=" + encodeURIComponent(targetId);
+        }, 1200);
+      } else {
+        // Fallback to home docs page
+        window.location.href = "https://sam9777-p.github.io/Concetto/index.html";
+      }
+    })();
+  </script>
+</head>
+<body style="background:#0A0201; color:#F5EAE8; font-family:sans-serif; text-align:center; padding:40px;">
+  <h2>Redirecting to Concetto '26...</h2>
+  <p>Launching application or redirecting to official portal.</p>
+</body>
+</html>

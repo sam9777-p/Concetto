@@ -124,7 +124,7 @@ class EventDetailScreen extends StatelessWidget {
 
                   // Organizing Club Pill
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
                       color: AppTheme.cyberAmber.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(6),
@@ -135,13 +135,17 @@ class EventDetailScreen extends StatelessWidget {
                       children: [
                         const Icon(Icons.shield_outlined, size: 14, color: AppTheme.cyberAmber),
                         const SizedBox(width: 5),
-                        Text(
-                          'ORGANIZED BY ${event.organizerClub.toUpperCase()}',
-                          style: GoogleFonts.rajdhani(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.cyberAmber,
-                            letterSpacing: 0.8,
+                        Flexible(
+                          child: Text(
+                            'ORGANIZED BY ${event.organizerClub.toUpperCase()}',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.cyberAmber,
+                              letterSpacing: 0.8,
+                            ),
                           ),
                         ),
                       ],
@@ -178,7 +182,7 @@ class EventDetailScreen extends StatelessWidget {
                           Text(event.time, style: Theme.of(context).textTheme.bodyMedium),
                         ],
                       ),
-                      if (event.teamSize.isNotEmpty)
+                      if (event.teamSize.isNotEmpty && !event.isWatchableOnly)
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -187,7 +191,7 @@ class EventDetailScreen extends StatelessWidget {
                             Text(event.teamSize, style: Theme.of(context).textTheme.bodyMedium),
                           ],
                         ),
-                      if (event.prizePool.isNotEmpty)
+                      if (event.prizePool.isNotEmpty && !event.isWatchableOnly)
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -206,73 +210,109 @@ class EventDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 28),
 
-                  // Action Buttons: In-App Register + In-App PDF Rulebook + External Form Link
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: ElevatedButton.icon(
-                          onPressed: () => _showRegistrationSheet(context, primaryColor),
-                          icon: const Icon(
-                            Icons.how_to_reg,
-                            color: Colors.black,
-                            size: 18,
+                  // Action Buttons: In-App Register (only for registrable) vs Open Entry
+                  if (event.isWatchableOnly) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            primaryColor.withValues(alpha: 0.25),
+                            const Color(0xFF160A08),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: primaryColor.withValues(alpha: 0.5)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.stars_rounded, color: primaryColor, size: 20),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: Text(
+                              'STAGE EXPERIENCE • OPEN TO ALL • NO REGISTRATION REQUIRED',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.orbitron(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.8,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
-                          label: const Text(
-                            'REGISTER NOW',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
+                        ],
+                      ),
+                    ),
+                  ] else ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _showRegistrationSheet(context, primaryColor),
+                            icon: const Icon(
+                              Icons.how_to_reg,
                               color: Colors.black,
-                              letterSpacing: 0.8,
-                              fontSize: 13,
+                              size: 18,
                             ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryColor,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                            label: const Text(
+                              'REGISTER NOW',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                letterSpacing: 0.8,
+                                fontSize: 13,
+                              ),
                             ),
-                            elevation: 4,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryColor,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 4,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        flex: 2,
-                        child: OutlinedButton.icon(
-                          onPressed: () => _showRulebookDialog(context, primaryColor),
-                          icon: const Icon(Icons.picture_as_pdf, size: 16),
-                          label: const Text(
-                            'RULES',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
-                          ),
-                        ),
-                      ),
-                      if (event.registrationUrl.isNotEmpty) ...[
                         const SizedBox(width: 8),
-                        IconButton.outlined(
-                          onPressed: () => _launchExternalUrl(context, event.registrationUrl),
-                          icon: const Icon(Icons.open_in_browser, size: 18),
-                          tooltip: 'Official Google Form (External)',
-                          style: IconButton.styleFrom(
-                            padding: const EdgeInsets.all(12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                        Expanded(
+                          flex: 2,
+                          child: OutlinedButton.icon(
+                            onPressed: () => _showRulebookDialog(context, primaryColor),
+                            icon: const Icon(Icons.picture_as_pdf, size: 16),
+                            label: const Text(
+                              'RULES',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
                             ),
                           ),
                         ),
+                        if (event.registrationUrl.isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          IconButton.outlined(
+                            onPressed: () => _launchExternalUrl(context, event.registrationUrl),
+                            icon: const Icon(Icons.open_in_browser, size: 18),
+                            tooltip: 'Official Google Form (External)',
+                            style: IconButton.styleFrom(
+                              padding: const EdgeInsets.all(12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
-                  ),
+                    ),
+                  ],
 
                   const SizedBox(height: 32),
 
@@ -830,14 +870,28 @@ class EventDetailScreen extends StatelessWidget {
     );
   }
 
-  // --- Rulebook In-App PDF Viewer ---
+  // --- Rulebook In-App PDF Viewer / External Link ---
   void _showRulebookDialog(BuildContext context, Color primaryColor) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => RulebookPdfViewerScreen(event: event),
-      ),
-    );
+    final url = event.rulebookUrl.trim();
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      _launchExternalUrl(context, url);
+    } else if (url.isNotEmpty ||
+        event.organizerClub.toUpperCase().contains('ELECTRONICS') ||
+        event.organizerClub.toUpperCase().contains('SEE')) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => RulebookPdfViewerScreen(event: event),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Rulebook details will be published by the organizing team soon.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   // --- Helper to open external registration links / rulebooks ---

@@ -52,7 +52,39 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         onTap: _navigateToHome,
         behavior: HitTestBehavior.opaque,
         child: Stack(
+          fit: StackFit.expand,
           children: [
+            // Background Wallpaper Image
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/background.png',
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Image.asset(
+                    'assets/images/splash_bg.webp',
+                    fit: BoxFit.cover,
+                  );
+                },
+              ),
+            ),
+
+            // Premium Scrim Gradient to ensure high text legibility
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.70),
+                      Colors.black.withValues(alpha: 0.45),
+                      Colors.black.withValues(alpha: 0.85),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
             // Dark orangish-red ambient radial glow
             AnimatedBuilder(
               animation: _pulseController,

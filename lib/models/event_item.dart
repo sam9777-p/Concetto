@@ -14,6 +14,7 @@ class EventItem {
   final String coordinatorName;
   final String coordinatorContact;
   final bool isFlagship;
+  final bool isWatchableOnly;
 
   final String organizerClub;
   final String coordinatorEmail;
@@ -42,6 +43,7 @@ class EventItem {
     this.passwordHash = '',
     this.updatedAt = '',
     this.isFlagship = false,
+    this.isWatchableOnly = false,
   });
 
   EventItem copyWith({
@@ -65,6 +67,7 @@ class EventItem {
     String? passwordHash,
     String? updatedAt,
     bool? isFlagship,
+    bool? isWatchableOnly,
   }) {
     return EventItem(
       id: id ?? this.id,
@@ -87,6 +90,7 @@ class EventItem {
       passwordHash: passwordHash ?? this.passwordHash,
       updatedAt: updatedAt ?? this.updatedAt,
       isFlagship: isFlagship ?? this.isFlagship,
+      isWatchableOnly: isWatchableOnly ?? this.isWatchableOnly,
     );
   }
 
@@ -112,6 +116,7 @@ class EventItem {
       passwordHash: json['passwordHash'] ?? '',
       updatedAt: json['updatedAt'] ?? '',
       isFlagship: json['isFlagship'] ?? false,
+      isWatchableOnly: json['isWatchableOnly'] ?? false,
     );
   }
 
@@ -136,6 +141,7 @@ class EventItem {
       'passwordHash': passwordHash,
       'updatedAt': updatedAt,
       'isFlagship': isFlagship,
+      'isWatchableOnly': isWatchableOnly,
     };
   }
 }

@@ -172,6 +172,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
 
                   const SizedBox(height: 32),
 
+                  // Voices of Concetto (Leadership Quotes)
+                  _buildLeadershipVoicesSection(primaryColor)
+                      .animate()
+                      .fadeIn(duration: 450.ms, delay: 540.ms),
+
+                  const SizedBox(height: 32),
+
                   // About Fest & Centenary Footer Card
                   _buildAboutSection(primaryColor, secondaryColor)
                       .animate()
@@ -1146,6 +1153,140 @@ extension _HomeScreenHelpers on _HomeScreenState {
           ),
         );
       },
+    );
+  }
+
+  // --- Leadership Voices Section ---
+  Widget _buildLeadershipVoicesSection(Color primaryColor) {
+    final quotes = [
+      {
+        'name': 'Badal Singh Naik',
+        'role': 'Student Advisor',
+        'image': 'assets/about/badal_singh.png',
+        'quote':
+            'Concetto stands as a vibrant platform where innovation meets imagination and ideas transform into possibilities. My vision has always been to work with dedication, embrace challenges, and strive to deliver the very best. I believe that excellence is not merely a destination, but a continuous journey driven by passion, perseverance, and teamwork.',
+      },
+      {
+        'name': 'Rahul Kumar',
+        'role': 'Advisory Committee',
+        'image': 'assets/about/rahul_kumar.png',
+        'quote':
+            'It is a privilege to welcome you to Concetto 2026, the premier techno-management festival of IIT (ISM) Dhanbad. As our institute celebrates a monumental century of academic brilliance and innovation, this edition stands as a tribute to our rich legacy and a stepping stone toward a limitless future.',
+      },
+      {
+        'name': 'Sourav Dutta',
+        'role': 'Student Advisor',
+        'image': 'assets/about/sourav_dutta.png',
+        'quote':
+            'It is my immense pleasure to welcome you to Concetto 2026, the annual techno-management fest of IIT (ISM), Dhanbad—where ideas take shape, innovation takes flight, and technology meets purpose. I encourage every participant to explore, experiment, compete, and learn beyond the boundaries of the classroom.',
+      },
+      {
+        'name': 'Prof. Gopi Krishna Dondapati',
+        'role': 'Treasurer',
+        'image': 'assets/about/prof_gopi_krishna.png',
+        'quote':
+            'As we commemorate the Centenary Year of IIT (ISM) Dhanbad, this edition holds a special significance as we celebrate a century of excellence, legacy, and learning. As the Treasurer, I believe that responsible financial management, transparency, and accountability are essential for transforming ideas into meaningful experiences.',
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            children: [
+              Icon(Icons.format_quote_rounded, size: 18, color: primaryColor),
+              const SizedBox(width: 8),
+              Text(
+                'VOICES OF CONCETTO',
+                style: GoogleFonts.rajdhani(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
+                  color: primaryColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 185,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: quotes.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 14),
+            itemBuilder: (context, i) {
+              final q = quotes[i];
+              return Container(
+                width: 290,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF110504),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundImage: AssetImage(q['image']!),
+                          backgroundColor: primaryColor.withValues(alpha: 0.2),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                q['name']!,
+                                style: GoogleFonts.rajdhani(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                q['role']!,
+                                style: GoogleFonts.rajdhani(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: primaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: Text(
+                        '"${q['quote']}"',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.white70,
+                          height: 1.35,
+                        ),
+                        maxLines: 5,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
