@@ -46,8 +46,11 @@ class AttendeeProfile {
   }
 }
 
-class AuthNotifier extends StateNotifier<AttendeeProfile> {
-  AuthNotifier() : super(_initialGuestProfile());
+class AuthNotifier extends Notifier<AttendeeProfile> {
+  @override
+  AttendeeProfile build() {
+    return _initialGuestProfile();
+  }
 
   static AttendeeProfile _initialGuestProfile() {
     return AttendeeProfile(
@@ -161,6 +164,4 @@ class AuthNotifier extends StateNotifier<AttendeeProfile> {
   }
 }
 
-final authProvider = StateNotifierProvider<AuthNotifier, AttendeeProfile>((ref) {
-  return AuthNotifier();
-});
+final authProvider = NotifierProvider<AuthNotifier, AttendeeProfile>(AuthNotifier.new);

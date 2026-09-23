@@ -41,6 +41,7 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
   late TextEditingController _coordinatorEmailController;
   late TextEditingController _coordinatorPhoneController;
   late TextEditingController _passcodeController;
+  late TextEditingController _tagsController;
 
   late String _posterUrl;
   late String _selectedCategory;
@@ -118,6 +119,9 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
       text: e?.coordinatorPhone.isNotEmpty == true ? e!.coordinatorPhone : (e?.coordinatorContact ?? ''),
     );
     _passcodeController = TextEditingController();
+    _tagsController = TextEditingController(
+      text: e != null && e.tags.isNotEmpty ? e.tags.join(', ') : _selectedCategory,
+    );
   }
 
   @override
@@ -136,6 +140,7 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
     _coordinatorEmailController.dispose();
     _coordinatorPhoneController.dispose();
     _passcodeController.dispose();
+    _tagsController.dispose();
     super.dispose();
   }
 
@@ -161,11 +166,18 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
             : 'Concetto Society')
         : _selectedClub;
 
+    final parsedTags = _tagsController.text
+        .split(',')
+        .map((t) => t.trim())
+        .where((t) => t.isNotEmpty)
+        .toList();
+
     final eventItem = EventItem(
       id: widget.initialEvent?.id ?? '',
       title: _titleController.text.trim(),
       organizerClub: finalClub,
       category: _selectedCategory,
+      tags: parsedTags.isNotEmpty ? parsedTags : [_selectedCategory],
       venue: _venueController.text.trim(),
       time: _timeController.text.trim(),
       date: _dateController.text.trim(),
@@ -431,6 +443,13 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 14),
+
+            _buildTextField(
+              controller: _tagsController,
+              label: 'Search Tags / Multi-Categories (comma separated)',
+              hint: 'e.g. Departmental, Electronics, Hardware, Flagship, Case Study',
             ),
             const SizedBox(height: 24),
 

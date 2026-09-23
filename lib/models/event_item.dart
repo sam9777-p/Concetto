@@ -2,6 +2,7 @@ class EventItem {
   final String id;
   final String title;
   final String category;
+  final List<String> tags;
   final String venue;
   final String time;
   final String description;
@@ -26,6 +27,7 @@ class EventItem {
     required this.id,
     required this.title,
     required this.category,
+    this.tags = const [],
     required this.venue,
     required this.time,
     required this.description,
@@ -50,6 +52,7 @@ class EventItem {
     String? id,
     String? title,
     String? category,
+    List<String>? tags,
     String? venue,
     String? time,
     String? description,
@@ -73,6 +76,7 @@ class EventItem {
       id: id ?? this.id,
       title: title ?? this.title,
       category: category ?? this.category,
+      tags: tags ?? this.tags,
       venue: venue ?? this.venue,
       time: time ?? this.time,
       description: description ?? this.description,
@@ -99,6 +103,10 @@ class EventItem {
       id: id,
       title: json['title'] ?? '',
       category: json['category'] ?? '',
+      tags: (json['tags'] as List?)?.map((e) => e.toString()).toList() ??
+          (json['category'] != null && json['category'].toString().isNotEmpty
+              ? [json['category'].toString()]
+              : const []),
       venue: json['venue'] ?? '',
       time: json['time'] ?? '',
       description: json['description'] ?? '',
@@ -124,6 +132,7 @@ class EventItem {
     return {
       'title': title,
       'category': category,
+      'tags': tags,
       'venue': venue,
       'time': time,
       'description': description,

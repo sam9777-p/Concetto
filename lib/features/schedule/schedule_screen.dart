@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/network/repositories.dart';
 import '../../core/theme/app_theme.dart';
 
@@ -410,7 +411,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                                         onTap: () => context.push('/events/detail', extra: event),
                                         borderRadius: BorderRadius.circular(14),
                                         child: Container(
-                                          padding: const EdgeInsets.all(14),
+                                          padding: const EdgeInsets.all(12),
                                           decoration: BoxDecoration(
                                             color: const Color(0xFF110604),
                                             borderRadius: BorderRadius.circular(14),
@@ -425,117 +426,161 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                                               ),
                                             ],
                                           ),
-                                          child: Column(
+                                          child: Row(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Row(
-                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                children: [
-                                                  Row(
-                                                    mainAxisSize: MainAxisSize.min,
+                                              // 2:3 rectangle portrait photo
+                                              ClipRRect(
+                                                borderRadius: BorderRadius.circular(10),
+                                                child: SizedBox(
+                                                  width: 68,
+                                                  height: 102, // 2:3 ratio (68 x 102)
+                                                  child: Stack(
+                                                    fit: StackFit.expand,
                                                     children: [
+                                                      CachedNetworkImage(
+                                                        imageUrl: event.posterUrl,
+                                                        fit: BoxFit.cover,
+                                                        placeholder: (_, _) => Container(color: const Color(0xFF140604)),
+                                                        errorWidget: (_, _, _) => Container(
+                                                          color: const Color(0xFF1A0A08),
+                                                          child: const Icon(Icons.bolt, color: Colors.white24, size: 24),
+                                                        ),
+                                                      ),
                                                       Container(
-                                                        padding: const EdgeInsets.symmetric(
-                                                          horizontal: 8,
-                                                          vertical: 3,
-                                                        ),
                                                         decoration: BoxDecoration(
-                                                          color: primaryColor.withValues(alpha: 0.15),
-                                                          borderRadius: BorderRadius.circular(6),
-                                                          border: Border.all(
-                                                            color: primaryColor.withValues(alpha: 0.4),
+                                                          gradient: LinearGradient(
+                                                            colors: [
+                                                              Colors.transparent,
+                                                              Colors.black.withValues(alpha: 0.5),
+                                                            ],
+                                                            begin: Alignment.topCenter,
+                                                            end: Alignment.bottomCenter,
                                                           ),
-                                                        ),
-                                                        child: Text(
-                                                          event.category.toUpperCase(),
-                                                          style: GoogleFonts.rajdhani(
-                                                            fontSize: 10,
-                                                            fontWeight: FontWeight.w800,
-                                                            color: primaryColor,
-                                                            letterSpacing: 0.8,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      if (event.isWatchableOnly) ...[
-                                                        const SizedBox(width: 6),
-                                                        Container(
-                                                          padding: const EdgeInsets.symmetric(
-                                                            horizontal: 6,
-                                                            vertical: 2,
-                                                          ),
-                                                          decoration: BoxDecoration(
-                                                            color: Colors.amber.withValues(alpha: 0.15),
-                                                            borderRadius: BorderRadius.circular(4),
-                                                            border: Border.all(
-                                                              color: Colors.amber.withValues(alpha: 0.5),
-                                                              width: 0.7,
-                                                            ),
-                                                          ),
-                                                          child: Text(
-                                                            'STAGE / OPEN',
-                                                            style: GoogleFonts.rajdhani(
-                                                              fontSize: 9,
-                                                              fontWeight: FontWeight.w800,
-                                                              color: Colors.amber,
-                                                              letterSpacing: 0.5,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ],
-                                                  ),
-                                                  Row(
-                                                    children: [
-                                                      Icon(Icons.access_time, size: 13, color: primaryColor),
-                                                      const SizedBox(width: 4),
-                                                      Text(
-                                                        event.time,
-                                                        style: GoogleFonts.rajdhani(
-                                                          fontSize: 12,
-                                                          fontWeight: FontWeight.w700,
-                                                          color: primaryColor,
                                                         ),
                                                       ),
                                                     ],
                                                   ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Text(
-                                                event.title,
-                                                style: GoogleFonts.rajdhani(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: Colors.white,
                                                 ),
                                               ),
-                                              const SizedBox(height: 6),
-                                              Row(
-                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                children: [
-                                                  Expanded(
-                                                    child: Row(
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Row(
+                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                       children: [
-                                                        const Icon(Icons.location_on_outlined, size: 13, color: Colors.grey),
-                                                        const SizedBox(width: 4),
-                                                        Expanded(
-                                                          child: Text(
-                                                            event.venue,
-                                                            maxLines: 1,
-                                                            overflow: TextOverflow.ellipsis,
-                                                            style: GoogleFonts.rajdhani(
-                                                              fontSize: 12,
-                                                              fontWeight: FontWeight.w500,
-                                                              color: Colors.white60,
+                                                        Row(
+                                                          mainAxisSize: MainAxisSize.min,
+                                                          children: [
+                                                            Container(
+                                                              padding: const EdgeInsets.symmetric(
+                                                                horizontal: 7,
+                                                                vertical: 2.5,
+                                                              ),
+                                                              decoration: BoxDecoration(
+                                                                color: primaryColor.withValues(alpha: 0.15),
+                                                                borderRadius: BorderRadius.circular(6),
+                                                                border: Border.all(
+                                                                  color: primaryColor.withValues(alpha: 0.4),
+                                                                ),
+                                                              ),
+                                                              child: Text(
+                                                                event.category.toUpperCase(),
+                                                                style: GoogleFonts.rajdhani(
+                                                                  fontSize: 9.5,
+                                                                  fontWeight: FontWeight.w800,
+                                                                  color: primaryColor,
+                                                                  letterSpacing: 0.8,
+                                                                ),
+                                                              ),
                                                             ),
-                                                          ),
+                                                            if (event.isWatchableOnly) ...[
+                                                              const SizedBox(width: 5),
+                                                              Container(
+                                                                padding: const EdgeInsets.symmetric(
+                                                                  horizontal: 5,
+                                                                  vertical: 2,
+                                                                ),
+                                                                decoration: BoxDecoration(
+                                                                  color: Colors.amber.withValues(alpha: 0.15),
+                                                                  borderRadius: BorderRadius.circular(4),
+                                                                  border: Border.all(
+                                                                    color: Colors.amber.withValues(alpha: 0.5),
+                                                                    width: 0.7,
+                                                                  ),
+                                                                ),
+                                                                child: Text(
+                                                                  'OPEN',
+                                                                  style: GoogleFonts.rajdhani(
+                                                                    fontSize: 8.5,
+                                                                    fontWeight: FontWeight.w800,
+                                                                    color: Colors.amber,
+                                                                    letterSpacing: 0.5,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ],
+                                                        ),
+                                                        Row(
+                                                          children: [
+                                                            Icon(Icons.access_time, size: 12, color: primaryColor),
+                                                            const SizedBox(width: 4),
+                                                            Text(
+                                                              event.time,
+                                                              style: GoogleFonts.rajdhani(
+                                                                fontSize: 11,
+                                                                fontWeight: FontWeight.w700,
+                                                                color: primaryColor,
+                                                              ),
+                                                            ),
+                                                          ],
                                                         ),
                                                       ],
                                                     ),
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                  const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.white38),
-                                                ],
+                                                    const SizedBox(height: 6),
+                                                    Text(
+                                                      event.title,
+                                                      maxLines: 2,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: GoogleFonts.rajdhani(
+                                                        fontSize: 14.5,
+                                                        fontWeight: FontWeight.w700,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    Row(
+                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                      children: [
+                                                        Expanded(
+                                                          child: Row(
+                                                            children: [
+                                                              const Icon(Icons.location_on_outlined, size: 12, color: Colors.grey),
+                                                              const SizedBox(width: 3),
+                                                              Expanded(
+                                                                child: Text(
+                                                                  event.venue,
+                                                                  maxLines: 1,
+                                                                  overflow: TextOverflow.ellipsis,
+                                                                  style: GoogleFonts.rajdhani(
+                                                                    fontSize: 11,
+                                                                    fontWeight: FontWeight.w500,
+                                                                    color: Colors.white60,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 6),
+                                                        const Icon(Icons.arrow_forward_ios, size: 11, color: Colors.white38),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                             ],
                                           ),

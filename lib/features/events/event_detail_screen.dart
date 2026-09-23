@@ -24,7 +24,7 @@ class EventDetailScreen extends StatelessWidget {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 280,
+            expandedHeight: 320,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
@@ -162,6 +162,37 @@ class EventDetailScreen extends StatelessWidget {
                       ],
                     ),
                   ),
+
+                  // Tags Cloud
+                  if (event.tags.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: event.tags.map((tag) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1B0907),
+                            borderRadius: BorderRadius.circular(7),
+                            border: Border.all(
+                              color: primaryColor.withValues(alpha: 0.35),
+                              width: 0.7,
+                            ),
+                          ),
+                          child: Text(
+                            '#${tag.toUpperCase()}',
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white70,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
                   const SizedBox(height: 16),
 
                   // Metadata Badges Wrap

@@ -1330,7 +1330,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
             final displayEvents = flagshipEvents.isNotEmpty ? flagshipEvents : events.take(6).toList();
 
             return SizedBox(
-              height: 270,
+              height: 385,
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 scrollDirection: Axis.horizontal,
@@ -1352,7 +1352,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
     return GestureDetector(
       onTap: () => context.push('/events/detail', extra: event),
       child: Container(
-        width: 225,
+        width: 200,
         margin: const EdgeInsets.symmetric(horizontal: 5),
         decoration: BoxDecoration(
           color: const Color(0xFF120504),
@@ -1370,7 +1370,9 @@ extension _HomeScreenHelpers on _HomeScreenState {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
+            // 2:3 rectangle portrait ratio poster
+            AspectRatio(
+              aspectRatio: 2 / 3,
               child: Stack(
                 children: [
                   Positioned.fill(
@@ -1459,45 +1461,66 @@ extension _HomeScreenHelpers on _HomeScreenState {
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    event.title,
-                    style: GoogleFonts.rajdhani(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.calendar_today, size: 11, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          event.date,
-                          style: GoogleFonts.rajdhani(fontSize: 11, color: Colors.grey),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          event.title,
+                          style: GoogleFonts.rajdhani(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      Text(
-                        'EXPLORE →',
-                        style: GoogleFonts.rajdhani(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.bold,
-                          color: primaryColor,
+                        if (event.tags.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              event.tags.take(2).map((t) => '#$t').join(' '),
+                              style: GoogleFonts.rajdhani(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.cyberAmber,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_today, size: 11, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            event.date,
+                            style: GoogleFonts.rajdhani(fontSize: 10.5, color: Colors.grey),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        Text(
+                          'EXPLORE →',
+                          style: GoogleFonts.rajdhani(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

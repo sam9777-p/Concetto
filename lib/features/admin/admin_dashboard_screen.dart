@@ -464,18 +464,18 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Thumbnail
+                // Thumbnail (2:3 portrait aspect ratio)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: CachedNetworkImage(
                     imageUrl: event.posterUrl,
-                    width: 70,
-                    height: 70,
+                    width: 64,
+                    height: 96,
                     fit: BoxFit.cover,
-                    placeholder: (_, _) => Container(color: Colors.black26),
+                    placeholder: (_, _) => Container(width: 64, height: 96, color: Colors.black26),
                     errorWidget: (_, _, _) => Container(
-                      width: 70,
-                      height: 70,
+                      width: 64,
+                      height: 96,
                       color: Colors.black26,
                       child: const Icon(Icons.broken_image, size: 24, color: Colors.white38),
                     ),

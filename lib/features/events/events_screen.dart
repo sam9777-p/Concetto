@@ -380,7 +380,8 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
     final filteredEvents = events.where((event) {
       final isPreEvent = event.category.toLowerCase().contains('pre') ||
           event.id.contains('_pre') ||
-          event.id.contains('preevent');
+          event.id.contains('preevent') ||
+          event.tags.any((t) => t.toLowerCase().contains('pre'));
 
       final bool matchesCategory;
       if (selectedCategory == 'All') {
@@ -388,15 +389,19 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
       } else if (selectedCategory == 'Pre-Events') {
         matchesCategory = isPreEvent;
       } else if (selectedCategory == 'Flagship') {
-        matchesCategory = event.isFlagship || event.category.toLowerCase() == 'flagship';
+        matchesCategory = event.isFlagship ||
+            event.category.toLowerCase() == 'flagship' ||
+            event.tags.any((t) => t.toLowerCase() == 'flagship');
       } else if (selectedCategory == 'Robotics') {
         matchesCategory = event.category.toLowerCase() == 'robotics' ||
+            event.tags.any((t) => t.toLowerCase() == 'robotics') ||
             event.organizerClub.toLowerCase().contains('robo') ||
             event.title.toLowerCase().contains('robo') ||
             event.title.toLowerCase().contains('autonav') ||
             event.title.toLowerCase().contains('aeroglide');
       } else if (selectedCategory == 'Electronics') {
         matchesCategory = event.category.toLowerCase() == 'electronics' ||
+            event.tags.any((t) => t.toLowerCase() == 'electronics') ||
             event.organizerClub.toLowerCase().contains('electronic') ||
             event.organizerClub.toLowerCase().contains('see') ||
             event.title.toLowerCase().contains('sparkathon') ||
@@ -404,6 +409,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
             event.title.toLowerCase().contains('fault hunt');
       } else if (selectedCategory == 'Management') {
         matchesCategory = event.category.toLowerCase() == 'management' ||
+            event.tags.any((t) => t.toLowerCase() == 'management') ||
             event.organizerClub.toLowerCase().contains('management') ||
             event.organizerClub.toLowerCase().contains('180dc') ||
             event.organizerClub.toLowerCase().contains('fintech') ||
@@ -412,6 +418,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
             event.title.toLowerCase().contains('equity auction');
       } else if (selectedCategory == 'Design') {
         matchesCategory = event.category.toLowerCase() == 'design' ||
+            event.tags.any((t) => t.toLowerCase() == 'design') ||
             event.organizerClub.toLowerCase().contains('ui/ux') ||
             event.organizerClub.toLowerCase().contains('angd') ||
             event.organizerClub.toLowerCase().contains('animation') ||
@@ -419,6 +426,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
             event.title.toLowerCase().contains('game jam');
       } else if (selectedCategory == 'Coding') {
         matchesCategory = event.category.toLowerCase() == 'coding' ||
+            event.tags.any((t) => t.toLowerCase() == 'coding') ||
             event.organizerClub.toLowerCase().contains('cyberlabs') ||
             event.organizerClub.toLowerCase().contains('coding') ||
             event.organizerClub.toLowerCase().contains('c3') ||
@@ -426,14 +434,18 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
             event.title.toLowerCase().contains('code') ||
             event.title.toLowerCase().contains('ctf');
       } else {
-        matchesCategory = event.category.toLowerCase() == selectedCategory.toLowerCase();
+        final sel = selectedCategory.toLowerCase();
+        matchesCategory = event.category.toLowerCase() == sel ||
+            event.tags.any((t) => t.toLowerCase() == sel);
       }
 
       final matchesSearch = _searchQuery.isEmpty ||
           event.title.toLowerCase().contains(_searchQuery) ||
           event.description.toLowerCase().contains(_searchQuery) ||
           event.venue.toLowerCase().contains(_searchQuery) ||
-          event.category.toLowerCase().contains(_searchQuery);
+          event.category.toLowerCase().contains(_searchQuery) ||
+          event.organizerClub.toLowerCase().contains(_searchQuery) ||
+          event.tags.any((tag) => tag.toLowerCase().contains(_searchQuery));
 
       return matchesCategory && matchesSearch;
     }).toList();
@@ -494,10 +506,10 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 320,
+        maxCrossAxisExtent: 240,
         mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: 0.68,
+        crossAxisSpacing: 14,
+        childAspectRatio: 0.50,
       ),
       itemCount: filteredEvents.length,
       itemBuilder: (context, index) {
@@ -554,8 +566,9 @@ class EventCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Poster and Badges
-            Expanded(
+            // Poster in 2:3 rectangle portrait ratio
+            AspectRatio(
+              aspectRatio: 2 / 3,
               child: Stack(
                 children: [
                   Positioned.fill(
@@ -651,71 +664,110 @@ class EventCard extends StatelessWidget {
             ),
 
             // Details
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    event.title,
-                    style: GoogleFonts.rajdhani(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    event.organizerClub,
-                    style: GoogleFonts.rajdhani(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.cyberAmber,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.calendar_today, size: 12, color: primaryColor),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          event.date,
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          event.title,
                           style: GoogleFonts.rajdhani(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.metallicMuted,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on_outlined, size: 12, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          event.venue,
+                        const SizedBox(height: 2),
+                        Text(
+                          event.organizerClub,
                           style: GoogleFonts.rajdhani(
                             fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white54,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.cyberAmber,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (event.tags.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              child: Row(
+                                children: event.tags.take(3).map((tag) => Container(
+                                  margin: const EdgeInsets.only(right: 4),
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(color: Colors.white12, width: 0.5),
+                                  ),
+                                  child: Text(
+                                    '#$tag',
+                                    style: GoogleFonts.rajdhani(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                )).toList(),
+                              ),
+                            ),
+                          ),
+                        Row(
+                          children: [
+                            Icon(Icons.calendar_today, size: 11, color: primaryColor),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                event.date,
+                                style: GoogleFonts.rajdhani(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.metallicMuted,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on_outlined, size: 11, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                event.venue,
+                                style: GoogleFonts.rajdhani(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white54,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

@@ -547,14 +547,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   // --- Official About Us & Centenary Heritage Section ---
+  // --- Official About Us & Centenary Heritage Section ---
   Widget _buildAboutUsSection(Color primaryColor, Color secondaryColor) {
     final glimpses = [
-      {'img': 'assets/about/glimpse1.png', 'title': 'Flagship Arena'},
-      {'img': 'assets/about/glimpse2.png', 'title': 'Drone & Robotics'},
-      {'img': 'assets/about/glimpse3.png', 'title': 'Overnight Hackathon'},
-      {'img': 'assets/about/glimpse4.png', 'title': 'Design Workshop'},
-      {'img': 'assets/about/glimpse5.png', 'title': 'Exhibition & Stunt'},
-      {'img': 'assets/about/glimpse6.png', 'title': 'Star Night Grandeur'},
+      {'img': 'assets/about/about1.webp', 'title': 'Where Ideas Meet Innovation', 'subtitle': 'Annual Techno-Management Fest'},
+      {'img': 'assets/about/about2.webp', 'title': 'Centauri Synapse', 'subtitle': 'Forged Over A Century'},
+      {'img': 'assets/about/about3.webp', 'title': 'Techno-Management Arena', 'subtitle': 'Curiosity, Creativity & Drive'},
+      {'img': 'assets/about/about4.webp', 'title': 'Centenary Legacy', 'subtitle': 'IIT (ISM) Dhanbad Excellence'},
+      {'img': 'assets/about/glimpse1.png', 'title': 'Flagship Arena', 'subtitle': 'Mega Robotics Battles'},
+      {'img': 'assets/about/glimpse2.png', 'title': 'Drone Arena', 'subtitle': 'Precision Flight Racing'},
+      {'img': 'assets/about/glimpse3.png', 'title': 'Overnight Hackathon', 'subtitle': '36 Hours of Non-stop Code'},
+      {'img': 'assets/about/glimpse4.png', 'title': 'Design Workshop', 'subtitle': 'Hands-on Prototyping'},
+      {'img': 'assets/about/glimpse5.png', 'title': 'Exhibition & Stunt', 'subtitle': 'Automotive & Aero Thrills'},
+      {'img': 'assets/about/glimpse6.png', 'title': 'Star Night Grandeur', 'subtitle': 'Celebrity Pronites'},
     ];
 
     return Column(
@@ -624,7 +629,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                'CONCETTO is the renowned annual techno-management fest hosted by IIT (ISM) Dhanbad. Celebrating the historic centenary milestone of the institution (1926 - 2026), Concetto\'26 unites over 20,000 innovators across 39 premier competitive arenas, workshops, guest lectures, and cultural showcases.',
+                'CONCETTO is the renowned annual techno-management fest hosted by IIT (ISM) Dhanbad. Celebrating the historic centenary milestone of the institution (1926 - 2026), Concetto\'26 unites over 20,000 innovators across premier competitive arenas, workshops, guest lectures, and cultural showcases.',
                 style: TextStyle(
                   fontSize: 12,
                   height: 1.45,
@@ -632,67 +637,124 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
-                'GLIMPSES OF CONCETTO',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.0,
-                  color: primaryColor,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'GLIMPSES OF CONCETTO',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.0,
+                      color: primaryColor,
+                    ),
+                  ),
+                  Text(
+                    'TAP TO VIEW',
+                    style: GoogleFonts.rajdhani(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white38,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 10),
               SizedBox(
-                height: 120,
+                height: 140,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
                   itemCount: glimpses.length,
                   separatorBuilder: (context, index) => const SizedBox(width: 10),
                   itemBuilder: (context, index) {
                     final item = glimpses[index];
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Stack(
-                        children: [
-                          Image.asset(
-                            item['img']!,
-                            width: 160,
-                            height: 120,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              width: 160,
-                              height: 120,
-                              color: const Color(0xFF1E0A08),
-                              child: const Icon(Icons.image, color: Colors.white24),
-                            ),
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => _showGlimpseViewer(context, item, primaryColor),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          width: 200,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
                           ),
-                          Positioned(
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.transparent,
-                                    Colors.black.withValues(alpha: 0.85),
+                          clipBehavior: Clip.antiAlias,
+                          child: Stack(
+                            children: [
+                              Positioned.fill(
+                                child: Image.asset(
+                                  item['img']!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) => Container(
+                                    color: const Color(0xFF1E0A08),
+                                    child: const Icon(Icons.image, color: Colors.white24),
+                                  ),
+                                ),
+                              ),
+                              Positioned.fill(
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Colors.transparent,
+                                        Colors.black.withValues(alpha: 0.85),
+                                      ],
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 6,
+                                right: 6,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.65),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: primaryColor.withValues(alpha: 0.5)),
+                                  ),
+                                  child: Icon(Icons.fullscreen_rounded, size: 12, color: primaryColor),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 8,
+                                left: 8,
+                                right: 8,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      item['title']!,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.rajdhani(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    Text(
+                                      item['subtitle']!,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.rajdhani(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: primaryColor,
+                                      ),
+                                    ),
                                   ],
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
                                 ),
                               ),
-                              child: Text(
-                                item['title']!,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     );
                   },
@@ -702,6 +764,131 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showGlimpseViewer(
+    BuildContext context,
+    Map<String, String> item,
+    Color primaryColor,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
+            decoration: BoxDecoration(
+              color: const Color(0xFF140605),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: primaryColor.withValues(alpha: 0.45), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: primaryColor.withValues(alpha: 0.25),
+                  blurRadius: 28,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 12, 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.camera_enhance_rounded, color: primaryColor, size: 16),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item['title']!,
+                              style: GoogleFonts.orbitron(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              item['subtitle']!,
+                              style: GoogleFonts.rajdhani(
+                                fontSize: 11.5,
+                                color: primaryColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        tooltip: 'Close',
+                      ),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: InteractiveViewer(
+                    minScale: 1.0,
+                    maxScale: 4.0,
+                    child: Center(
+                      child: Image.asset(
+                        item['img']!,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          padding: const EdgeInsets.all(40),
+                          color: Colors.black45,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(Icons.broken_image, color: Colors.white38, size: 48),
+                              SizedBox(height: 8),
+                              Text('Could not load image', style: TextStyle(color: Colors.white54)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.pinch_rounded, size: 14, color: Colors.white38),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Pinch to zoom • Drag to pan',
+                        style: GoogleFonts.rajdhani(
+                          color: Colors.white38,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
