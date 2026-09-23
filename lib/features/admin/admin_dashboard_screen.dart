@@ -469,13 +469,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   borderRadius: BorderRadius.circular(8),
                   child: CachedNetworkImage(
                     imageUrl: event.posterUrl,
-                    width: 64,
-                    height: 96,
+                    width: 96,
+                    height: 64,
                     fit: BoxFit.cover,
-                    placeholder: (_, _) => Container(width: 64, height: 96, color: Colors.black26),
+                    placeholder: (_, _) => Container(width: 96, height: 64, color: Colors.black26),
                     errorWidget: (_, _, _) => Container(
-                      width: 64,
-                      height: 96,
+                      width: 96,
+                    height: 64,
                       color: Colors.black26,
                       child: const Icon(Icons.broken_image, size: 24, color: Colors.white38),
                     ),

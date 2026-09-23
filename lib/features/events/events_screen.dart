@@ -227,7 +227,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Prom Night \'26 • Kryptos Cryptic Hunt • Movie Night',
+                              'Prom Night \'26 • Kryptoes Dance Showdown • Movie Night',
                               style: GoogleFonts.rajdhani(
                                 color: Colors.white70,
                                 fontSize: 11,
@@ -506,10 +506,10 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 240,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 14,
-        childAspectRatio: 0.50,
+        maxCrossAxisExtent: 260,
+        mainAxisSpacing: 14,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.72,
       ),
       itemCount: filteredEvents.length,
       itemBuilder: (context, index) {
@@ -566,9 +566,9 @@ class EventCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Poster in 2:3 rectangle portrait ratio
+            // Poster in 3:2 rectangle ratio
             AspectRatio(
-              aspectRatio: 2 / 3,
+              aspectRatio: 3 / 2,
               child: Stack(
                 children: [
                   Positioned.fill(

@@ -668,13 +668,13 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
             ),
             child: Row(
               children: [
-                Expanded(child: _buildDayMilestone('DAY 1', 'OCT 08', true)),
+                Expanded(child: _buildDayMilestone('DAY 0', 'OCT 08', true)),
                 _buildMilestoneDivider(),
-                Expanded(child: _buildDayMilestone('DAY 2', 'OCT 09', false)),
+                Expanded(child: _buildDayMilestone('DAY 1', 'OCT 09', false)),
                 _buildMilestoneDivider(),
-                Expanded(child: _buildDayMilestone('DAY 3', 'OCT 10', false)),
+                Expanded(child: _buildDayMilestone('DAY 2', 'OCT 10', false)),
                 _buildMilestoneDivider(),
-                Expanded(child: _buildDayMilestone('FINALE', 'OCT 11', false)),
+                Expanded(child: _buildDayMilestone('DAY 3', 'OCT 11', false)),
               ],
             ),
           ),
@@ -1167,7 +1167,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                 child: _buildActionTile(
                   icon: Icons.schedule,
                   title: 'Festival Timeline',
-                  subtitle: 'Day 1 to Day 3 Flow',
+                  subtitle: 'Day 0 to Day 3 Flow',
                   accentColor: const Color(0xFF00E5FF),
                   onTap: () => context.go('/schedule'),
                 ),
@@ -1330,7 +1330,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
             final displayEvents = flagshipEvents.isNotEmpty ? flagshipEvents : events.take(6).toList();
 
             return SizedBox(
-              height: 385,
+              height: 285,
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 scrollDirection: Axis.horizontal,
@@ -1352,8 +1352,8 @@ extension _HomeScreenHelpers on _HomeScreenState {
     return GestureDetector(
       onTap: () => context.push('/events/detail', extra: event),
       child: Container(
-        width: 200,
-        margin: const EdgeInsets.symmetric(horizontal: 5),
+        width: 260,
+        margin: const EdgeInsets.symmetric(horizontal: 6),
         decoration: BoxDecoration(
           color: const Color(0xFF120504),
           borderRadius: BorderRadius.circular(16),
@@ -1370,9 +1370,9 @@ extension _HomeScreenHelpers on _HomeScreenState {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 2:3 rectangle portrait ratio poster
+            // 3:2 rectangle ratio poster
             AspectRatio(
-              aspectRatio: 2 / 3,
+              aspectRatio: 3 / 2,
               child: Stack(
                 children: [
                   Positioned.fill(

@@ -433,8 +433,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                                               ClipRRect(
                                                 borderRadius: BorderRadius.circular(10),
                                                 child: SizedBox(
-                                                  width: 68,
-                                                  height: 102, // 2:3 ratio (68 x 102)
+                                                  width: 96,
+                                                  height: 64, // 2:3 ratio (68 x 102)
                                                   child: Stack(
                                                     fit: StackFit.expand,
                                                     children: [

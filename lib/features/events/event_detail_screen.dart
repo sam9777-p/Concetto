@@ -24,7 +24,7 @@ class EventDetailScreen extends StatelessWidget {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 320,
+            expandedHeight: 260,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
