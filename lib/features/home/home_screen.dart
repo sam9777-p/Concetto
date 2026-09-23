@@ -6,13 +6,14 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/network/repositories.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/event_item.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/announcement_item.dart';
 
-// 1. Define the Star Model
+// --- Star Model for Background Starfield ---
 class Star {
   final double x;
   final double y;
@@ -61,17 +62,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
 
   void _generateStars(Size size) {
     final random = math.Random(42);
-    for (int i = 0; i < 90; i++) {
-      final isCross = random.nextDouble() > 0.85;
+    for (int i = 0; i < 95; i++) {
+      final isCross = random.nextDouble() > 0.82;
       _stars.add(
         Star(
           x: random.nextDouble() * size.width,
           y: random.nextDouble() * size.height,
-          size: isCross ? random.nextDouble() * 3 + 2 : random.nextDouble() * 1.5 + 0.5,
+          size: isCross ? random.nextDouble() * 3 + 2.2 : random.nextDouble() * 1.5 + 0.6,
           isCross: isCross,
           twinkleSpeed: random.nextDouble() * 3 + 1,
           color: isCross
-              ? const Color(0xFFFF5722).withValues(alpha: 0.6)
+              ? const Color(0xFFFF5722).withValues(alpha: 0.75)
               : Colors.white.withValues(alpha: random.nextDouble() * 0.5 + 0.3),
         ),
       );
@@ -95,7 +96,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
       backgroundColor: const Color(0xFF070202),
       body: Stack(
         children: [
-          // Twinkling Starfield Layer (isolated with RepaintBoundary)
+          // 1. Cosmic Aurora & Glow Accents
+          Positioned(
+            top: -60,
+            right: -60,
+            child: Container(
+              width: 260,
+              height: 260,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    primaryColor.withValues(alpha: 0.18),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 420,
+            left: -80,
+            child: Container(
+              width: 280,
+              height: 280,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF00E5FF).withValues(alpha: 0.08),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // 2. Twinkling Starfield Layer
           RepaintBoundary(
             child: AnimatedBuilder(
               animation: _starController,
@@ -111,7 +148,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             ),
           ),
 
-          // Scrollable Content Layer (isolated with RepaintBoundary)
+          // 3. Scrollable Content Layer
           SafeArea(
             child: RepaintBoundary(
               child: SingleChildScrollView(
@@ -121,140 +158,181 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                   children: [
                     const SizedBox(height: 12),
 
-                  // Header / Logo Bar
-                  _buildHeader(primaryColor, secondaryColor)
-                      .animate()
-                      .fadeIn(duration: 400.ms)
-                      .slideY(begin: -0.05, end: 0),
+                    // Top Futuristic Header
+                    _buildHeader(primaryColor, secondaryColor)
+                        .animate()
+                        .fadeIn(duration: 400.ms)
+                        .slideY(begin: -0.06, end: 0),
 
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 18),
 
-                  // Centenary Theme Banner
-                  _buildThemeBanner(primaryColor, secondaryColor)
-                      .animate()
-                      .fadeIn(duration: 450.ms, delay: 100.ms)
-                      .slideY(begin: 0.05, end: 0),
+                    // Epic Centenary Hero Showcase
+                    _buildHeroShowcase(primaryColor, secondaryColor)
+                        .animate()
+                        .fadeIn(duration: 450.ms, delay: 80.ms)
+                        .slideY(begin: 0.05, end: 0),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                  // Countdown Timer
-                  ConcettoCountdownTimer(primaryColor: primaryColor)
-                      .animate()
-                      .fadeIn(duration: 450.ms, delay: 180.ms)
-                      .slideY(begin: 0.05, end: 0),
+                    // Telemetry Countdown Mission Clock
+                    ConcettoCountdownTimer(primaryColor: primaryColor)
+                        .animate()
+                        .fadeIn(duration: 450.ms, delay: 150.ms)
+                        .slideY(begin: 0.05, end: 0),
 
-                  const SizedBox(height: 28),
+                    const SizedBox(height: 28),
 
-                  // Live Announcements Stream
-                  _buildAnnouncementsSection(announcementsAsync, primaryColor)
-                      .animate()
-                      .fadeIn(duration: 450.ms, delay: 260.ms),
+                    // Live Transmissions & Announcements
+                    _buildAnnouncementsSection(announcementsAsync, primaryColor)
+                        .animate()
+                        .fadeIn(duration: 450.ms, delay: 220.ms),
 
-                  const SizedBox(height: 28),
+                    const SizedBox(height: 28),
 
-                  // Key Stats Bar (Why Concetto?)
-                  _buildStatsBar(primaryColor)
-                      .animate()
-                      .fadeIn(duration: 450.ms, delay: 340.ms),
+                    // Key Festival Metrics (Why Concetto?)
+                    _buildStatsBar(primaryColor)
+                        .animate()
+                        .fadeIn(duration: 450.ms, delay: 280.ms),
 
-                  const SizedBox(height: 32),
+                    const SizedBox(height: 32),
 
-                  // Featured Flagship Events Carousel
-                  _buildFeaturedEventsSection(eventsAsync, primaryColor)
-                      .animate()
-                      .fadeIn(duration: 450.ms, delay: 420.ms),
+                    // Command Deck - Quick Action Matrix
+                    _buildQuickActionHub(context, primaryColor)
+                        .animate()
+                        .fadeIn(duration: 450.ms, delay: 340.ms),
 
-                  const SizedBox(height: 32),
+                    const SizedBox(height: 32),
 
-                  // Quick Action Hub (Events, Schedule, Pass, Accommodation)
-                  _buildQuickActionHub(context, primaryColor)
-                      .animate()
-                      .fadeIn(duration: 450.ms, delay: 500.ms),
+                    // Flagship Arenas Carousel
+                    _buildFeaturedEventsSection(eventsAsync, primaryColor)
+                        .animate()
+                        .fadeIn(duration: 450.ms, delay: 400.ms),
 
-                  const SizedBox(height: 32),
+                    const SizedBox(height: 32),
 
-                  // Voices of Concetto (Leadership Quotes)
-                  _buildLeadershipVoicesSection(primaryColor)
-                      .animate()
-                      .fadeIn(duration: 450.ms, delay: 540.ms),
+                    // Voices of Concetto (Leadership Speeches with 5-6 lines preview)
+                    _buildLeadershipVoicesSection(primaryColor)
+                        .animate()
+                        .fadeIn(duration: 450.ms, delay: 460.ms),
 
-                  const SizedBox(height: 32),
+                    const SizedBox(height: 32),
 
-                  // About Fest & Centenary Footer Card
-                  _buildAboutSection(primaryColor, secondaryColor)
-                      .animate()
-                      .fadeIn(duration: 450.ms, delay: 580.ms),
+                    // Relive the Legacy - Moments & Glimpses Gallery
+                    _buildGlimpsesSection(primaryColor)
+                        .animate()
+                        .fadeIn(duration: 450.ms, delay: 520.ms),
 
-                  const SizedBox(height: 40),
-                ],
+                    const SizedBox(height: 32),
+
+                    // Centenary Heritage & Festival Contact Footer
+                    _buildAboutSection(primaryColor, secondaryColor)
+                        .animate()
+                        .fadeIn(duration: 450.ms, delay: 580.ms),
+
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
-  // --- Header ---
+  // --- Top Futuristic Header HUD ---
   Widget _buildHeader(Color primaryColor, Color secondaryColor) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          // Logo + Fest Branding
           Flexible(
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
+                  padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: primaryColor.withValues(alpha: 0.5)),
+                    borderRadius: BorderRadius.circular(12),
+                    gradient: LinearGradient(
+                      colors: [
+                        primaryColor.withValues(alpha: 0.8),
+                        Colors.black,
+                        secondaryColor.withValues(alpha: 0.6),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: primaryColor.withValues(alpha: 0.25),
-                        blurRadius: 8,
+                        color: primaryColor.withValues(alpha: 0.35),
+                        blurRadius: 10,
+                        spreadRadius: 1,
                       ),
                     ],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(9),
+                    borderRadius: BorderRadius.circular(10),
                     child: Image.asset(
                       'assets/images/logo_square.png',
-                      height: 40,
-                      width: 40,
+                      height: 42,
+                      width: 42,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) => Image.asset(
                         'assets/logo_final.webp',
-                        height: 40,
+                        height: 42,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 Flexible(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        "CONCETTO '26",
-                        style: GoogleFonts.orbitron(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: 1.2,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "CONCETTO '26",
+                            style: GoogleFonts.orbitron(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 1.2,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(width: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                            decoration: BoxDecoration(
+                              color: primaryColor.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: primaryColor.withValues(alpha: 0.6), width: 0.6),
+                            ),
+                            child: Text(
+                              "100 YRS",
+                              style: GoogleFonts.rajdhani(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: primaryColor,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       Text(
                         "IIT (ISM) DHANBAD",
                         style: GoogleFonts.rajdhani(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: primaryColor,
-                          letterSpacing: 1.0,
+                          color: AppTheme.metallicMuted,
+                          letterSpacing: 1.2,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -265,29 +343,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             ),
           ),
           const SizedBox(width: 8),
+
+          // Date / Status Badge with Pulsing Live Beacon
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: const Color(0xFF140604),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: primaryColor.withValues(alpha: 0.45)),
+              border: Border.all(color: primaryColor.withValues(alpha: 0.5)),
               boxShadow: [
                 BoxShadow(
-                  color: primaryColor.withValues(alpha: 0.12),
-                  blurRadius: 8,
+                  color: primaryColor.withValues(alpha: 0.15),
+                  blurRadius: 10,
+                  spreadRadius: 1,
                 ),
               ],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.bolt, size: 13, color: primaryColor),
-                const SizedBox(width: 4),
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF00E676),
+                    shape: BoxShape.circle,
+                  ),
+                )
+                    .animate(onPlay: (c) => c.repeat(reverse: true))
+                    .fade(begin: 0.3, end: 1.0, duration: 800.ms),
+                const SizedBox(width: 6),
                 Text(
                   'OCT 08 - 11',
-                  style: GoogleFonts.rajdhani(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
+                  style: GoogleFonts.orbitron(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
                     color: primaryColor,
                     letterSpacing: 0.8,
                   ),
@@ -300,27 +390,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     );
   }
 
-  // --- Theme Banner ---
-  Widget _buildThemeBanner(Color primaryColor, Color secondaryColor) {
+  // --- Epic Centenary Hero Showcase ---
+  Widget _buildHeroShowcase(Color primaryColor, Color secondaryColor) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           gradient: LinearGradient(
             colors: [
-              primaryColor.withValues(alpha: 0.15),
-              Colors.black.withValues(alpha: 0.6),
+              const Color(0xFF1C0907),
+              const Color(0xFF100403),
+              Colors.black.withValues(alpha: 0.9),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          border: Border.all(color: primaryColor.withValues(alpha: 0.4)),
+          border: Border.all(color: primaryColor.withValues(alpha: 0.45), width: 1.2),
           boxShadow: [
             BoxShadow(
-              color: primaryColor.withValues(alpha: 0.08),
-              blurRadius: 16,
+              color: primaryColor.withValues(alpha: 0.14),
+              blurRadius: 20,
               spreadRadius: 2,
             ),
           ],
@@ -328,62 +419,148 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Top Edition Pill
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                   decoration: BoxDecoration(
-                    color: primaryColor,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Text(
-                    'CENTENARY EDITION',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.black,
-                      letterSpacing: 1,
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF5722), Color(0xFFFFA000)],
                     ),
+                    borderRadius: BorderRadius.circular(6),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF5722).withValues(alpha: 0.4),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.star, size: 10, color: Colors.black),
+                      const SizedBox(width: 4),
+                      Text(
+                        'CENTENARY EDITION • 1926-2026',
+                        style: GoogleFonts.rajdhani(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 8),
+                const Spacer(),
                 Text(
-                  'IIT (ISM) DHANBAD',
-                  style: TextStyle(
+                  'IIT (ISM)',
+                  style: GoogleFonts.rajdhani(
                     fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: secondaryColor.withValues(alpha: 0.8),
-                    letterSpacing: 1,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white60,
+                    letterSpacing: 1.2,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
+
+            // Hero Title
             Text(
               'Centauri Synapse',
-              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                    height: 1.2,
+              style: GoogleFonts.orbitron(
+                fontSize: 27,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: 0.6,
+                height: 1.15,
+                shadows: [
+                  Shadow(
+                    color: primaryColor.withValues(alpha: 0.6),
+                    blurRadius: 14,
                   ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Forged Over a Century, Soaring Towards Infinity',
-              style: GoogleFonts.rajdhani(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: primaryColor,
-                letterSpacing: 1.0,
+                ],
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
+
+            // Sub-headline
             Text(
-              'Where a century of academic imagination meets futuristic technology. Eastern India\'s largest techno-management celebration.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: secondaryColor.withValues(alpha: 0.85),
-                    height: 1.4,
+              'Forged Over a Century • Soaring Towards Infinity',
+              style: GoogleFonts.rajdhani(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w800,
+                color: primaryColor,
+                letterSpacing: 0.8,
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // Description
+            Text(
+              'Eastern India\'s largest techno-management celebration. A century of pioneer mining & engineering legacy converging into three days of robotics, coding, hackathons, and innovation.',
+              style: GoogleFonts.rajdhani(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Colors.white.withValues(alpha: 0.82),
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            // Dual CTA Action Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => context.go('/events'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 4,
+                      shadowColor: primaryColor.withValues(alpha: 0.6),
+                    ),
+                    icon: const Icon(Icons.bolt, size: 16, color: Colors.black),
+                    label: Text(
+                      'EXPLORE EVENTS',
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1,
+                      ),
+                    ),
                   ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => context.go('/schedule'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: BorderSide(color: primaryColor.withValues(alpha: 0.6), width: 1.2),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    icon: Icon(Icons.calendar_month, size: 16, color: primaryColor),
+                    label: Text(
+                      'TIMELINE',
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -393,7 +570,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
 
 }
 
-// --- Isolated High-Performance Countdown Timer Widget ---
+// --- High-Performance Futuristic Countdown Clock ---
 class ConcettoCountdownTimer extends StatefulWidget {
   final Color primaryColor;
 
@@ -438,26 +615,51 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
     final seconds = _timeRemaining.inSeconds % 60;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Section Title with Radar Beacon
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(Icons.timer_outlined, size: 16, color: widget.primaryColor),
-              const SizedBox(width: 6),
-              Text(
-                'TIME UNTIL LAUNCH',
-                style: GoogleFonts.rajdhani(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                  color: widget.primaryColor,
+              Row(
+                children: [
+                  Icon(Icons.radar, size: 16, color: widget.primaryColor),
+                  const SizedBox(width: 6),
+                  Text(
+                    'MISSION LAUNCH TELEMETRY',
+                    style: GoogleFonts.rajdhani(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.3,
+                      color: widget.primaryColor,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                decoration: BoxDecoration(
+                  color: widget.primaryColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: widget.primaryColor.withValues(alpha: 0.4), width: 0.6),
+                ),
+                child: Text(
+                  'T-MINUS',
+                  style: GoogleFonts.orbitron(
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w700,
+                    color: widget.primaryColor,
+                    letterSpacing: 1,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
+
+          // Digits Grid
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -467,25 +669,82 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
               _buildTimerSeparator(),
               _buildDigitBox(minutes.toString().padLeft(2, '0'), 'MINS'),
               _buildTimerSeparator(),
-              _buildDigitBox(seconds.toString().padLeft(2, '0'), 'SECS'),
+              _buildDigitBox(seconds.toString().padLeft(2, '0'), 'SECS', isLive: true),
             ],
+          ),
+          const SizedBox(height: 10),
+
+          // Mini Festival Progress Milestone Indicator
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F0403),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: widget.primaryColor.withValues(alpha: 0.25)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildDayMilestone('DAY 1', 'OCT 08', true),
+                _buildMilestoneDivider(),
+                _buildDayMilestone('DAY 2', 'OCT 09', false),
+                _buildMilestoneDivider(),
+                _buildDayMilestone('DAY 3', 'OCT 10', false),
+                _buildMilestoneDivider(),
+                _buildDayMilestone('FINALE', 'OCT 11', false),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDigitBox(String digits, String label) {
+  Widget _buildDayMilestone(String day, String date, bool isCurrent) {
+    return Column(
+      children: [
+        Text(
+          day,
+          style: GoogleFonts.orbitron(
+            fontSize: 9.5,
+            fontWeight: FontWeight.w800,
+            color: isCurrent ? widget.primaryColor : Colors.white60,
+          ),
+        ),
+        Text(
+          date,
+          style: GoogleFonts.rajdhani(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            color: isCurrent ? Colors.white : Colors.white38,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMilestoneDivider() {
+    return Container(
+      width: 16,
+      height: 1,
+      color: widget.primaryColor.withValues(alpha: 0.35),
+    );
+  }
+
+  Widget _buildDigitBox(String digits, String label, {bool isLive = false}) {
     return Container(
       width: 74,
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF130604),
+        color: const Color(0xFF140604),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: widget.primaryColor.withValues(alpha: 0.45), width: 0.8),
+        border: Border.all(
+          color: isLive ? widget.primaryColor : widget.primaryColor.withValues(alpha: 0.45),
+          width: isLive ? 1.0 : 0.8,
+        ),
         boxShadow: [
           BoxShadow(
-            color: widget.primaryColor.withValues(alpha: 0.12),
+            color: widget.primaryColor.withValues(alpha: isLive ? 0.2 : 0.08),
             blurRadius: 10,
             spreadRadius: 1,
           ),
@@ -497,8 +756,8 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
             digits,
             style: GoogleFonts.orbitron(
               fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: widget.primaryColor,
+              fontWeight: FontWeight.w800,
+              color: isLive ? const Color(0xFFFF7043) : widget.primaryColor,
               letterSpacing: 1.2,
               shadows: [
                 Shadow(
@@ -508,12 +767,12 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
               ],
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Text(
             label,
             style: GoogleFonts.rajdhani(
               fontSize: 10,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
               color: AppTheme.metallicMuted,
               letterSpacing: 1.2,
             ),
@@ -527,9 +786,9 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
     return Text(
       ':',
       style: TextStyle(
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: FontWeight.bold,
-        color: widget.primaryColor.withValues(alpha: 0.7),
+        color: widget.primaryColor.withValues(alpha: 0.65),
       ),
     );
   }
@@ -537,7 +796,7 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
 
 extension _HomeScreenHelpers on _HomeScreenState {
 
-  // --- Announcements Section ---
+  // --- Live Transmissions & Announcements ---
   Widget _buildAnnouncementsSection(
     AsyncValue<List<AnnouncementItem>> announcementsAsync,
     Color primaryColor,
@@ -546,7 +805,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -555,31 +814,47 @@ extension _HomeScreenHelpers on _HomeScreenState {
                   Icon(Icons.campaign, size: 18, color: primaryColor),
                   const SizedBox(width: 8),
                   Text(
-                    'LIVE ANNOUNCEMENTS',
+                    'LIVE TRANSMISSIONS & ALERTS',
                     style: GoogleFonts.rajdhani(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.3,
                       color: primaryColor,
                     ),
                   ),
                 ],
               ),
               Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF00E676),
-                  shape: BoxShape.circle,
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00E676).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF00E676).withValues(alpha: 0.5), width: 0.6),
                 ),
-              )
-                  .animate(onPlay: (c) => c.repeat(reverse: true))
-                  .scale(
-                    begin: const Offset(0.7, 0.7),
-                    end: const Offset(1.3, 1.3),
-                    duration: 1000.ms,
-                  )
-                  .fade(begin: 0.5, end: 1.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF00E676),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'ACTIVE',
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF00E676),
+                        letterSpacing: 0.6,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -592,20 +867,20 @@ extension _HomeScreenHelpers on _HomeScreenState {
             ),
           ),
           error: (err, _) => Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text('Failed to load updates: $err'),
           ),
           data: (announcements) {
             if (announcements.isEmpty) {
               return const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
+                padding: EdgeInsets.symmetric(horizontal: 16),
                 child: Text('No active announcements right now.'),
               );
             }
             return SizedBox(
-              height: 135,
+              height: 140,
               child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
                 itemCount: announcements.length,
@@ -623,91 +898,166 @@ extension _HomeScreenHelpers on _HomeScreenState {
 
   Widget _buildAnnouncementCard(AnnouncementItem ann, Color primaryColor) {
     Color tagColor = primaryColor;
-    if (ann.tag == 'URGENT') tagColor = Colors.redAccent;
-    if (ann.tag == 'HACKATHON') tagColor = Colors.cyanAccent;
-    if (ann.tag == 'INFO') tagColor = Colors.lightBlueAccent;
+    if (ann.tag == 'URGENT') tagColor = const Color(0xFFFF5252);
+    if (ann.tag == 'HACKATHON') tagColor = const Color(0xFF00E5FF);
+    if (ann.tag == 'INFO') tagColor = const Color(0xFF64B5F6);
 
     final dateStr = DateFormat('MMM d, h:mm a').format(ann.timestamp);
 
-    return Container(
-      width: 280,
-      margin: const EdgeInsets.symmetric(horizontal: 6),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF100605),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: tagColor.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: tagColor.withValues(alpha: 0.5)),
-                ),
-                child: Text(
-                  ann.tag,
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    color: tagColor,
-                    letterSpacing: 0.8,
+    return InkWell(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (ctx) => Dialog(
+            backgroundColor: const Color(0xFF140605),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: tagColor.withValues(alpha: 0.5)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: tagColor.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: tagColor.withValues(alpha: 0.5)),
+                        ),
+                        child: Text(
+                          ann.tag,
+                          style: GoogleFonts.rajdhani(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: tagColor,
+                          ),
+                        ),
+                      ),
+                      Text(dateStr, style: const TextStyle(fontSize: 11, color: Colors.white54)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    ann.title,
+                    style: GoogleFonts.rajdhani(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    ann.description,
+                    style: const TextStyle(fontSize: 13, color: Colors.white70, height: 1.5),
+                  ),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: Text('CLOSE', style: TextStyle(color: primaryColor)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: 285,
+        margin: const EdgeInsets.symmetric(horizontal: 5),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF120504),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.4),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: tagColor.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: tagColor.withValues(alpha: 0.5)),
+                  ),
+                  child: Text(
+                    ann.tag,
+                    style: GoogleFonts.rajdhani(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.bold,
+                      color: tagColor,
+                      letterSpacing: 0.8,
+                    ),
                   ),
                 ),
-              ),
-              Text(
-                dateStr,
-                style: const TextStyle(fontSize: 10, color: Colors.white54),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            ann.title,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+                Text(
+                  dateStr,
+                  style: GoogleFonts.rajdhani(fontSize: 10.5, color: Colors.white54),
+                ),
+              ],
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            ann.description,
-            style: const TextStyle(fontSize: 11, color: Colors.white70, height: 1.3),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+            const SizedBox(height: 6),
+            Text(
+              ann.title,
+              style: GoogleFonts.rajdhani(
+                fontSize: 13.5,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              ann.description,
+              style: const TextStyle(fontSize: 11, color: Colors.white70, height: 1.3),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  // --- Why Concetto? Stats Bar ---
+  // --- Key Festival Metrics (Why Concetto?) ---
   Widget _buildStatsBar(Color primaryColor) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.auto_graph, size: 16, color: primaryColor),
+              Icon(Icons.auto_graph_rounded, size: 16, color: primaryColor),
               const SizedBox(width: 6),
               Text(
-                'WHY CONCETTO?',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
+                'WHY CONCETTO? • FESTIVAL IMPACT',
+                style: GoogleFonts.rajdhani(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.3,
                   color: primaryColor,
                 ),
               ),
@@ -720,9 +1070,9 @@ extension _HomeScreenHelpers on _HomeScreenState {
               const SizedBox(width: 8),
               Expanded(child: _buildStatItem('100+', 'Events', Icons.emoji_events, primaryColor)),
               const SizedBox(width: 8),
-              Expanded(child: _buildStatItem('100+', 'Colleges', Icons.school, primaryColor)),
+              Expanded(child: _buildStatItem('150+', 'Colleges', Icons.school, primaryColor)),
               const SizedBox(width: 8),
-              Expanded(child: _buildStatItem('₹ Lakhs', 'Prizes', Icons.monetization_on, primaryColor)),
+              Expanded(child: _buildStatItem('₹15L+', 'Prizes', Icons.monetization_on, primaryColor)),
             ],
           ),
         ],
@@ -732,28 +1082,39 @@ extension _HomeScreenHelpers on _HomeScreenState {
 
   Widget _buildStatItem(String value, String label, IconData icon, Color primaryColor) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFF100605),
+        color: const Color(0xFF120504),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: primaryColor.withValues(alpha: 0.25)),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: primaryColor.withValues(alpha: 0.08),
+            blurRadius: 8,
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Icon(icon, size: 18, color: primaryColor),
+          Icon(icon, size: 20, color: primaryColor),
           const SizedBox(height: 6),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
+            style: GoogleFonts.orbitron(
+              fontSize: 14.5,
+              fontWeight: FontWeight.w800,
               color: Colors.white,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(fontSize: 10, color: Colors.white60),
+            style: GoogleFonts.rajdhani(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              color: Colors.white60,
+              letterSpacing: 0.5,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -762,7 +1123,150 @@ extension _HomeScreenHelpers on _HomeScreenState {
     );
   }
 
-  // --- Featured Events Section ---
+  // --- Command Deck - Quick Action Matrix ---
+  Widget _buildQuickActionHub(BuildContext context, Color primaryColor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.dashboard_customize, size: 16, color: primaryColor),
+              const SizedBox(width: 6),
+              Text(
+                'COMMAND DECK • QUICK ACCESS',
+                style: GoogleFonts.rajdhani(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.3,
+                  color: primaryColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildActionTile(
+                  icon: Icons.event_available,
+                  title: 'All Events',
+                  subtitle: '100+ Contests & Arenas',
+                  accentColor: primaryColor,
+                  onTap: () => context.go('/events'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildActionTile(
+                  icon: Icons.schedule,
+                  title: 'Festival Timeline',
+                  subtitle: 'Day 1 to Day 3 Flow',
+                  accentColor: const Color(0xFF00E5FF),
+                  onTap: () => context.go('/schedule'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _buildActionTile(
+                  icon: Icons.hotel,
+                  title: 'Hostel & Stay',
+                  subtitle: 'Campus Accommodation',
+                  accentColor: const Color(0xFF00E676),
+                  onTap: () => _showAccommodationSheet(context, primaryColor),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildActionTile(
+                  icon: Icons.badge,
+                  title: 'Centenary Pass',
+                  subtitle: 'My Profile & ID',
+                  accentColor: const Color(0xFFAB47BC),
+                  onTap: () => context.go('/profile'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color accentColor,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.all(13),
+          decoration: BoxDecoration(
+            color: const Color(0xFF120504),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: accentColor.withValues(alpha: 0.35)),
+            boxShadow: [
+              BoxShadow(
+                color: accentColor.withValues(alpha: 0.08),
+                blurRadius: 8,
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 20, color: accentColor),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 10.5,
+                        color: Colors.white60,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- Flagship Arenas Carousel ---
   Widget _buildFeaturedEventsSection(
     AsyncValue<List<EventItem>> eventsAsync,
     Color primaryColor,
@@ -771,20 +1275,20 @@ extension _HomeScreenHelpers on _HomeScreenState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
-                  Icon(Icons.stars, size: 18, color: primaryColor),
+                  Icon(Icons.stars_rounded, size: 18, color: primaryColor),
                   const SizedBox(width: 8),
                   Text(
-                    'FLAGSHIP HIGHLIGHTS',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
+                    'FLAGSHIP ARENAS & HIGHLIGHTS',
+                    style: GoogleFonts.rajdhani(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.3,
                       color: primaryColor,
                     ),
                   ),
@@ -795,8 +1299,8 @@ extension _HomeScreenHelpers on _HomeScreenState {
                 child: Row(
                   children: [
                     Text(
-                      'View All',
-                      style: TextStyle(
+                      'View All 100+',
+                      style: GoogleFonts.rajdhani(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: primaryColor,
@@ -813,17 +1317,17 @@ extension _HomeScreenHelpers on _HomeScreenState {
         eventsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (err, _) => Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text('Failed to load events: $err'),
           ),
           data: (events) {
             final flagshipEvents = events.where((e) => e.isFlagship).toList();
-            final displayEvents = flagshipEvents.isNotEmpty ? flagshipEvents : events.take(5).toList();
+            final displayEvents = flagshipEvents.isNotEmpty ? flagshipEvents : events.take(6).toList();
 
             return SizedBox(
-              height: 260,
+              height: 270,
               child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
                 itemCount: displayEvents.length,
@@ -843,15 +1347,15 @@ extension _HomeScreenHelpers on _HomeScreenState {
     return GestureDetector(
       onTap: () => context.push('/events/detail', extra: event),
       child: Container(
-        width: 220,
-        margin: const EdgeInsets.symmetric(horizontal: 6),
+        width: 225,
+        margin: const EdgeInsets.symmetric(horizontal: 5),
         decoration: BoxDecoration(
-          color: const Color(0xFF100605),
+          color: const Color(0xFF120504),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: primaryColor.withValues(alpha: 0.4)),
           boxShadow: [
             BoxShadow(
-              color: primaryColor.withValues(alpha: 0.1),
+              color: primaryColor.withValues(alpha: 0.12),
               blurRadius: 10,
               spreadRadius: 1,
             ),
@@ -884,6 +1388,21 @@ extension _HomeScreenHelpers on _HomeScreenState {
                       ),
                     ),
                   ),
+                  // Dark gradient overlay for text readability
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.75),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                    ),
+                  ),
                   Positioned(
                     top: 8,
                     right: 8,
@@ -895,10 +1414,11 @@ extension _HomeScreenHelpers on _HomeScreenState {
                       ),
                       child: Text(
                         event.category.toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
+                        style: GoogleFonts.rajdhani(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w900,
                           color: Colors.black,
+                          letterSpacing: 0.6,
                         ),
                       ),
                     ),
@@ -910,18 +1430,19 @@ extension _HomeScreenHelpers on _HomeScreenState {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.8),
+                          color: Colors.black.withValues(alpha: 0.85),
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: primaryColor.withValues(alpha: 0.5)),
+                          border: Border.all(color: primaryColor.withValues(alpha: 0.6)),
                         ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.emoji_events, size: 12, color: primaryColor),
                             const SizedBox(width: 4),
                             Text(
                               event.prizePool,
-                              style: TextStyle(
-                                fontSize: 10,
+                              style: GoogleFonts.orbitron(
+                                fontSize: 9.5,
                                 fontWeight: FontWeight.bold,
                                 color: primaryColor,
                               ),
@@ -940,8 +1461,8 @@ extension _HomeScreenHelpers on _HomeScreenState {
                 children: [
                   Text(
                     event.title,
-                    style: const TextStyle(
-                      fontSize: 14,
+                    style: GoogleFonts.rajdhani(
+                      fontSize: 14.5,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -951,14 +1472,22 @@ extension _HomeScreenHelpers on _HomeScreenState {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.calendar_today, size: 12, color: Colors.grey),
+                      const Icon(Icons.calendar_today, size: 11, color: Colors.grey),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           event.date,
-                          style: const TextStyle(fontSize: 11, color: Colors.grey),
+                          style: GoogleFonts.rajdhani(fontSize: 11, color: Colors.grey),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(
+                        'EXPLORE →',
+                        style: GoogleFonts.rajdhani(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.bold,
+                          color: primaryColor,
                         ),
                       ),
                     ],
@@ -972,208 +1501,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
     );
   }
 
-  // --- Quick Action Hub ---
-  Widget _buildQuickActionHub(BuildContext context, Color primaryColor) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.dashboard_customize, size: 16, color: primaryColor),
-              const SizedBox(width: 6),
-              Text(
-                'QUICK ACCESS',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                  color: primaryColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildActionTile(
-                  icon: Icons.event_note,
-                  title: 'All Events',
-                  subtitle: '100+ Contests',
-                  onTap: () => context.go('/events'),
-                  primaryColor: primaryColor,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildActionTile(
-                  icon: Icons.calendar_month,
-                  title: 'Timeline',
-                  subtitle: 'Day 1 - Day 3',
-                  onTap: () => context.go('/schedule'),
-                  primaryColor: primaryColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _buildActionTile(
-                  icon: Icons.hotel,
-                  title: 'Stay & Travel',
-                  subtitle: 'Accommodation',
-                  onTap: () => _showAccommodationSheet(context, primaryColor),
-                  primaryColor: primaryColor,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildActionTile(
-                  icon: Icons.badge,
-                  title: 'Fest Pass',
-                  subtitle: 'My Profile',
-                  onTap: () => context.go('/profile'),
-                  primaryColor: primaryColor,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-    required Color primaryColor,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: const Color(0xFF100605),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: primaryColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, size: 20, color: primaryColor),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(fontSize: 11, color: Colors.white60),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showAccommodationSheet(BuildContext context, Color primaryColor) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF0F0403),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.hotel, color: primaryColor),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Campus Accommodation',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              const Text(
-                'Enjoy a comfortable hostel stay on the IIT (ISM) Dhanbad campus throughout the festival days (October 10-12, 2026).',
-                style: TextStyle(color: Colors.white70, height: 1.4),
-              ),
-              const SizedBox(height: 12),
-              const Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.check_circle_outline, size: 16, color: Colors.greenAccent),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text('On-campus boys and girls hostel rooms', style: TextStyle(fontSize: 12)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              const Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.check_circle_outline, size: 16, color: Colors.greenAccent),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text('Convenient proximity to all festival venues', style: TextStyle(fontSize: 12)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Contact operations: anant.22je0109@nit.ac.in or +91 85030 86164'),
-                      ),
-                    );
-                  },
-                  child: const Text('CONTACT ACCOMMODATION TEAM'),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  // --- Leadership Voices Section ---
+  // --- Voices of Concetto (Leadership Speeches with 5-6 lines preview) ---
   Widget _buildLeadershipVoicesSection(Color primaryColor) {
     final quotes = [
       {
@@ -1217,28 +1545,43 @@ extension _HomeScreenHelpers on _HomeScreenState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(Icons.format_quote_rounded, size: 18, color: primaryColor),
-              const SizedBox(width: 8),
+              Row(
+                children: [
+                  Icon(Icons.format_quote_rounded, size: 18, color: primaryColor),
+                  const SizedBox(width: 8),
+                  Text(
+                    'VOICES OF CONCETTO • PATRON MESSAGES',
+                    style: GoogleFonts.rajdhani(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.3,
+                      color: primaryColor,
+                    ),
+                  ),
+                ],
+              ),
               Text(
-                'VOICES OF CONCETTO',
+                'TAP TO EXPAND',
                 style: GoogleFonts.rajdhani(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.5,
-                  color: primaryColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: primaryColor.withValues(alpha: 0.8),
+                  letterSpacing: 0.8,
                 ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 12),
+        // Height 250px so that 5-6 full lines of speech are displayed before "Read full speech"
         SizedBox(
-          height: 195,
+          height: 250,
           child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             itemCount: quotes.length,
@@ -1248,25 +1591,39 @@ extension _HomeScreenHelpers on _HomeScreenState {
               return Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(16),
                   onTap: () => _showLeadershipMessageDialog(context, q, primaryColor),
                   child: Container(
-                    width: 290,
-                    padding: const EdgeInsets.all(14),
+                    width: 300,
+                    padding: const EdgeInsets.all(15),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF110504),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+                      color: const Color(0xFF120504),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: primaryColor.withValues(alpha: 0.35)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: primaryColor.withValues(alpha: 0.08),
+                          blurRadius: 10,
+                        ),
+                      ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Speaker Avatar + Name + Role Header
                         Row(
                           children: [
-                            CircleAvatar(
-                              radius: 18,
-                              backgroundImage: AssetImage(q['image']!),
-                              backgroundColor: primaryColor.withValues(alpha: 0.2),
+                            Container(
+                              padding: const EdgeInsets.all(1.5),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: primaryColor.withValues(alpha: 0.6), width: 1.2),
+                              ),
+                              child: CircleAvatar(
+                                radius: 20,
+                                backgroundImage: AssetImage(q['image']!),
+                                backgroundColor: primaryColor.withValues(alpha: 0.2),
+                              ),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
@@ -1276,7 +1633,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                                   Text(
                                     q['name']!,
                                     style: GoogleFonts.rajdhani(
-                                      fontSize: 14,
+                                      fontSize: 14.5,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                     ),
@@ -1285,47 +1642,70 @@ extension _HomeScreenHelpers on _HomeScreenState {
                                   Text(
                                     q['role']!,
                                     style: GoogleFonts.rajdhani(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w700,
                                       color: primaryColor,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
+                            Icon(
+                              Icons.format_quote,
+                              color: primaryColor.withValues(alpha: 0.35),
+                              size: 22,
+                            ),
                           ],
                         ),
                         const SizedBox(height: 10),
+
+                        // 5 to 6 lines of pure speech visible before the button
                         Expanded(
                           child: Text(
                             '"${q['quote']}"',
-                            style: const TextStyle(
-                              fontSize: 11,
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 12.5,
                               fontStyle: FontStyle.italic,
-                              color: Colors.white70,
-                              height: 1.35,
+                              color: Colors.white.withValues(alpha: 0.85),
+                              height: 1.4,
+                              fontWeight: FontWeight.w500,
                             ),
-                            maxLines: 4,
+                            maxLines: 6,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
+
+                        // Interactive "Read Full Speech" Action Pill
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            Text(
-                              'Read full speech',
-                              style: GoogleFonts.rajdhani(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: primaryColor,
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: primaryColor.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: primaryColor.withValues(alpha: 0.5), width: 0.8),
                               ),
-                            ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.arrow_forward_rounded,
-                              size: 12,
-                              color: primaryColor,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Read full speech',
+                                    style: GoogleFonts.rajdhani(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: primaryColor,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(
+                                    Icons.arrow_forward_rounded,
+                                    size: 13,
+                                    color: primaryColor,
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -1351,20 +1731,20 @@ extension _HomeScreenHelpers on _HomeScreenState {
       builder: (ctx) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 480, maxHeight: 560),
-            padding: const EdgeInsets.all(20),
+            constraints: const BoxConstraints(maxWidth: 480, maxHeight: 580),
+            padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
-              color: const Color(0xFF140808),
+              color: const Color(0xFF140605),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: primaryColor.withValues(alpha: 0.4),
+                color: primaryColor.withValues(alpha: 0.45),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: primaryColor.withValues(alpha: 0.15),
+                  color: primaryColor.withValues(alpha: 0.2),
                   blurRadius: 24,
                   spreadRadius: 2,
                 ),
@@ -1377,7 +1757,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                 Row(
                   children: [
                     CircleAvatar(
-                      radius: 24,
+                      radius: 26,
                       backgroundImage: AssetImage(q['image']!),
                       backgroundColor: primaryColor.withValues(alpha: 0.2),
                     ),
@@ -1389,7 +1769,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                           Text(
                             q['name']!,
                             style: GoogleFonts.rajdhani(
-                              fontSize: 17,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
@@ -1398,8 +1778,8 @@ extension _HomeScreenHelpers on _HomeScreenState {
                           Text(
                             q['role']!,
                             style: GoogleFonts.rajdhani(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
                               color: primaryColor,
                             ),
                           ),
@@ -1432,9 +1812,9 @@ extension _HomeScreenHelpers on _HomeScreenState {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'MESSAGE FOR CONCETTO 2026',
+                              'OFFICIAL ADDRESS • CONCETTO 2026',
                               style: GoogleFonts.rajdhani(
-                                fontSize: 11,
+                                fontSize: 11.5,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1.2,
                                 color: primaryColor,
@@ -1442,12 +1822,12 @@ extension _HomeScreenHelpers on _HomeScreenState {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 12),
                         Text(
                           q['quote']!,
                           style: const TextStyle(
-                            fontSize: 13.5,
-                            height: 1.6,
+                            fontSize: 14,
+                            height: 1.65,
                             color: Colors.white,
                             fontWeight: FontWeight.w400,
                           ),
@@ -1456,18 +1836,23 @@ extension _HomeScreenHelpers on _HomeScreenState {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 Align(
                   alignment: Alignment.centerRight,
-                  child: TextButton.icon(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
                     onPressed: () => Navigator.of(ctx).pop(),
-                    icon: Icon(Icons.check_rounded, size: 16, color: primaryColor),
+                    icon: const Icon(Icons.check_rounded, size: 16, color: Colors.black),
                     label: Text(
                       'CLOSE',
                       style: GoogleFonts.rajdhani(
                         fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: primaryColor,
+                        fontWeight: FontWeight.w800,
                         letterSpacing: 1,
                       ),
                     ),
@@ -1481,61 +1866,339 @@ extension _HomeScreenHelpers on _HomeScreenState {
     );
   }
 
-  // --- About Fest & Footer ---
+  // --- Relive the Legacy - Moments & Glimpses Gallery ---
+  Widget _buildGlimpsesSection(Color primaryColor) {
+    final glimpses = [
+      {'img': 'assets/about/glimpse1.png', 'title': 'Flagship Arena', 'subtitle': 'Mega Robotics Battles'},
+      {'img': 'assets/about/glimpse2.png', 'title': 'Drone Arena', 'subtitle': 'Precision Flight Racing'},
+      {'img': 'assets/about/glimpse3.png', 'title': 'Overnight Hackathon', 'subtitle': '36 Hours of Non-stop Code'},
+      {'img': 'assets/about/glimpse4.png', 'title': 'Design Workshop', 'subtitle': 'Hands-on Prototyping'},
+      {'img': 'assets/about/glimpse5.png', 'title': 'Exhibition & Stunt', 'subtitle': 'Automotive & Aero Thrills'},
+      {'img': 'assets/about/glimpse6.png', 'title': 'Star Night Grandeur', 'subtitle': 'Celebrity Pronites'},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.photo_library_rounded, size: 18, color: primaryColor),
+                  const SizedBox(width: 8),
+                  Text(
+                    'CONCETTO GLIMPSES • MOMENTS',
+                    style: GoogleFonts.rajdhani(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.3,
+                      color: primaryColor,
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                'EXPERIENCE',
+                style: GoogleFonts.rajdhani(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: primaryColor.withValues(alpha: 0.8),
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 180,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: glimpses.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final item = glimpses[index];
+              return Container(
+                width: 250,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: primaryColor.withValues(alpha: 0.35)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.4),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: Image.asset(
+                        item['img']!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (ctx, err, stack) => Container(
+                          color: const Color(0xFF140604),
+                          child: const Icon(Icons.image, color: Colors.white24),
+                        ),
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withValues(alpha: 0.85),
+                            ],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 12,
+                      left: 12,
+                      right: 12,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item['title']!,
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            item['subtitle']!,
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 11,
+                              color: primaryColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  // --- Accommodation Modal Bottom Sheet ---
+  void _showAccommodationSheet(BuildContext context, Color primaryColor) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF120504),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(Icons.hotel, color: primaryColor, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Campus Stay & Accommodation',
+                          style: GoogleFonts.rajdhani(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          'IIT (ISM) Dhanbad Hostels',
+                          style: GoogleFonts.rajdhani(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: primaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Enjoy secure hostel accommodation right on the IIT (ISM) Dhanbad campus throughout the festival days (October 08-11, 2026).',
+                style: GoogleFonts.rajdhani(fontSize: 13, color: Colors.white70, height: 1.4),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.check_circle_rounded, size: 16, color: Color(0xFF00E676)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Dedicated boys and girls hostel wings with security',
+                      style: GoogleFonts.rajdhani(fontSize: 12.5, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.check_circle_rounded, size: 16, color: Color(0xFF00E676)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Direct walking distance to SAC, Penman Auditorium, and all arenas',
+                      style: GoogleFonts.rajdhani(fontSize: 12.5, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    final telUri = Uri.parse('tel:+918503086164');
+                    if (await canLaunchUrl(telUri)) {
+                      await launchUrl(telUri);
+                    } else {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Contact Operations: +91 85030 86164 or anant.22je0109@nit.ac.in'),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  icon: const Icon(Icons.phone_in_talk, size: 18, color: Colors.black),
+                  label: Text(
+                    'CALL ACCOMMODATION DESK (+91 85030 86164)',
+                    style: GoogleFonts.rajdhani(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // --- Centenary Heritage & About Fest Footer ---
   Widget _buildAboutSection(Color primaryColor, Color secondaryColor) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFF0F0403),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: primaryColor.withValues(alpha: 0.2)),
+          color: const Color(0xFF100403),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: primaryColor.withValues(alpha: 0.25)),
+          boxShadow: [
+            BoxShadow(
+              color: primaryColor.withValues(alpha: 0.06),
+              blurRadius: 14,
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'ABOUT CONCETTO',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: primaryColor,
-                letterSpacing: 1.2,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'CONCETTO is the premier annual Techno-Management Fest hosted by Indian Institute of Technology (ISM) Dhanbad. Over 20,000 students from 100+ institutes nationwide compete in robotics, engineering design, hackathons, and management case studies.',
-              style: TextStyle(
-                fontSize: 12,
-                color: secondaryColor.withValues(alpha: 0.8),
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Divider(color: Colors.white12),
-            const SizedBox(height: 12),
             Row(
               children: [
-                Icon(Icons.location_pin, size: 16, color: primaryColor),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.account_balance, size: 16, color: primaryColor),
+                ),
                 const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'IIT (ISM) Dhanbad, Jharkhand - 826004',
-                    style: TextStyle(fontSize: 11, color: Colors.white60),
+                Text(
+                  '100 YEARS OF LEGACY • IIT (ISM)',
+                  style: GoogleFonts.rajdhani(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: primaryColor,
+                    letterSpacing: 1.2,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 12),
+            Text(
+              'Established in 1926 as the Indian School of Mines and upgraded to an Indian Institute of Technology, IIT (ISM) Dhanbad enters its monumental Centenary Year. CONCETTO 2026 brings over 20,000 delegates from 150+ premier institutions nationwide to celebrate innovation, robotics, coding, aerospace, and management.',
+              style: GoogleFonts.rajdhani(
+                fontSize: 12.5,
+                color: Colors.white.withValues(alpha: 0.8),
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Divider(color: Colors.white.withValues(alpha: 0.08), height: 1),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Icon(Icons.location_on_outlined, size: 16, color: primaryColor),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'IIT (ISM) Dhanbad, Jharkhand - 826004, India',
+                    style: GoogleFonts.rajdhani(fontSize: 12, color: Colors.white70),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Icon(Icons.email_outlined, size: 16, color: primaryColor),
                 const SizedBox(width: 8),
-                const Text(
+                Text(
                   'concetto@iitism.ac.in',
-                  style: TextStyle(fontSize: 11, color: Colors.white60),
+                  style: GoogleFonts.rajdhani(fontSize: 12, color: Colors.white70),
                 ),
               ],
             ),
@@ -1546,7 +2209,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
   }
 }
 
-// 2. The Custom Painter
+// --- The Starfield Custom Painter ---
 class StarfieldPainter extends CustomPainter {
   final double animationValue;
   final List<Star> stars;
@@ -1575,4 +2238,4 @@ class StarfieldPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant StarfieldPainter oldDelegate) => true;
-}
+}
