@@ -291,6 +291,15 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
       return matchesCategory && matchesSearch;
     }).toList();
 
+    // Keep stage / watchable events at the end of the list
+    filteredEvents.sort((a, b) {
+      final aIsStage = a.isWatchableOnly || a.category.toLowerCase() == 'stage';
+      final bIsStage = b.isWatchableOnly || b.category.toLowerCase() == 'stage';
+      if (aIsStage && !bIsStage) return 1;
+      if (!aIsStage && bIsStage) return -1;
+      return 0;
+    });
+
     if (filteredEvents.isEmpty) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),

@@ -870,28 +870,14 @@ class EventDetailScreen extends StatelessWidget {
     );
   }
 
-  // --- Rulebook In-App PDF Viewer / External Link ---
+  // --- Rulebook In-App PDF Viewer ---
   void _showRulebookDialog(BuildContext context, Color primaryColor) {
-    final url = event.rulebookUrl.trim();
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      _launchExternalUrl(context, url);
-    } else if (url.isNotEmpty ||
-        event.organizerClub.toUpperCase().contains('ELECTRONICS') ||
-        event.organizerClub.toUpperCase().contains('SEE')) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => RulebookPdfViewerScreen(event: event),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Rulebook details will be published by the organizing team soon.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => RulebookPdfViewerScreen(event: event),
+      ),
+    );
   }
 
   // --- Helper to open external registration links / rulebooks ---

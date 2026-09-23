@@ -6,7 +6,7 @@ class MockData {
   static final List<EventItem> events = [
     EventItem(
       id: 'pmx180dc_caseblitz',
-      title: 'PMX180DC CaseBlitz \'26',
+      title: 'CaseBlitz \'26',
       category: 'Flagship',
       organizerClub: 'Product Management & 180DC',
       venue: 'NVCTI Incubation & NLHC Classrooms',
@@ -1787,7 +1787,7 @@ class MockData {
     ),
     AnnouncementItem(
       id: 'ann_4',
-      title: 'MasterStack & PMX180DC CaseBlitz',
+      title: 'MasterStack & CaseBlitz',
       description:
           'Overnight hackathon and premier business case study challenge portals are accepting team registrations.',
       timestamp: DateTime(2026, 10, 3, 18, 0),

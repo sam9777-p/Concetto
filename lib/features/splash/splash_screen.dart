@@ -171,22 +171,17 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                           width: 160,
                           height: 160,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0F0605),
+                            color: Colors.black.withValues(alpha: 0.35),
                             borderRadius: BorderRadius.circular(32),
                             border: Border.all(
-                              color: primaryOrange.withValues(alpha: 0.8),
-                              width: 2.0,
+                              color: primaryOrange.withValues(alpha: 0.75),
+                              width: 1.5,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: primaryOrange.withValues(alpha: 0.4),
+                                color: primaryOrange.withValues(alpha: 0.45),
                                 blurRadius: 36,
                                 spreadRadius: 4,
-                              ),
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.8),
-                                blurRadius: 16,
-                                spreadRadius: 2,
                               ),
                             ],
                           ),
@@ -194,7 +189,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(20),
                             child: Image.asset(
-                              'assets/images/logo_square.png',
+                              'assets/images/logo_transparent.png',
                               fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) {
                                 return const Icon(

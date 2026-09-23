@@ -1,4 +1,6 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import '../../models/event_item.dart';
 
@@ -19,11 +21,13 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
   int _pageCount = 0;
   int _currentPage = 1;
   bool _isLoading = true;
+  Uint8List? _pdfMemoryBytes;
 
   @override
   void initState() {
     super.initState();
     _pdfViewerController = PdfViewerController();
+    _loadPdf();
   }
 
   @override
@@ -32,9 +36,92 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
     super.dispose();
   }
 
-  String get _pdfAssetPath {
+  String _formatPdfDownloadUrl(String original) {
+    var url = original.trim();
+
+    // Google Docs to direct PDF export
+    if (url.contains('docs.google.com/document/d/')) {
+      final match = RegExp(r'docs\.google\.com/document/d/([a-zA-Z0-9_-]+)').firstMatch(url);
+      if (match != null) {
+        final docId = match.group(1);
+        return 'https://docs.google.com/document/d/$docId/export?format=pdf';
+      }
+    }
+
+    // Google Drive file to direct download
+    if (url.contains('drive.google.com/file/d/')) {
+      final match = RegExp(r'drive\.google\.com/file/d/([a-zA-Z0-9_-]+)').firstMatch(url);
+      if (match != null) {
+        final fileId = match.group(1);
+        return 'https://drive.google.com/uc?export=download&id=$fileId';
+      }
+    }
+
+    return url;
+  }
+
+  Future<void> _loadPdf() async {
+    final rawUrl = widget.event.rulebookUrl.trim();
+
+    if (rawUrl.isEmpty || (!rawUrl.startsWith('http://') && !rawUrl.startsWith('https://'))) {
+      // Local asset
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
+    final downloadUrl = _formatPdfDownloadUrl(rawUrl);
+
+    try {
+      final dio = Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 12),
+          receiveTimeout: const Duration(seconds: 20),
+          responseType: ResponseType.bytes,
+          followRedirects: true,
+          validateStatus: (status) => status != null && status < 400,
+        ),
+      );
+
+      final response = await dio.get<List<int>>(downloadUrl);
+
+      if (response.data != null && response.data!.isNotEmpty) {
+        final bytes = Uint8List.fromList(response.data!);
+        // Verify it starts with PDF magic bytes (%PDF)
+        if (bytes.length > 4 &&
+            bytes[0] == 0x25 &&
+            bytes[1] == 0x50 &&
+            bytes[2] == 0x44 &&
+            bytes[3] == 0x46) {
+          if (mounted) {
+            setState(() {
+              _pdfMemoryBytes = bytes;
+              _isLoading = false;
+            });
+            return;
+          }
+        }
+      }
+
+      // If response is HTML login page or invalid PDF, fallback gracefully
+      _useFallback();
+    } catch (e) {
+      _useFallback();
+    }
+  }
+
+  void _useFallback() {
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  String get _fallbackAssetPath {
     final url = widget.event.rulebookUrl.trim();
-    if (url.isNotEmpty && !url.startsWith('http')) {
+    if (url.isNotEmpty && !url.startsWith('http') && url.endsWith('.pdf')) {
       return url;
     }
     return 'assets/rulebooks/society_of_electronics_engineers.pdf';
@@ -42,7 +129,7 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFFFF3366);
+    final primaryColor = Theme.of(context).colorScheme.primary;
     const bgDark = Color(0xFF070709);
     const cardBg = Color(0xFF13131A);
 
@@ -72,7 +159,7 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
             Text(
               'OFFICIAL RULEBOOK & SYNOPSIS',
               style: TextStyle(
-                color: primaryColor.withValues(alpha: 0.9),
+                color: primaryColor,
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.2,
@@ -119,40 +206,55 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
       ),
       body: Stack(
         children: [
-          SfPdfViewer.asset(
-            _pdfAssetPath,
-            controller: _pdfViewerController,
-            canShowScrollHead: true,
-            canShowScrollStatus: true,
-            pageSpacing: 8,
-            onDocumentLoaded: (PdfDocumentLoadedDetails details) {
-              setState(() {
-                _pageCount = details.document.pages.count;
-                _isLoading = false;
-              });
-            },
-            onDocumentLoadFailed: (PdfDocumentLoadFailedDetails details) {
-              setState(() {
-                _isLoading = false;
-              });
-            },
-            onPageChanged: (PdfPageChangedDetails details) {
-              setState(() {
-                _currentPage = details.newPageNumber;
-              });
-            },
-          ),
+          if (!_isLoading) ...[
+            if (_pdfMemoryBytes != null)
+              SfPdfViewer.memory(
+                _pdfMemoryBytes!,
+                controller: _pdfViewerController,
+                canShowScrollHead: true,
+                canShowScrollStatus: true,
+                pageSpacing: 8,
+                onDocumentLoaded: (details) {
+                  setState(() {
+                    _pageCount = details.document.pages.count;
+                  });
+                },
+                onPageChanged: (details) {
+                  setState(() {
+                    _currentPage = details.newPageNumber;
+                  });
+                },
+              )
+            else
+              SfPdfViewer.asset(
+                _fallbackAssetPath,
+                controller: _pdfViewerController,
+                canShowScrollHead: true,
+                canShowScrollStatus: true,
+                pageSpacing: 8,
+                onDocumentLoaded: (details) {
+                  setState(() {
+                    _pageCount = details.document.pages.count;
+                  });
+                },
+                onPageChanged: (details) {
+                  setState(() {
+                    _currentPage = details.newPageNumber;
+                  });
+                },
+              ),
+          ],
           if (_isLoading)
             Container(
               color: bgDark,
-              child: const Center(
+              child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     CircularProgressIndicator(color: primaryColor),
-                    SizedBox(height: 16),
-                    Text(
-                      'Decrypting Rulebook PDF...',
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Loading Rulebook in memory...',
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 13,
@@ -187,7 +289,7 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
                   ),
                   Text(
                     'Time: ${widget.event.time}',
-                    style: TextStyle(color: primaryColor.withValues(alpha: 0.9), fontSize: 11, fontWeight: FontWeight.w600),
+                    style: TextStyle(color: primaryColor, fontSize: 11, fontWeight: FontWeight.w600),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],

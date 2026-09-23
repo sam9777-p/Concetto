@@ -1160,11 +1160,11 @@ extension _HomeScreenHelpers on _HomeScreenState {
   Widget _buildLeadershipVoicesSection(Color primaryColor) {
     final quotes = [
       {
-        'name': 'Badal Singh Naik',
-        'role': 'Student Advisor',
-        'image': 'assets/about/badal_singh.png',
+        'name': 'Prof. Gopi Krishna Dondapati',
+        'role': 'Treasurer & Faculty',
+        'image': 'assets/about/prof_gopi_krishna.png',
         'quote':
-            'Concetto stands as a vibrant platform where innovation meets imagination and ideas transform into possibilities. My vision has always been to work with dedication, embrace challenges, and strive to deliver the very best. I believe that excellence is not merely a destination, but a continuous journey driven by passion, perseverance, and teamwork.',
+            'As we commemorate the Centenary Year of IIT (ISM) Dhanbad, this edition holds a special significance as we celebrate a century of excellence, legacy, and learning. As the Treasurer, I believe that responsible financial management, transparency, and accountability are essential for transforming ideas into meaningful experiences. This fest is the result of collective effort, dedication, and teamwork from every individual involved.',
       },
       {
         'name': 'Rahul Kumar',
@@ -1174,18 +1174,18 @@ extension _HomeScreenHelpers on _HomeScreenState {
             'It is a privilege to welcome you to Concetto 2026, the premier techno-management festival of IIT (ISM) Dhanbad. As our institute celebrates a monumental century of academic brilliance and innovation, this edition stands as a tribute to our rich legacy and a stepping stone toward a limitless future.',
       },
       {
+        'name': 'Badal Singh Naik',
+        'role': 'Student Advisor',
+        'image': 'assets/about/badal_singh.png',
+        'quote':
+            'Concetto stands as a vibrant platform where innovation meets imagination and ideas transform into possibilities. My vision has always been to work with dedication, embrace challenges, and strive to deliver the very best. I believe that excellence is not merely a destination, but a continuous journey driven by passion, perseverance, and teamwork.',
+      },
+      {
         'name': 'Sourav Dutta',
         'role': 'Student Advisor',
         'image': 'assets/about/sourav_dutta.png',
         'quote':
             'It is my immense pleasure to welcome you to Concetto 2026, the annual techno-management fest of IIT (ISM), Dhanbad—where ideas take shape, innovation takes flight, and technology meets purpose. I encourage every participant to explore, experiment, compete, and learn beyond the boundaries of the classroom.',
-      },
-      {
-        'name': 'Prof. Gopi Krishna Dondapati',
-        'role': 'Treasurer',
-        'image': 'assets/about/prof_gopi_krishna.png',
-        'quote':
-            'As we commemorate the Centenary Year of IIT (ISM) Dhanbad, this edition holds a special significance as we celebrate a century of excellence, legacy, and learning. As the Treasurer, I believe that responsible financial management, transparency, and accountability are essential for transforming ideas into meaningful experiences.',
       },
     ];
 

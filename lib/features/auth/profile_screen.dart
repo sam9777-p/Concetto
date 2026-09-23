@@ -20,6 +20,7 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   String _selectedTeamFilter = 'All';
+  String? _expandedNoteMemberName;
 
   final List<String> _teamFilters = const [
     'All',
@@ -183,7 +184,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             children: [
               Row(
                 children: [
-                  Image.asset('assets/logo_final.webp', height: 32),
+                  Image.asset('assets/images/logo_transparent.png', height: 32),
                   const SizedBox(width: 8),
                   Text(
                     "CONCETTO '26 PASS",
@@ -892,21 +893,70 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           if (member.quote.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(8),
-                border: Border(left: BorderSide(color: primaryColor, width: 2.5)),
-              ),
-              child: Text(
-                '"${member.quote}"',
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontStyle: FontStyle.italic,
-                  color: Colors.white70,
-                  height: 1.35,
+            InkWell(
+              onTap: () {
+                setState(() {
+                  if (_expandedNoteMemberName == member.name) {
+                    _expandedNoteMemberName = null;
+                  } else {
+                    _expandedNoteMemberName = member.name;
+                  }
+                });
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.04),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border(left: BorderSide(color: primaryColor, width: 2.5)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                      child: Text(
+                        '"${member.quote}"',
+                        maxLines: _expandedNoteMemberName == member.name ? null : 2,
+                        overflow: _expandedNoteMemberName == member.name
+                            ? TextOverflow.visible
+                            : TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.white70,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                    if (member.quote.length > 70) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            _expandedNoteMemberName == member.name ? 'Read Less' : 'Read More',
+                            style: TextStyle(
+                              color: primaryColor,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          Icon(
+                            _expandedNoteMemberName == member.name
+                                ? Icons.keyboard_arrow_up
+                                : Icons.keyboard_arrow_down,
+                            size: 14,
+                            color: primaryColor,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),
