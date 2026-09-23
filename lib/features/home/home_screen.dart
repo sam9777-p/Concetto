@@ -292,42 +292,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                "CONCETTO '26",
-                                style: GoogleFonts.orbitron(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.white,
-                                  letterSpacing: 1.1,
-                                ),
-                              ),
-                            ),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "CONCETTO '26",
+                          style: GoogleFonts.orbitron(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: 1.1,
                           ),
-                          const SizedBox(width: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: primaryColor.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: primaryColor.withValues(alpha: 0.6), width: 0.6),
-                            ),
-                            child: Text(
-                              "100 YRS",
-                              style: GoogleFonts.rajdhani(
-                                fontSize: 8.5,
-                                fontWeight: FontWeight.w800,
-                                color: primaryColor,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                       Text(
                         "IIT (ISM) DHANBAD",
@@ -1886,6 +1862,10 @@ extension _HomeScreenHelpers on _HomeScreenState {
   // --- Relive the Legacy - Moments & Glimpses Gallery ---
   Widget _buildGlimpsesSection(Color primaryColor) {
     final glimpses = [
+      {'img': 'assets/about/about1.webp', 'title': 'Where Ideas Meet Innovation', 'subtitle': 'Annual Techno-Management Fest'},
+      {'img': 'assets/about/about2.webp', 'title': 'Centauri Synapse', 'subtitle': 'Forged Over A Century'},
+      {'img': 'assets/about/about3.webp', 'title': 'Techno-Management Arena', 'subtitle': 'Curiosity, Creativity & Drive'},
+      {'img': 'assets/about/about4.webp', 'title': 'Centenary Legacy', 'subtitle': 'IIT (ISM) Dhanbad Excellence'},
       {'img': 'assets/about/glimpse1.png', 'title': 'Flagship Arena', 'subtitle': 'Mega Robotics Battles'},
       {'img': 'assets/about/glimpse2.png', 'title': 'Drone Arena', 'subtitle': 'Precision Flight Racing'},
       {'img': 'assets/about/glimpse3.png', 'title': 'Overnight Hackathon', 'subtitle': '36 Hours of Non-stop Code'},
@@ -2241,14 +2221,87 @@ extension _HomeScreenHelpers on _HomeScreenState {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
+              // Pass Tiers Mini Grid
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.04),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: primaryColor.withValues(alpha: 0.25)),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('1 Day Stay + Food + Events', style: GoogleFonts.rajdhani(fontSize: 12, color: Colors.white70)),
+                        Text('₹499/-', style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: primaryColor)),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('2 Day Stay + Food + Events', style: GoogleFonts.rajdhani(fontSize: 12, color: Colors.white70)),
+                        Text('₹699/-', style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: primaryColor)),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('3 Day Stay + Food + Events', style: GoogleFonts.rajdhani(fontSize: 12, color: Colors.white70)),
+                        Text('₹999/-', style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: primaryColor)),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('3 Day Stay + Food + Merch', style: GoogleFonts.rajdhani(fontSize: 12, color: Colors.white70)),
+                        Text('₹1,249/-', style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFFFF4081))),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,
                     foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    final formUri = Uri.parse('https://docs.google.com/forms/d/e/1FAIpQLSeCjdcCQyPqFwwD9D_7Mg_nYfUm-U7tLY2RbjJOP33V6a42kg/viewform');
+                    if (await canLaunchUrl(formUri)) {
+                      await launchUrl(formUri, mode: LaunchMode.externalApplication);
+                    }
+                  },
+                  icon: const Icon(Icons.assignment_turned_in, size: 18, color: Colors.black),
+                  label: Text(
+                    'BOOK PASS & STAY (GOOGLE FORM)',
+                    style: GoogleFonts.orbitron(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white70,
+                    side: BorderSide(color: Colors.white24),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   onPressed: () async {
@@ -2256,23 +2309,15 @@ extension _HomeScreenHelpers on _HomeScreenState {
                     final telUri = Uri.parse('tel:+918503086164');
                     if (await canLaunchUrl(telUri)) {
                       await launchUrl(telUri);
-                    } else {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Contact Operations: +91 85030 86164 or anant.22je0109@nit.ac.in'),
-                          ),
-                        );
-                      }
                     }
                   },
-                  icon: const Icon(Icons.phone_in_talk, size: 18, color: Colors.black),
+                  icon: const Icon(Icons.phone_in_talk, size: 16, color: Colors.white70),
                   label: Text(
                     'CALL ACCOMMODATION DESK (+91 85030 86164)',
                     style: GoogleFonts.rajdhani(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.8,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.6,
                     ),
                   ),
                 ),

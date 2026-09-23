@@ -189,18 +189,22 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
             children: [
               // Poster Image
               GestureDetector(
-                onTap: () => _showImageZoomDialog(context, 'assets/images/tshirt.jpeg'),
+                onTap: () => _showImageZoomDialog(context, 'assets/merch_official.png'),
                 child: Stack(
                   children: [
                     AspectRatio(
                       aspectRatio: 1.0,
                       child: Image.asset(
-                        'assets/images/tshirt.jpeg',
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: const Color(0xFF1B0705),
-                          child: const Center(
-                            child: Icon(Icons.checkroom, size: 60, color: Colors.white30),
+                        'assets/merch_official.png',
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => Image.asset(
+                          'assets/images/tshirt.jpeg',
+                          fit: BoxFit.cover,
+                          errorBuilder: (c, e, s) => Container(
+                            color: const Color(0xFF1B0705),
+                            child: const Center(
+                              child: Icon(Icons.checkroom, size: 60, color: Colors.white30),
+                            ),
                           ),
                         ),
                       ),
@@ -282,7 +286,7 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
                       textBaseline: TextBaseline.alphabetic,
                       children: [
                         Text(
-                          '₹499',
+                          '₹379',
                           style: GoogleFonts.orbitron(
                             fontSize: 26,
                             fontWeight: FontWeight.w900,
@@ -291,7 +295,7 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          '₹799',
+                          '₹599',
                           style: const TextStyle(
                             fontSize: 15,
                             color: Colors.white38,
@@ -300,7 +304,7 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Fest Subsidy Applied',
+                          '37% OFF • Fest Subsidy',
                           style: GoogleFonts.rajdhani(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -443,62 +447,84 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
         ),
         const SizedBox(height: 16),
 
-        // Tier 1: Silver Day Pass
+        // Tier 1: Silver Pass (1-Day)
         _buildPassCard(
           context: context,
           primaryColor: primaryColor,
-          title: 'SILVER DAY PASS',
-          badge: '1 DAY ACCESS',
-          price: '₹299',
-          originalPrice: '₹499',
-          accentColor: const Color(0xFFB0BEC5),
+          title: 'SILVER PASS (1-DAY)',
+          badge: '1 DAY FOOD + STAY & ALL EVENTS',
+          price: '₹499',
+          originalPrice: '₹799',
+          accentColor: const Color(0xFFCFD8DC),
           features: [
-            '1-Day Full Access to Technical Events & Exhibitions',
-            'Participation in any 2 Open Arenas & Workshops',
-            'Evening Cultural Showcase & Stunt Show Entry',
+            '1 Day Campus Stay & Hostel Accommodation',
+            '1 Day Complete Food & Mess Facility',
+            'All-Event Access & Competitions Entry',
+            'Evening Cultural Showcase & Stunt Shows',
             'Official Concetto Certificate of Participation',
           ],
         ),
 
         const SizedBox(height: 14),
 
-        // Tier 2: Gold Fest Pass (Most Popular)
+        // Tier 2: Gold Pass (2-Day)
         _buildPassCard(
           context: context,
           primaryColor: primaryColor,
-          title: 'GOLD FEST PASS',
-          badge: 'MOST POPULAR • 4 DAYS',
+          title: 'GOLD PASS (2-DAY)',
+          badge: '2 DAY FOOD + STAY & ALL EVENTS',
           price: '₹699',
           originalPrice: '₹1,099',
           accentColor: const Color(0xFFFFB300),
-          isFeatured: true,
           features: [
-            'Complete 4-Day All-Event Access (All 39 Arenas)',
-            'Eligibility for Mega Hackathons & Robotics Arena',
-            'Star Night Musical Concert Entry (General Enclosure)',
-            'Official Concetto Kit: Badge, Stickers & Lanyard',
-            'Participation in Guest Lectures & Startup Conclave',
+            '2 Days Campus Stay & Hostel Accommodation',
+            '2 Days Complete Food & Mess Facility',
+            'Complete Access to All Events & Open Arenas',
+            'Eligibility for Hackathons & Robotics Arena',
+            'Official Concetto Delegate Kit & Certificate',
           ],
         ),
 
         const SizedBox(height: 14),
 
-        // Tier 3: Centenary Diamond All-Access (VIP)
+        // Tier 3: Diamond Pass (3-Day)
         _buildPassCard(
           context: context,
           primaryColor: primaryColor,
-          title: 'CENTENARY DIAMOND PASS',
-          badge: 'VIP + HOSTEL ACCOMMODATION',
-          price: '₹1,499',
-          originalPrice: '₹2,299',
+          title: 'DIAMOND PASS (3-DAY)',
+          badge: '3 DAY FOOD + STAY & ALL EVENTS',
+          price: '₹999',
+          originalPrice: '₹1,499',
           accentColor: const Color(0xFF00E5FF),
+          isFeatured: true,
           features: [
-            'Full 4-Day VIP All-Event & Arena Access',
-            '4 Nights Campus Hostel Accommodation (Jasper/Rosaline)',
-            'Campus Mess Food Coupons (Breakfast, Lunch & Dinner)',
-            'Star Night VIP Front-Row Enclosure Access',
-            'OFFICIAL CONCETTO\'26 T-SHIRT INCLUDED FOR FREE',
-            'Priority Registration & Dedicated Campus Guide',
+            'Full 3 Days Campus Stay & Hostel Accommodation',
+            'Full 3 Days Complete Food & Mess Facility',
+            'All-Event VIP & Arena Access Across the Fest',
+            'Celebrity Star Night Concert Enclosure Entry',
+            'Official Concetto Kit & Dedicated Guidance',
+          ],
+        ),
+
+        const SizedBox(height: 14),
+
+        // Tier 4: Diamond Elite + Merchandise Pass (3-Day)
+        _buildPassCard(
+          context: context,
+          primaryColor: primaryColor,
+          title: 'DIAMOND+ MERCH PASS',
+          badge: '3 DAY FOOD + STAY + MERCHANDISE & ALL EVENTS',
+          price: '₹1,249',
+          originalPrice: '₹1,999',
+          accentColor: const Color(0xFFFF4081),
+          isFeatured: true,
+          features: [
+            'Full 3 Days Campus Stay & Hostel Accommodation',
+            'Full 3 Days Complete Food & Mess Facility',
+            'OFFICIAL CONCETTO\'26 MERCHANDISE / T-SHIRT INCLUDED',
+            'Complete All-Event Access Across All 3 Fest Days',
+            'Star Night VIP Front-Row Concert Access',
+            'Centenary Edition Fest Badge, Mementos & Goodies',
           ],
         ),
       ],
@@ -638,23 +664,23 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
           SizedBox(
             width: double.infinity,
             height: 44,
-            child: OutlinedButton.icon(
-              onPressed: () => _showPassBookingSheet(context, title, price, accentColor),
-              icon: Icon(Icons.bookmark_add, size: 16, color: accentColor),
+            child: ElevatedButton.icon(
+              onPressed: () => _openPassBookingForm(context, title, price),
+              icon: const Icon(Icons.open_in_new, size: 16, color: Colors.black),
               label: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
-                  'BOOK $title',
+                  'BOOK $title • $price',
                   style: GoogleFonts.orbitron(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.8,
-                    color: Colors.white,
+                    color: Colors.black,
                   ),
                 ),
               ),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: accentColor.withValues(alpha: 0.7)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: accentColor,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
@@ -664,138 +690,27 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
     );
   }
 
-  // --- Modal for Pass Booking ---
-  void _showPassBookingSheet(BuildContext context, String passTitle, String price, Color accentColor) {
-    final nameCtrl = TextEditingController();
-    final collegeCtrl = TextEditingController();
-    final phoneCtrl = TextEditingController();
-    final emailCtrl = TextEditingController();
+  // Official Pass Google Form Link provided by user
+  static const String _passGoogleFormUrl =
+      'https://docs.google.com/forms/d/e/1FAIpQLSeCjdcCQyPqFwwD9D_7Mg_nYfUm-U7tLY2RbjJOP33V6a42kg/viewform';
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF100504),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (sheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 20,
-            left: 20,
-            right: 20,
-            top: 24,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'BOOK FESTIVAL PASS',
-                      style: GoogleFonts.orbitron(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: accentColor,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, size: 20),
-                      onPressed: () => Navigator.pop(sheetContext),
-                    ),
-                  ],
-                ),
-                Text(
-                  '$passTitle • $price',
-                  style: const TextStyle(fontSize: 13, color: Colors.white70),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: nameCtrl,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    labelText: 'Full Name',
-                    prefixIcon: Icon(Icons.person, color: accentColor),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: collegeCtrl,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    labelText: 'College / University Name',
-                    prefixIcon: Icon(Icons.school, color: accentColor),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: phoneCtrl,
-                  style: const TextStyle(color: Colors.white),
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    labelText: 'Mobile Number',
-                    prefixIcon: Icon(Icons.phone, color: accentColor),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: emailCtrl,
-                  style: const TextStyle(color: Colors.white),
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email Address',
-                    prefixIcon: Icon(Icons.email, color: accentColor),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (nameCtrl.text.trim().isEmpty) return;
-                      Navigator.pop(sheetContext);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              const Icon(Icons.check_circle, color: Color(0xFF00E676), size: 18),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text('Pass reserved for ${nameCtrl.text.trim()}! Please confirm via email.'),
-                              ),
-                            ],
-                          ),
-                          backgroundColor: const Color(0xFF140604),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: accentColor,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: Text(
-                      'PROCEED TO RESERVE PASS',
-                      style: GoogleFonts.orbitron(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.8,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+  Future<void> _openPassBookingForm(BuildContext context, String passTitle, String price) async {
+    final uri = Uri.parse(_passGoogleFormUrl);
+    try {
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched && context.mounted) {
+        await launchUrl(uri);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open pass registration form: $e'),
+            behavior: SnackBarBehavior.floating,
           ),
         );
-      },
-    );
+      }
+    }
   }
 
   // --- Zoom Image Dialog ---
