@@ -840,7 +840,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
 
   Widget _buildFeaturedEventCard(EventItem event, Color primaryColor) {
     return GestureDetector(
-      onTap: () => context.go('/events/detail', extra: event),
+      onTap: () => context.push('/events/detail', extra: event),
       child: Container(
         width: 220,
         margin: const EdgeInsets.symmetric(horizontal: 6),

@@ -68,7 +68,10 @@ class MainWrapper extends StatelessWidget {
   }
 }
 
+final _rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final goRouter = GoRouter(
+  navigatorKey: _rootNavigatorKey,
   initialLocation: '/splash',
   redirect: (context, state) {
     final path = state.uri.path;
@@ -113,6 +116,50 @@ final goRouter = GoRouter(
       builder: (context, state) => const SplashScreen(),
     ),
     GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/events/detail',
+      builder: (context, state) {
+        EventItem? event = state.extra as EventItem?;
+        if (event == null) {
+          final id = state.uri.queryParameters['id'];
+          if (id != null && id.isNotEmpty) {
+            try {
+              event = MockData.events.firstWhere(
+                (e) => e.id.toLowerCase() == id.toLowerCase(),
+              );
+            } catch (_) {
+              event = null;
+            }
+          }
+        }
+        if (event == null) {
+          return const EventsScreen();
+        }
+        return EventDetailScreen(event: event);
+      },
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/events/:id',
+      builder: (context, state) {
+        final id = state.pathParameters['id'];
+        EventItem? event;
+        if (id != null && id.isNotEmpty) {
+          try {
+            event = MockData.events.firstWhere(
+              (e) => e.id.toLowerCase() == id.toLowerCase(),
+            );
+          } catch (_) {
+            event = null;
+          }
+        }
+        if (event == null) {
+          return const EventsScreen();
+        }
+        return EventDetailScreen(event: event);
+      },
+    ),
+    GoRoute(
       path: '/admin',
       builder: (context, state) => const AdminDashboardScreen(),
       routes: [
@@ -154,50 +201,6 @@ final goRouter = GoRouter(
             GoRoute(
               path: '/events',
               builder: (context, state) => const EventsScreen(),
-              routes: [
-                GoRoute(
-                  path: 'detail',
-                  builder: (context, state) {
-                    EventItem? event = state.extra as EventItem?;
-                    if (event == null) {
-                      final id = state.uri.queryParameters['id'];
-                      if (id != null && id.isNotEmpty) {
-                        try {
-                          event = MockData.events.firstWhere(
-                            (e) => e.id.toLowerCase() == id.toLowerCase(),
-                          );
-                        } catch (_) {
-                          event = null;
-                        }
-                      }
-                    }
-                    if (event == null) {
-                      return const EventsScreen();
-                    }
-                    return EventDetailScreen(event: event);
-                  },
-                ),
-                GoRoute(
-                  path: ':id',
-                  builder: (context, state) {
-                    final id = state.pathParameters['id'];
-                    EventItem? event;
-                    if (id != null && id.isNotEmpty) {
-                      try {
-                        event = MockData.events.firstWhere(
-                          (e) => e.id.toLowerCase() == id.toLowerCase(),
-                        );
-                      } catch (_) {
-                        event = null;
-                      }
-                    }
-                    if (event == null) {
-                      return const EventsScreen();
-                    }
-                    return EventDetailScreen(event: event);
-                  },
-                ),
-              ],
             ),
           ],
         ),

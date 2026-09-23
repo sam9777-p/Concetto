@@ -218,7 +218,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
               },
               child: eventsAsync.when(
                 loading: () {
-                  final previous = eventsAsync.valueOrNull;
+                  final previous = eventsAsync.asData?.value;
                   if (previous != null && previous.isNotEmpty) {
                     return _buildEventsView(context, previous, primaryColor);
                   }
@@ -235,7 +235,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                   );
                 },
                 error: (err, _) {
-                  final previous = eventsAsync.valueOrNull;
+                  final previous = eventsAsync.asData?.value;
                   if (previous != null && previous.isNotEmpty) {
                     return _buildEventsView(context, previous, primaryColor);
                   }
@@ -376,7 +376,7 @@ class EventCard extends StatelessWidget {
     final catColor = _getCategoryColor(event.category);
 
     return GestureDetector(
-      onTap: () => context.go('/events/detail', extra: event),
+      onTap: () => context.push('/events/detail', extra: event),
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFF110604),

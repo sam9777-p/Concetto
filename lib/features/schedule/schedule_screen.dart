@@ -253,7 +253,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                             child: Padding(
                               padding: const EdgeInsets.only(bottom: 16),
                               child: InkWell(
-                                onTap: () => context.go('/events/detail', extra: event),
+                                onTap: () => context.push('/events/detail', extra: event),
                                 borderRadius: BorderRadius.circular(14),
                                 child: Container(
                                   padding: const EdgeInsets.all(14),
