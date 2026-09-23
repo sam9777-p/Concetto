@@ -124,7 +124,8 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
     if (url.isNotEmpty && !url.startsWith('http') && url.endsWith('.pdf')) {
       return url;
     }
-    return 'assets/rulebooks/society_of_electronics_engineers.pdf';
+    final raw = widget.event.id.toLowerCase().replaceAll('-', '_');
+    return 'assets/rulebooks/$raw.pdf';
   }
 
   @override
@@ -211,36 +212,44 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
               SfPdfViewer.memory(
                 _pdfMemoryBytes!,
                 controller: _pdfViewerController,
-                canShowScrollHead: true,
-                canShowScrollStatus: true,
-                pageSpacing: 8,
+                canShowScrollHead: false,
+                canShowScrollStatus: false,
+                canShowPaginationDialog: false,
+                enableDoubleTapZooming: true,
+                pageSpacing: 6,
                 onDocumentLoaded: (details) {
                   setState(() {
                     _pageCount = details.document.pages.count;
                   });
                 },
                 onPageChanged: (details) {
-                  setState(() {
-                    _currentPage = details.newPageNumber;
-                  });
+                  if (mounted && _currentPage != details.newPageNumber) {
+                    setState(() {
+                      _currentPage = details.newPageNumber;
+                    });
+                  }
                 },
               )
             else
               SfPdfViewer.asset(
                 _fallbackAssetPath,
                 controller: _pdfViewerController,
-                canShowScrollHead: true,
-                canShowScrollStatus: true,
-                pageSpacing: 8,
+                canShowScrollHead: false,
+                canShowScrollStatus: false,
+                canShowPaginationDialog: false,
+                enableDoubleTapZooming: true,
+                pageSpacing: 6,
                 onDocumentLoaded: (details) {
                   setState(() {
                     _pageCount = details.document.pages.count;
                   });
                 },
                 onPageChanged: (details) {
-                  setState(() {
-                    _currentPage = details.newPageNumber;
-                  });
+                  if (mounted && _currentPage != details.newPageNumber) {
+                    setState(() {
+                      _currentPage = details.newPageNumber;
+                    });
+                  }
                 },
               ),
           ],
@@ -268,44 +277,123 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
         ],
       ),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: cardBg,
           border: Border(
             top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
           ),
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Smooth Hardware-Accelerated Page Scrubber / Slider
+              if (_pageCount > 1) ...[
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left, color: Colors.white70, size: 22),
+                      tooltip: 'Previous Page',
+                      visualDensity: VisualDensity.compact,
+                      onPressed: _currentPage > 1
+                          ? () {
+                              _pdfViewerController.previousPage();
+                            }
+                          : null,
+                    ),
+                    Expanded(
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: primaryColor,
+                          inactiveTrackColor: Colors.white.withValues(alpha: 0.15),
+                          thumbColor: primaryColor,
+                          overlayColor: primaryColor.withValues(alpha: 0.2),
+                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                          overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+                          trackHeight: 3,
+                        ),
+                        child: Slider(
+                          value: _currentPage.toDouble().clamp(1.0, _pageCount.toDouble()),
+                          min: 1.0,
+                          max: _pageCount.toDouble(),
+                          divisions: _pageCount > 1 ? _pageCount - 1 : 1,
+                          onChanged: (val) {
+                            final targetPage = val.round();
+                            if (targetPage != _currentPage) {
+                              setState(() {
+                                _currentPage = targetPage;
+                              });
+                              _pdfViewerController.jumpToPage(targetPage);
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.chevron_right, color: Colors.white70, size: 22),
+                      tooltip: 'Next Page',
+                      visualDensity: VisualDensity.compact,
+                      onPressed: _currentPage < _pageCount
+                          ? () {
+                              _pdfViewerController.nextPage();
+                            }
+                          : null,
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+                      ),
+                      child: Text(
+                        'P. $_currentPage/$_pageCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+              ],
+              Row(
                 children: [
-                  Text(
-                    'Venue: ${widget.event.venue}',
-                    style: const TextStyle(color: Colors.white70, fontSize: 11),
-                    overflow: TextOverflow.ellipsis,
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Venue: ${widget.event.venue}',
+                          style: const TextStyle(color: Colors.white70, fontSize: 11),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          'Time: ${widget.event.time}',
+                          style: TextStyle(color: primaryColor, fontSize: 11, fontWeight: FontWeight.w600),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
                   ),
-                  Text(
-                    'Time: ${widget.event.time}',
-                    style: TextStyle(color: primaryColor, fontSize: 11, fontWeight: FontWeight.w600),
-                    overflow: TextOverflow.ellipsis,
+                  ElevatedButton.icon(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.check_circle_outline, size: 16, color: Colors.white),
+                    label: const Text('GOT IT', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
                   ),
                 ],
               ),
-            ),
-            ElevatedButton.icon(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.check_circle_outline, size: 16, color: Colors.white),
-              label: const Text('GOT IT', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

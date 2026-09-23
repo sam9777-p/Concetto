@@ -23,12 +23,15 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
 
   final List<String> _categories = [
     'All',
+    'Pre-Events',
     'Flagship',
     'Robotics',
     'Coding',
     'Electronics',
     'Management',
+    'Departmental',
     'Design',
+    'Stage',
   ];
 
   @override
@@ -147,6 +150,100 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
               ),
             ),
           ),
+
+          // Pre-Events Quick Access Spotlight
+          if (_selectedCategoryIndex == 0 && _searchQuery.isEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+              child: InkWell(
+                onTap: () {
+                  setState(() {
+                    _selectedCategoryIndex = 1; // 'Pre-Events'
+                  });
+                },
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFF6B1124).withValues(alpha: 0.75),
+                        const Color(0xFF1E0A24).withValues(alpha: 0.95),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFFF5722).withValues(alpha: 0.45), width: 0.8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF5722).withValues(alpha: 0.2),
+                        blurRadius: 12,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF5722).withValues(alpha: 0.25),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.celebration, color: Color(0xFFFF8A65), size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  'PRE-FESTIVAL SPECIALS',
+                                  style: GoogleFonts.orbitron(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.0,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFF5722),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text(
+                                    'NEW',
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Prom Night \'26 • Kryptos Cryptic Hunt • Movie Night',
+                              style: GoogleFonts.rajdhani(
+                                color: Colors.white70,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 14),
+                    ],
+                  ),
+                ),
+              ),
+            ),
 
           // Horizontal Category Filter Chips
           SizedBox(
@@ -280,13 +377,24 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
 
     // Filter by category & search query
     final filteredEvents = events.where((event) {
-      final matchesCategory = selectedCategory == 'All' ||
-          event.category.toLowerCase() == selectedCategory.toLowerCase();
+      final isPreEvent = event.category.toLowerCase().contains('pre') ||
+          event.id.contains('_pre') ||
+          event.id.contains('preevent');
+
+      final bool matchesCategory;
+      if (selectedCategory == 'All') {
+        matchesCategory = true;
+      } else if (selectedCategory == 'Pre-Events') {
+        matchesCategory = isPreEvent;
+      } else {
+        matchesCategory = event.category.toLowerCase() == selectedCategory.toLowerCase();
+      }
 
       final matchesSearch = _searchQuery.isEmpty ||
           event.title.toLowerCase().contains(_searchQuery) ||
           event.description.toLowerCase().contains(_searchQuery) ||
-          event.venue.toLowerCase().contains(_searchQuery);
+          event.venue.toLowerCase().contains(_searchQuery) ||
+          event.category.toLowerCase().contains(_searchQuery);
 
       return matchesCategory && matchesSearch;
     }).toList();
