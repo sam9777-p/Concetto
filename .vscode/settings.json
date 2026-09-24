@@ -1,6 +1,13 @@
-﻿{
-    "gradle.nestedProjects":  true,
-    "java.import.gradle.enabled":  false,
-    "java.gradle.buildServer.enabled":  "off",
-    "gradle.autoDetect":  "off"
+{
+    "gradle.nestedProjects": [
+        "android"
+    ],
+    "gradle.autoDetect": "on",
+    "java.gradle.buildServer.enabled": "on",
+    "files.exclude": {
+        "**/flutter/ephemeral": true
+    },
+    "files.watcherExclude": {
+        "**/flutter/ephemeral/**": true
+    }
 }
