@@ -1,6 +1,6 @@
-{
-  "gradle.nestedProjects": true,
-  "gradle.wrapperScript": "${workspaceFolder}/android/gradlew.bat",
-  "java.import.gradle.enabled": false,
-  "java.import.gradle.wrapper.enabled": true
+﻿{
+    "gradle.nestedProjects":  true,
+    "java.import.gradle.enabled":  false,
+    "java.gradle.buildServer.enabled":  "off",
+    "gradle.autoDetect":  "off"
 }
