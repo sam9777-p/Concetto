@@ -385,9 +385,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ),
                   child: Container(
-                    width: 84,
-                    height: 84,
-                    padding: const EdgeInsets.all(4),
+                    width: 96,
+                    height: 96,
+                    padding: const EdgeInsets.all(3),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(9),
@@ -395,7 +395,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     child: QrImageView(
                       data: user.qrPayload,
                       version: QrVersions.auto,
-                      size: 76,
+                      size: 90,
+                      padding: const EdgeInsets.all(2),
                       backgroundColor: Colors.white,
                       eyeStyle: const QrEyeStyle(
                         eyeShape: QrEyeShape.square,
@@ -1967,8 +1968,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             Expanded(
                               child: Text(
                                 isIitSelected
-                                    ? 'Assigned Category: STUDENT PASS (Type 0)'
-                                    : 'Assigned Category: GUEST PASS (Type 1)',
+                                    ? 'Assigned Category: STUDENT PASS'
+                                    : 'Assigned Category: GUEST PASS',
                                 style: GoogleFonts.rajdhani(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
@@ -2029,7 +2030,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    if (!isSignUp) ...[
+                      const SizedBox(height: 4),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () => _showForgotPasswordDialog(context, emailController.text.trim()),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            'Forgot Password?',
+                            style: GoogleFonts.rajdhani(
+                              color: primaryColor,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
 
                     // Submit Button
                     SizedBox(
@@ -2115,7 +2139,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                               const SizedBox(width: 8),
                                               Expanded(
                                                 child: Text(
-                                                  'VERIFICATION LINK SENT',
+                                                  'VERIFICATION EMAIL SENT',
                                                   style: GoogleFonts.orbitron(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
                                                 ),
                                               ),
@@ -2126,19 +2150,34 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                'We sent a confirmation email to:\n$email\n\nYou MUST click the verification link in your inbox before logging in. Unverified accounts cannot log in.',
-                                                style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 14, height: 1.4),
+                                                'We sent a confirmation link to:\n$email',
+                                                style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold, height: 1.4),
                                               ),
                                               const SizedBox(height: 12),
                                               Container(
-                                                padding: const EdgeInsets.all(8),
+                                                padding: const EdgeInsets.all(10),
                                                 decoration: BoxDecoration(
                                                   color: Colors.white.withValues(alpha: 0.05),
                                                   borderRadius: BorderRadius.circular(8),
+                                                  border: Border.all(color: const Color(0xFF00E676).withValues(alpha: 0.3)),
                                                 ),
-                                                child: Text(
-                                                  'Once verified, simply sign in here to load your digital festival pass.',
-                                                  style: GoogleFonts.rajdhani(color: AppTheme.metallicMuted, fontSize: 12),
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      'Complete verification process to log in:',
+                                                      style: GoogleFonts.rajdhani(
+                                                        color: const Color(0xFF00E676),
+                                                        fontSize: 13,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 6),
+                                                    Text(
+                                                      '1. Open the email sent to $email and click the verification link.\n2. IF EMAIL IS NOT FOUND, PLEASE CHECK YOUR SPAM OR JUNK FOLDER.\n3. Return here and tap "Sign In" to view your verified festival pass and QR code.',
+                                                      style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 12, height: 1.35),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
                                             ],
@@ -2351,6 +2390,119 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         );
       }
     }
+  }
+
+  void _showForgotPasswordDialog(BuildContext parentContext, String initialEmail) {
+    final emailCtrl = TextEditingController(text: initialEmail);
+    bool isSending = false;
+    String? errorMsg;
+    String? successMsg;
+
+    showDialog(
+      context: parentContext,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF140604),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Color(0xFFFF5252), width: 1.2),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.lock_reset, color: Color(0xFFFF5252), size: 24),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'RESET PASSWORD',
+                  style: GoogleFonts.orbitron(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Enter your registered email address. We will send password reset instructions to your inbox.',
+                style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 13, height: 1.3),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                decoration: InputDecoration(
+                  labelText: 'Email Address *',
+                  labelStyle: GoogleFonts.rajdhani(color: Colors.white60),
+                  prefixIcon: const Icon(Icons.email, color: Color(0xFFFF5252), size: 18),
+                  filled: true,
+                  fillColor: const Color(0xFF1E0805),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+              if (errorMsg != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  errorMsg!,
+                  style: GoogleFonts.rajdhani(color: Colors.redAccent, fontSize: 12),
+                ),
+              ],
+              if (successMsg != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  successMsg!,
+                  style: GoogleFonts.rajdhani(color: const Color(0xFF00E676), fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: Text('CANCEL', style: GoogleFonts.rajdhani(color: Colors.white54, fontWeight: FontWeight.bold)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF5252),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: isSending
+                  ? null
+                  : () async {
+                      final email = emailCtrl.text.trim();
+                      if (email.isEmpty) {
+                        setDialogState(() => errorMsg = 'Please enter your email.');
+                        return;
+                      }
+                      setDialogState(() {
+                        isSending = true;
+                        errorMsg = null;
+                      });
+                      try {
+                        await ref.read(authProvider.notifier).sendPasswordResetEmail(email);
+                        setDialogState(() {
+                          isSending = false;
+                          successMsg = 'Reset link sent! Please check your Inbox and Spam folder.';
+                        });
+                        await Future.delayed(const Duration(seconds: 2));
+                        if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+                      } catch (e) {
+                        setDialogState(() {
+                          isSending = false;
+                          errorMsg = e.toString().replaceAll('Exception: ', '');
+                        });
+                      }
+                    },
+              child: isSending
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('SEND RESET LINK', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _launchExternalUrl(String url) async {

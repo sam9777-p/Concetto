@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'repositories.dart';
 
 class AttendeeProfile {
   final String uid;
@@ -11,7 +14,7 @@ class AttendeeProfile {
   final String college;
   final String phone;
   final String passId;
-  final int passType; // 0: Student, 1: Guest, 2: Silver, 3: Gold, 4: Platinum, 5: VIP
+  final int passType; // 0: Student, 1: Guest, 2: Silver, 3: Gold, 4: Diamond, 5: Diamond+ Merch
   final bool isGuest;
   final bool isEmailVerified;
   final List<String> registeredEventIds;
@@ -50,6 +53,12 @@ class AttendeeProfile {
   String get qrPayload => jsonEncode({
         'uid': uid,
         'passId': passId,
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'college': college,
+        'passType': passType,
+        'passCategory': passCategoryTitle,
       });
 
   AttendeeProfile copyWith({
@@ -101,6 +110,57 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
     );
   }
 
+  static List<FirebaseFirestore> _getFirestoreInstances() {
+    final list = <FirebaseFirestore>[];
+    try {
+      // 1. Default Firestore database
+      list.add(FirebaseFirestore.instance);
+    } catch (_) {}
+    try {
+      // 2. Named 'concetto' database
+      if (FirestoreConfig.databaseId.isNotEmpty && FirestoreConfig.databaseId != '(default)') {
+        list.add(FirebaseFirestore.instanceFor(
+          app: Firebase.app(),
+          databaseId: FirestoreConfig.databaseId,
+        ));
+      }
+    } catch (_) {}
+    return list;
+  }
+
+  static Future<void> _persistUserAndPassToFirestore({
+    required String uid,
+    required String passId,
+    required Map<String, dynamic> userData,
+    required Map<String, dynamic> passData,
+  }) async {
+    for (final db in _getFirestoreInstances()) {
+      try {
+        await Future.wait([
+          db.collection('users').doc(uid).set(userData, SetOptions(merge: true)),
+          db.collection('passes').doc(passId).set(passData, SetOptions(merge: true)),
+        ]).timeout(const Duration(seconds: 4));
+        debugPrint('Successfully persisted user and pass to Firestore database ${db.databaseId}');
+      } catch (e) {
+        debugPrint('Notice persisting to Firestore (${db.databaseId}): $e');
+      }
+    }
+  }
+
+  static Future<Map<String, dynamic>?> _readUserFromFirestore(String uid) async {
+    for (final db in _getFirestoreInstances()) {
+      try {
+        final doc = await db.collection('users').doc(uid).get().timeout(const Duration(seconds: 4));
+        if (doc.exists && doc.data() != null) {
+          return doc.data();
+        }
+      } catch (e) {
+        debugPrint('Notice reading user from Firestore (${db.databaseId}): $e');
+      }
+    }
+    return null;
+  }
+
   Future<void> _initCurrentUser() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -108,6 +168,8 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
         await user.reload();
         final refreshed = FirebaseAuth.instance.currentUser;
         if (refreshed != null && refreshed.emailVerified) {
+          // Try local cache first for instant rendering
+          await _loadProfileFromLocalCache(refreshed.uid);
           await _loadProfileFromFirestore(refreshed);
         } else {
           // If not email verified, sign out
@@ -119,11 +181,54 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
     }
   }
 
+  Future<void> _loadProfileFromLocalCache(String uid) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cachedJson = prefs.getString('cached_profile_$uid');
+      if (cachedJson != null) {
+        final map = jsonDecode(cachedJson) as Map<String, dynamic>;
+        state = AttendeeProfile(
+          uid: uid,
+          name: map['name'] ?? '',
+          email: map['email'] ?? '',
+          college: map['college'] ?? '',
+          phone: map['phone'] ?? '',
+          passId: map['passId'] ?? '',
+          passType: map['passType'] is int ? map['passType'] : 1,
+          isGuest: false,
+          isEmailVerified: true,
+          registeredEventIds: state.registeredEventIds,
+        );
+      }
+    } catch (e) {
+      debugPrint('Cache load notice: $e');
+    }
+  }
+
+  Future<void> _saveProfileToLocalCache(AttendeeProfile profile) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        'cached_profile_${profile.uid}',
+        jsonEncode({
+          'uid': profile.uid,
+          'name': profile.name,
+          'email': profile.email,
+          'college': profile.college,
+          'phone': profile.phone,
+          'passId': profile.passId,
+          'passType': profile.passType,
+        }),
+      );
+    } catch (e) {
+      debugPrint('Cache save notice: $e');
+    }
+  }
+
   Future<void> _loadProfileFromFirestore(User user) async {
     try {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      if (doc.exists && doc.data() != null) {
-        final data = doc.data()!;
+      final data = await _readUserFromFirestore(user.uid);
+      if (data != null) {
         final passTypeRaw = data['passType'];
         int parsedPassType = 1;
         if (passTypeRaw is int) {
@@ -132,7 +237,7 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
           parsedPassType = int.tryParse(passTypeRaw.toString()) ?? 1;
         }
 
-        state = AttendeeProfile(
+        final profile = AttendeeProfile(
           uid: user.uid,
           name: (data['name'] as String?)?.isNotEmpty == true
               ? data['name'] as String
@@ -146,25 +251,71 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
           isEmailVerified: true,
           registeredEventIds: state.registeredEventIds,
         );
+        state = profile;
+        await _saveProfileToLocalCache(profile);
         return;
       }
     } catch (e) {
       debugPrint('Error loading firestore profile: $e');
     }
 
-    // Fallback if firestore document not found yet
+    // Fallback if firestore document not found yet: generate and repair Firestore instantly!
     final isIit = user.email!.toLowerCase().endsWith('@iitism.ac.in');
-    state = AttendeeProfile(
+    final uniqueSuffix = user.uid.length >= 6
+        ? user.uid.substring(0, 6).toUpperCase()
+        : DateTime.now().millisecondsSinceEpoch.toString().substring(7);
+    final passId = 'CON-26-$uniqueSuffix';
+    final passType = isIit ? 0 : 1;
+    final college = isIit ? 'Indian Institute of Technology (ISM) Dhanbad' : 'Visiting Participant';
+    final name = user.displayName?.isNotEmpty == true ? user.displayName! : user.email!.split('@').first;
+
+    final profile = AttendeeProfile(
       uid: user.uid,
-      name: user.displayName ?? user.email!.split('@').first,
+      name: name,
       email: user.email!,
-      college: isIit ? 'Indian Institute of Technology (ISM) Dhanbad' : 'Registered Participant',
+      college: college,
       phone: user.phoneNumber ?? '',
-      passId: 'CON-26-${user.uid.substring(0, 6).toUpperCase()}',
-      passType: isIit ? 0 : 1,
+      passId: passId,
+      passType: passType,
       isGuest: false,
       isEmailVerified: true,
       registeredEventIds: state.registeredEventIds,
+    );
+    state = profile;
+    await _saveProfileToLocalCache(profile);
+
+    // Save to Firestore in background
+    _persistUserAndPassToFirestore(
+      uid: user.uid,
+      passId: passId,
+      userData: {
+        'uid': user.uid,
+        'name': name,
+        'email': user.email!,
+        'phone': user.phoneNumber ?? '',
+        'college': college,
+        'isIitIsm': isIit,
+        'passId': passId,
+        'passType': passType,
+        'passCategory': AttendeeProfile.passCategoryNames[passType] ?? 'STUDENT PASS',
+        'createdAt': FieldValue.serverTimestamp(),
+        'createdAtIso': DateTime.now().toIso8601String(),
+      },
+      passData: {
+        'passId': passId,
+        'uid': user.uid,
+        'userId': user.uid,
+        'name': name,
+        'email': user.email!,
+        'phone': user.phoneNumber ?? '',
+        'college': college,
+        'isIitIsm': isIit,
+        'passType': passType,
+        'passCategory': AttendeeProfile.passCategoryNames[passType] ?? 'STUDENT PASS',
+        'status': 'active',
+        'createdAt': FieldValue.serverTimestamp(),
+        'createdAtIso': DateTime.now().toIso8601String(),
+      },
     );
   }
 
@@ -187,11 +338,19 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
       // Must not allow login if email not verified
       await FirebaseAuth.instance.signOut();
       throw Exception(
-        'Email address not verified yet. Please check your inbox at $cleanEmail and click the verification link before logging in.',
+        'Email address not verified yet. Please check your inbox and SPAM folder at $cleanEmail and click the verification link before logging in.',
       );
     }
 
     await _loadProfileFromFirestore(refreshedUser);
+  }
+
+  Future<void> sendPasswordResetEmail(String email) async {
+    final cleanEmail = email.trim();
+    if (cleanEmail.isEmpty) {
+      throw Exception('Please enter your email address.');
+    }
+    await FirebaseAuth.instance.sendPasswordResetEmail(email: cleanEmail);
   }
 
   Future<void> resendVerificationEmail(String email, String password) async {
@@ -226,6 +385,7 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
 
     // Default pass type: 0 for IIT ISM student, 1 for guest from other colleges
     final int defaultPassType = isIitIsm ? 0 : 1;
+    final passCategoryTitle = AttendeeProfile.passCategoryNames[defaultPassType] ?? 'STUDENT PASS';
 
     // 1. Create Firebase Auth User
     final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
@@ -238,48 +398,83 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
       throw Exception('Failed to create account.');
     }
 
-    await user.updateDisplayName(name);
+    try {
+      await user.updateDisplayName(name.trim());
+    } catch (_) {}
 
-    // 2. Generate Unique Pass Identifier
+    // 2. IMMEDIATELY send Verification Email right away!
+    try {
+      await user.sendEmailVerification();
+      debugPrint('Verification email dispatched to $cleanEmail');
+    } catch (e) {
+      debugPrint('Error sending verification email: $e');
+    }
+
+    // 3. Generate Unique Pass Identifier
     final uniqueSuffix = user.uid.length >= 6
         ? user.uid.substring(0, 6).toUpperCase()
         : DateTime.now().millisecondsSinceEpoch.toString().substring(7);
     final passId = 'CON-26-$uniqueSuffix';
 
-    // 3. Persist to Firestore: `users` and `passes` collections
+    final userData = {
+      'uid': user.uid,
+      'name': name.trim(),
+      'email': cleanEmail,
+      'phone': phone.trim(),
+      'college': college.trim(),
+      'isIitIsm': isIitIsm,
+      'passId': passId,
+      'passType': defaultPassType,
+      'passCategory': passCategoryTitle,
+      'createdAt': FieldValue.serverTimestamp(),
+      'createdAtIso': DateTime.now().toIso8601String(),
+    };
+
+    final passData = {
+      'passId': passId,
+      'uid': user.uid,
+      'userId': user.uid,
+      'name': name.trim(),
+      'email': cleanEmail,
+      'phone': phone.trim(),
+      'college': college.trim(),
+      'isIitIsm': isIitIsm,
+      'passType': defaultPassType,
+      'passCategory': passCategoryTitle,
+      'status': 'active',
+      'createdAt': FieldValue.serverTimestamp(),
+      'createdAtIso': DateTime.now().toIso8601String(),
+    };
+
+    // 4. Save to local cache immediately
     try {
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        'uid': user.uid,
-        'name': name.trim(),
-        'email': cleanEmail,
-        'phone': phone.trim(),
-        'college': college.trim(),
-        'isIitIsm': isIitIsm,
-        'passId': passId,
-        'passType': defaultPassType,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        'cached_profile_${user.uid}',
+        jsonEncode({
+          'uid': user.uid,
+          'name': name.trim(),
+          'email': cleanEmail,
+          'phone': phone.trim(),
+          'college': college.trim(),
+          'passId': passId,
+          'passType': defaultPassType,
+        }),
+      );
+    } catch (_) {}
 
-      await FirebaseFirestore.instance.collection('passes').doc(passId).set({
-        'passId': passId,
-        'userId': user.uid,
-        'name': name.trim(),
-        'email': cleanEmail,
-        'phone': phone.trim(),
-        'college': college.trim(),
-        'passType': defaultPassType,
-        'status': 'active',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    } catch (e) {
-      debugPrint('Firestore pass document write notice: $e');
-    }
+    // 5. Persist to Firestore: `users` and `passes` collections
+    await _persistUserAndPassToFirestore(
+      uid: user.uid,
+      passId: passId,
+      userData: userData,
+      passData: passData,
+    );
 
-    // 4. Send Confirmation / Verification Email
-    await user.sendEmailVerification();
-
-    // 5. User cannot login until verified, so sign out immediately
-    await FirebaseAuth.instance.signOut();
+    // 6. User cannot login until email is verified, so sign out
+    try {
+      await FirebaseAuth.instance.signOut();
+    } catch (_) {}
 
     return passId;
   }

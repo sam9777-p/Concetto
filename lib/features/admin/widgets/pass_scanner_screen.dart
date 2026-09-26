@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/network/auth_provider.dart';
+import '../../../core/network/repositories.dart';
 import '../../../core/theme/app_theme.dart';
 
 class PassScannerScreen extends StatefulWidget {
@@ -26,6 +28,24 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
   bool _isTorchOn = false;
   String? _statusMessage;
   bool _isError = false;
+
+  static List<FirebaseFirestore> _getDatabases() {
+    final list = <FirebaseFirestore>[];
+    try {
+      // 1. Default database
+      list.add(FirebaseFirestore.instance);
+    } catch (_) {}
+    try {
+      // 2. Named 'concetto' database
+      if (FirestoreConfig.databaseId.isNotEmpty && FirestoreConfig.databaseId != '(default)') {
+        list.add(FirebaseFirestore.instanceFor(
+          app: Firebase.app(),
+          databaseId: FirestoreConfig.databaseId,
+        ));
+      }
+    } catch (_) {}
+    return list;
+  }
 
   @override
   void dispose() {
@@ -71,8 +91,9 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
 
     String passIdToSearch = cleanInput;
     String? userIdHint;
+    Map<String, dynamic>? passData;
 
-    // Check if payload is JSON formatted: {"uid":"...","passId":"..."}
+    // Check if payload is JSON formatted: {"uid":"...","passId":"...", ...}
     if (cleanInput.startsWith('{') && cleanInput.endsWith('}')) {
       try {
         final decoded = jsonDecode(cleanInput);
@@ -83,62 +104,77 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
           if (decoded.containsKey('uid')) {
             userIdHint = decoded['uid'].toString();
           }
+          // Self-contained attendee payload from QR code
+          if (decoded.containsKey('name') || decoded.containsKey('college') || decoded.containsKey('email')) {
+            passData = Map<String, dynamic>.from(decoded);
+          }
         }
       } catch (_) {}
     }
 
-    Map<String, dynamic>? passData;
     String resolvedPassId = passIdToSearch;
     String resolvedUserId = userIdHint ?? '';
+    String? firestoreError;
 
-    try {
-      // 1. Check in 'passes' collection
-      final passDoc = await FirebaseFirestore.instance.collection('passes').doc(passIdToSearch).get();
-      if (passDoc.exists && passDoc.data() != null) {
-        passData = passDoc.data()!;
-        resolvedUserId = passData['userId']?.toString() ?? resolvedUserId;
-      }
+    final databases = _getDatabases();
 
-      // 2. If not found in 'passes', check 'users' by UID
-      if (passData == null && userIdHint != null && userIdHint.isNotEmpty) {
-        final userDoc = await FirebaseFirestore.instance.collection('users').doc(userIdHint).get();
-        if (userDoc.exists && userDoc.data() != null) {
-          passData = userDoc.data()!;
-          resolvedPassId = passData['passId']?.toString() ?? resolvedPassId;
-          resolvedUserId = userDoc.id;
+    for (final db in databases) {
+      try {
+        // 1. Check in 'passes' collection by doc ID
+        final passDoc = await db.collection('passes').doc(passIdToSearch).get().timeout(const Duration(seconds: 4));
+        if (passDoc.exists && passDoc.data() != null) {
+          passData = passDoc.data()!;
+          resolvedUserId = passData['userId']?.toString() ?? passData['uid']?.toString() ?? resolvedUserId;
+          break;
         }
-      }
 
-      // 3. If still not found, query 'users' collection where passId == passIdToSearch
-      if (passData == null) {
-        final query = await FirebaseFirestore.instance
+        // 2. Query 'users' collection where passId == passIdToSearch
+        final userQuery = await db
             .collection('users')
             .where('passId', isEqualTo: passIdToSearch)
             .limit(1)
-            .get();
-        if (query.docs.isNotEmpty) {
-          passData = query.docs.first.data();
+            .get()
+            .timeout(const Duration(seconds: 4));
+        if (userQuery.docs.isNotEmpty) {
+          passData = userQuery.docs.first.data();
           resolvedPassId = passData['passId']?.toString() ?? resolvedPassId;
-          resolvedUserId = passData['uid']?.toString() ?? query.docs.first.id;
+          resolvedUserId = passData['uid']?.toString() ?? userQuery.docs.first.id;
+          break;
         }
-      }
 
-      // 4. Fallback check case-insensitively or formatted query
-      if (passData == null && !passIdToSearch.startsWith('CON-')) {
-        final formatted = 'CON-26-${passIdToSearch.toUpperCase()}';
-        final query = await FirebaseFirestore.instance
-            .collection('passes')
-            .where('passId', isEqualTo: formatted)
-            .limit(1)
-            .get();
-        if (query.docs.isNotEmpty) {
-          passData = query.docs.first.data();
-          resolvedPassId = formatted;
-          resolvedUserId = passData['userId']?.toString() ?? '';
+        // 3. If userIdHint exists, check 'users' doc by UID
+        if (userIdHint != null && userIdHint.isNotEmpty) {
+          final userDoc = await db.collection('users').doc(userIdHint).get().timeout(const Duration(seconds: 4));
+          if (userDoc.exists && userDoc.data() != null) {
+            passData = userDoc.data()!;
+            resolvedPassId = passData['passId']?.toString() ?? resolvedPassId;
+            resolvedUserId = userDoc.id;
+            break;
+          }
+        }
+
+        // 4. Fallback check formatted ID (e.g. CON-26-...)
+        if (!passIdToSearch.startsWith('CON-')) {
+          final formatted = 'CON-26-${passIdToSearch.toUpperCase()}';
+          final pQuery = await db
+              .collection('passes')
+              .where('passId', isEqualTo: formatted)
+              .limit(1)
+              .get()
+              .timeout(const Duration(seconds: 4));
+          if (pQuery.docs.isNotEmpty) {
+            passData = pQuery.docs.first.data();
+            resolvedPassId = formatted;
+            resolvedUserId = passData['userId']?.toString() ?? '';
+            break;
+          }
+        }
+      } catch (e) {
+        debugPrint('Error searching pass in ${db.databaseId}: $e');
+        if (e.toString().contains('permission-denied')) {
+          firestoreError = 'Permission Denied: Please check Firestore rules in Firebase Console.';
         }
       }
-    } catch (e) {
-      debugPrint('Error searching pass: $e');
     }
 
     if (!mounted) return;
@@ -176,7 +212,9 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
       setState(() {
         _isProcessing = false;
         _isError = true;
-        _statusMessage = 'Pass "$passIdToSearch" not found in database.';
+        _statusMessage = firestoreError != null
+            ? 'Firestore Permission Denied. Please ensure read rules for "passes" are enabled in Firebase Console.'
+            : 'Pass "$passIdToSearch" not found in database.';
       });
       HapticFeedback.vibrate();
     }
@@ -297,8 +335,7 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
                         : () async {
                             setDlgState(() => isSubmitting = true);
                             try {
-                              // Write to Firestore collection 'scan_logs'
-                              await FirebaseFirestore.instance.collection('scan_logs').add({
+                              final logData = {
                                 'userId': userId,
                                 'passId': passId,
                                 'name': name,
@@ -308,8 +345,17 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
                                 'passType': passType,
                                 'passCategory': passCategory,
                                 'logTime': FieldValue.serverTimestamp(),
+                                'logTimeIso': DateTime.now().toIso8601String(),
                                 'scannedBy': 'Organizer Command Hub',
-                              });
+                              };
+
+                              for (final db in _getDatabases()) {
+                                try {
+                                  await db.collection('scan_logs').add(logData).timeout(const Duration(seconds: 4));
+                                } catch (e) {
+                                  debugPrint('Notice logging scan in ${db.databaseId}: $e');
+                                }
+                              }
 
                               if (dlgContext.mounted) {
                                 Navigator.pop(dlgContext);
