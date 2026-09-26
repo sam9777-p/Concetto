@@ -55,6 +55,11 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
   late bool _isFlagship;
   late bool _isVisible;
   late bool _isStageExperience;
+  late bool _isOpenRegistration;
+  late int _minTeamSize;
+  late int _maxTeamSize;
+  late TextEditingController _minTeamSizeController;
+  late TextEditingController _maxTeamSizeController;
   late List<EventStage> _stages;
   bool _obscurePasscode = true;
   bool _isSaving = false;
@@ -182,6 +187,15 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
     _venueController = TextEditingController(text: e?.venue ?? 'Central Arena (SAC Ground)');
     _prizePoolController = TextEditingController(text: e?.prizePool ?? '₹ 30,000');
     _teamSizeController = TextEditingController(text: e?.teamSize ?? '1 - 4 Members');
+    _isOpenRegistration = e?.isOpenRegistration ?? false;
+    _minTeamSize = e?.minTeamSize ?? 1;
+    _maxTeamSize = e?.maxTeamSize ?? 4;
+    if (e != null && (e.teamSize.toLowerCase().contains('open') || e.teamSize.toLowerCase().contains('individual'))) {
+      _isOpenRegistration = true;
+    }
+    _minTeamSizeController = TextEditingController(text: _minTeamSize.toString());
+    _maxTeamSizeController = TextEditingController(text: _maxTeamSize.toString());
+
     _descriptionController = TextEditingController(text: e?.description ?? '');
     _rulebookUrlController = TextEditingController(text: e?.rulebookUrl ?? '');
     _registrationUrlController = TextEditingController(text: e?.registrationUrl ?? '');
@@ -216,6 +230,8 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
     _dateController.dispose();
     _prizePoolController.dispose();
     _teamSizeController.dispose();
+    _minTeamSizeController.dispose();
+    _maxTeamSizeController.dispose();
     _descriptionController.dispose();
     _rulebookUrlController.dispose();
     _registrationUrlController.dispose();
@@ -618,6 +634,33 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
         ? _specificPasswordController.text.trim()
         : FirestoreService.generateSpecificPassword(_titleController.text.trim());
 
+    if (!_isOpenRegistration && !_isStageExperience) {
+      final minParsed = int.tryParse(_minTeamSizeController.text.trim()) ?? _minTeamSize;
+      final maxParsed = int.tryParse(_maxTeamSizeController.text.trim()) ?? _maxTeamSize;
+      if (minParsed < 1) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Minimum team size must be at least 1 member')),
+        );
+        return;
+      }
+      if (maxParsed < minParsed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Max team size must be greater than or equal to min team size')),
+        );
+        return;
+      }
+      _minTeamSize = minParsed;
+      _maxTeamSize = maxParsed;
+    }
+
+    final computedTeamSize = _isStageExperience
+        ? 'Open Showcase'
+        : (_isOpenRegistration
+            ? 'Open Registration'
+            : (_minTeamSize == _maxTeamSize
+                ? (_minTeamSize <= 1 ? 'Solo (1 Member)' : '$_minTeamSize Members')
+                : '$_minTeamSize - $_maxTeamSize Members'));
+
     final eventItem = EventItem(
       id: widget.initialEvent?.id ?? '',
       title: _titleController.text.trim(),
@@ -627,11 +670,14 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
       venue: _venueController.text.trim(),
       time: _timeController.text.trim(),
       date: _dateController.text.trim(),
-      prizePool: _prizePoolController.text.trim(),
-      teamSize: _isStageExperience ? 'Open Showcase' : _teamSizeController.text.trim(),
+      prizePool: primaryCategory.toLowerCase() == 'workshops' ? '' : _prizePoolController.text.trim(),
+      teamSize: computedTeamSize,
+      minTeamSize: _minTeamSize,
+      maxTeamSize: _maxTeamSize,
+      isOpenRegistration: _isOpenRegistration,
       description: _descriptionController.text.trim(),
       posterUrl: cleanPosterUrl,
-      rulebookUrl: _isStageExperience ? '' : _rulebookUrlController.text.trim(),
+      rulebookUrl: (_isStageExperience || primaryCategory.toLowerCase() == 'workshops') ? '' : _rulebookUrlController.text.trim(),
       registrationUrl: _isStageExperience ? '' : _registrationUrlController.text.trim(),
       coordinatorName: _coordinatorNameController.text.trim(),
       coordinatorEmail: _coordinatorEmailController.text.trim(),
@@ -1436,30 +1482,163 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
             ),
             const SizedBox(height: 24),
 
-            // 4. Details & Prize
-            _buildSectionHeader('4. DETAILS & PRIZE POOL', Icons.emoji_events_outlined),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTextField(
-                    controller: _prizePoolController,
-                    label: 'Prize Money',
-                    hint: 'e.g. ₹ 50,000',
+            // 4. Details & Team Size / Prize Pool
+            _buildSectionHeader('4. DETAILS & REGISTRATION SPECS', Icons.groups_outlined),
+            if (!_selectedCategories.contains('Workshops')) ...[
+              _buildTextField(
+                controller: _prizePoolController,
+                label: 'Prize Money',
+                hint: 'e.g. ₹ 50,000 (Leave empty if no cash prize)',
+              ),
+              const SizedBox(height: 12),
+            ],
+            if (!_isStageExperience) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppTheme.cardSurface,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: _isOpenRegistration ? AppTheme.neonOrange.withValues(alpha: 0.5) : Colors.white12,
                   ),
                 ),
-                if (!_isStageExperience) ...[
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildTextField(
-                      controller: _teamSizeController,
-                      label: 'Members / Team Size',
-                      hint: 'e.g. 1 - 4 Members',
+                child: SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  activeTrackColor: AppTheme.neonOrange,
+                  title: Text(
+                    'Open Registration',
+                    style: GoogleFonts.rajdhani(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
                     ),
                   ),
-                ],
+                  subtitle: Text(
+                    'Enable if registration is open without fixed team limits (no min/max required)',
+                    style: GoogleFonts.rajdhani(color: Colors.white54, fontSize: 12),
+                  ),
+                  value: _isOpenRegistration,
+                  onChanged: (val) {
+                    setState(() {
+                      _isOpenRegistration = val;
+                    });
+                  },
+                ),
+              ),
+              if (!_isOpenRegistration) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Min Team Size (Low) *',
+                            style: GoogleFonts.rajdhani(
+                              color: AppTheme.metallicSilver,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          TextFormField(
+                            controller: _minTeamSizeController,
+                            keyboardType: TextInputType.number,
+                            style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                            onChanged: (_) => setState(() {}),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: AppTheme.cardSurface,
+                              hintText: 'e.g. 1',
+                              hintStyle: GoogleFonts.rajdhani(color: Colors.white30),
+                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.white12)),
+                              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.neonOrange)),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Max Team Size (High) *',
+                            style: GoogleFonts.rajdhani(
+                              color: AppTheme.metallicSilver,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          TextFormField(
+                            controller: _maxTeamSizeController,
+                            keyboardType: TextInputType.number,
+                            style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                            onChanged: (_) => setState(() {}),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: AppTheme.cardSurface,
+                              hintText: 'e.g. 4',
+                              hintStyle: GoogleFonts.rajdhani(color: Colors.white30),
+                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.white12)),
+                              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.neonOrange)),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Builder(
+                  builder: (context) {
+                    final minVal = int.tryParse(_minTeamSizeController.text.trim()) ?? 1;
+                    final maxVal = int.tryParse(_maxTeamSizeController.text.trim()) ?? 4;
+                    final isInvalid = maxVal < minVal;
+                    final displayText = minVal == maxVal
+                        ? (minVal <= 1 ? 'Solo (1 Member)' : '$minVal Members')
+                        : '$minVal - $maxVal Members';
+
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isInvalid ? Colors.redAccent.withValues(alpha: 0.1) : AppTheme.cardSurface,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: isInvalid ? Colors.redAccent : AppTheme.neonOrange.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isInvalid ? Icons.warning_amber_rounded : Icons.info_outline,
+                            size: 16,
+                            color: isInvalid ? Colors.redAccent : AppTheme.neonOrange,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              isInvalid
+                                  ? 'Max team size (High) must be greater than or equal to Min team size (Low)'
+                                  : 'Display Output: $displayText',
+                              style: GoogleFonts.rajdhani(
+                                color: isInvalid ? Colors.redAccent : Colors.white70,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ],
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
+            ],
 
             _buildTextField(
               controller: _descriptionController,

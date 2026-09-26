@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Space-grade color palette
-  static const Color scaffoldBg = Color(0xFF080302);
-  static const Color neonOrange = Color(0xFFFF4500);
-  static const Color cyberAmber = Color(0xFFFFA000);
-  static const Color metallicSilver = Color(0xFFCFD8DC);
-  static const Color metallicMuted = Color(0xFF90A4AE);
-  static const Color translucentDark = Color(0xDD0B0403);
-  static const Color cardSurface = Color(0xFF110604);
-  static const Color elevatedSurface = Color(0xFF180907);
+  // Space-grade refined color palette (comfortable contrast, sleek dark aesthetic)
+  static const Color scaffoldBg = Color(0xFF0D0E12);
+  static const Color neonOrange = Color(0xFFF97316); // Balanced warm solar orange
+  static const Color cyberAmber = Color(0xFFF59E0B);
+  static const Color metallicSilver = Color(0xFFE2E8F0);
+  static const Color metallicMuted = Color(0xFF94A3B8);
+  static const Color translucentDark = Color(0xEE0D0E12);
+  static const Color cardSurface = Color(0xFF161922);
+  static const Color elevatedSurface = Color(0xFF1E222D);
   static const Color cyberCyan = Color(0xFF00E5FF);
   static const Color neonEmerald = Color(0xFF00E676);
 
@@ -22,13 +22,13 @@ class AppTheme {
   );
 
   static const LinearGradient darkCardGradient = LinearGradient(
-    colors: [Color(0xFF160805), Color(0xFF0D0403)],
+    colors: [Color(0xFF1A1D26), Color(0xFF13151D)],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
 
   // Box shadow helpers
-  static List<BoxShadow> neonGlow({Color color = neonOrange, double opacity = 0.25, double blur = 12}) {
+  static List<BoxShadow> neonGlow({Color color = neonOrange, double opacity = 0.20, double blur = 10}) {
     return [
       BoxShadow(
         color: color.withValues(alpha: opacity),
@@ -126,14 +126,14 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: neonOrange.withValues(alpha: 0.35), width: 0.6),
+          side: BorderSide(color: neonOrange.withValues(alpha: 0.22), width: 0.8),
         ),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
 
       // Grounded Navigation Bar Theme
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: const Color(0xFF0B0403),
+        backgroundColor: const Color(0xFF10121A),
         elevation: 0,
         indicatorColor: neonOrange.withValues(alpha: 0.18),
         indicatorShape: RoundedRectangleBorder(

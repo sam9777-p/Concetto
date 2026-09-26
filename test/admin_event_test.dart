@@ -51,6 +51,13 @@ void main() {
       expect(MasterAdminConfig.verify(''), isFalse);
     });
 
+    test('MasterAdminConfig verifies developer passwords including new pattern', () {
+      expect(MasterAdminConfig.verifyDev('concetto2026@dev2!2!'), isTrue);
+      expect(MasterAdminConfig.verifyDev('Concetto2026@dev2!2!'), isTrue);
+      expect(MasterAdminConfig.verifyDev('Concetto#Dev2026'), isTrue);
+      expect(MasterAdminConfig.verifyDev('wrong_dev_pass'), isFalse);
+    });
+
     test('FirestoreService hashPasscode produces deterministic SHA-256 hash', () {
       final hash1 = FirestoreService.hashPasscode('my_event_pin_123');
       final hash2 = FirestoreService.hashPasscode('my_event_pin_123');

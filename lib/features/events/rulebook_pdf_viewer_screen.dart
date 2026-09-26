@@ -1,10 +1,6 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../../core/services/pdf_cache_service.dart';
-import '../../core/theme/app_theme.dart';
 import '../../models/event_item.dart';
 
 class RulebookPdfViewerScreen extends StatefulWidget {
@@ -24,54 +20,28 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
   int _pageCount = 0;
   int _currentPage = 1;
   bool _loadFailed = false;
+  bool _isLoading = true;
 
-  Uint8List? _cachedPdfBytes;
-  bool _isFetchingPdf = false;
-  double _downloadProgress = 0.0;
+  // Bundled asset rulebooks map
+  static const Map<String, String> _bundledRulebooks = {
+    'aethera': 'assets/rulebooks/aethera.pdf',
+    'code_wars': 'assets/rulebooks/code_wars.pdf',
+    'edge_ai_challenge': 'assets/rulebooks/edge_ai_challenge.pdf',
+    'equity_auction': 'assets/rulebooks/equity_auction.pdf',
+    'fault_hunt': 'assets/rulebooks/fault_hunt.pdf',
+    'logic_odyssey': 'assets/rulebooks/logic_odyssey.pdf',
+    'mathalon': 'assets/rulebooks/mathalon.pdf',
+    'questree__26': 'assets/rulebooks/questree__26.pdf',
+    'pmx180dc_caseblitz': 'assets/rulebooks/questree__26.pdf',
+    'reservoir_making___iadc': 'assets/rulebooks/reservoir_making___iadc.pdf',
+    'sparkathon': 'assets/rulebooks/sparkathon.pdf',
+    'vibehack__26': 'assets/rulebooks/vibehack__26.pdf',
+  };
 
   @override
   void initState() {
     super.initState();
     _pdfViewerController = PdfViewerController();
-
-    final url = _normalizedPdfUrl;
-    if (url.isNotEmpty && url.startsWith('http')) {
-      final memBytes = PdfCacheService.getFromMemory(url);
-      if (memBytes != null) {
-        _cachedPdfBytes = memBytes;
-      } else {
-        _fetchAndCachePdf(url);
-      }
-    }
-  }
-
-  Future<void> _fetchAndCachePdf(String url) async {
-    setState(() {
-      _isFetchingPdf = true;
-      _downloadProgress = 0.0;
-    });
-
-    try {
-      final bytes = await PdfCacheService.getOrFetchPdf(
-        url,
-        onProgress: (p) {
-          if (mounted) {
-            setState(() => _downloadProgress = p);
-          }
-        },
-      );
-
-      if (mounted) {
-        setState(() {
-          _isFetchingPdf = false;
-          _cachedPdfBytes = bytes;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isFetchingPdf = false);
-      }
-    }
   }
 
   @override
@@ -80,11 +50,25 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
     super.dispose();
   }
 
+  String? get _bundledAssetPath {
+    final id = widget.event.id.toLowerCase().trim();
+    if (_bundledRulebooks.containsKey(id)) {
+      return _bundledRulebooks[id];
+    }
+    // Check partial matches
+    for (final entry in _bundledRulebooks.entries) {
+      if (id.contains(entry.key) || entry.key.contains(id)) {
+        return entry.value;
+      }
+    }
+    return null;
+  }
+
   String get _normalizedPdfUrl {
     final raw = widget.event.rulebookUrl.trim();
     if (raw.isEmpty) return '';
 
-    // If it's a Google Drive file link, convert to direct export link
+    // Google Drive direct export
     if (raw.contains('drive.google.com/file/d/')) {
       final match = RegExp(r'/file/d/([a-zA-Z0-9_-]+)').firstMatch(raw);
       if (match != null && match.groupCount >= 1) {
@@ -92,31 +76,28 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
         return 'https://drive.google.com/uc?export=download&id=$fileId';
       }
     }
-    return raw;
-  }
 
-  Future<void> _openExternalLink(String url) async {
-    final uri = Uri.tryParse(url.trim());
-    if (uri != null && await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not open link: $url')),
-        );
+    // Google Docs PDF export
+    if (raw.contains('docs.google.com/document/d/')) {
+      final match = RegExp(r'/document/d/([a-zA-Z0-9_-]+)').firstMatch(raw);
+      if (match != null && match.groupCount >= 1) {
+        final docId = match.group(1);
+        return 'https://docs.google.com/document/d/$docId/export?format=pdf';
       }
     }
+
+    return raw;
   }
 
   @override
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).colorScheme.primary;
-    const bgDark = Color(0xFF070709);
-    const cardBg = Color(0xFF13131A);
+    final cardBg = Theme.of(context).colorScheme.surface;
+    final bgDark = Theme.of(context).scaffoldBackgroundColor;
 
-    final rawUrl = widget.event.rulebookUrl.trim();
+    final assetPath = _bundledAssetPath;
     final effectiveUrl = _normalizedPdfUrl;
-    final hasUrl = rawUrl.isNotEmpty && rawUrl.startsWith('http');
+    final hasSource = assetPath != null || (effectiveUrl.isNotEmpty && effectiveUrl.startsWith('http'));
 
     return Scaffold(
       backgroundColor: bgDark,
@@ -127,6 +108,7 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
+        // Title gets maximum space with zero crowding
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -152,64 +134,20 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
             ),
           ],
         ),
-        actions: [
-          if (hasUrl)
-            IconButton(
-              icon: const Icon(Icons.open_in_new, color: AppTheme.cyberAmber),
-              tooltip: 'Open in Browser / External App',
-              onPressed: () => _openExternalLink(rawUrl),
-            ),
-          if (_pageCount > 0)
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-              ),
-              child: Center(
-                child: Text(
-                  '$_currentPage / $_pageCount',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          if (hasUrl && !_loadFailed) ...[
-            IconButton(
-              icon: const Icon(Icons.zoom_in, color: Colors.white70),
-              tooltip: 'Zoom In',
-              onPressed: () {
-                _pdfViewerController.zoomLevel = (_pdfViewerController.zoomLevel + 0.25).clamp(1.0, 3.0);
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.zoom_out, color: Colors.white70),
-              tooltip: 'Zoom Out',
-              onPressed: () {
-                _pdfViewerController.zoomLevel = (_pdfViewerController.zoomLevel - 0.25).clamp(1.0, 3.0);
-              },
-            ),
-          ],
-        ],
+        actions: const [], // Zero redundant buttons or page numbers to keep header clean and spacious
       ),
       body: Stack(
         children: [
-          if (!hasUrl)
+          if (!hasSource)
             _buildEmptyState(
-              title: 'NO RULEBOOK ATTACHED YET',
-              subtitle: 'The organizing club has not uploaded an official rulebook PDF for this event yet.',
-              icon: Icons.menu_book_outlined,
+              title: 'RULEBOOK ANNOUNCEMENT SOON',
+              subtitle: 'The official rulebook guidelines for ${widget.event.title} are being finalized by the organizing society and will be available here shortly.',
             )
           else if (_loadFailed)
-            _buildLoadFailedState(rawUrl)
-          else if (_cachedPdfBytes != null)
-            SfPdfViewer.memory(
-              _cachedPdfBytes!,
+            _buildLoadFailedState()
+          else if (assetPath != null)
+            SfPdfViewer.asset(
+              assetPath,
               controller: _pdfViewerController,
               canShowScrollHead: false,
               canShowScrollStatus: false,
@@ -221,14 +159,23 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
                   setState(() {
                     _pageCount = details.document.pages.count;
                     _loadFailed = false;
+                    _isLoading = false;
                   });
                 }
               },
               onDocumentLoadFailed: (details) {
-                if (mounted) {
+                // If local asset failed, try network fallback if URL exists
+                if (effectiveUrl.isNotEmpty && effectiveUrl.startsWith('http')) {
                   setState(() {
-                    _loadFailed = true;
+                    _isLoading = true;
                   });
+                } else {
+                  if (mounted) {
+                    setState(() {
+                      _loadFailed = true;
+                      _isLoading = false;
+                    });
+                  }
                 }
               },
               onPageChanged: (details) {
@@ -253,6 +200,7 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
                   setState(() {
                     _pageCount = details.document.pages.count;
                     _loadFailed = false;
+                    _isLoading = false;
                   });
                 }
               },
@@ -260,6 +208,7 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
                 if (mounted) {
                   setState(() {
                     _loadFailed = true;
+                    _isLoading = false;
                   });
                 }
               },
@@ -272,54 +221,17 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
               },
             ),
 
-          // Downloading & Caching Progress Overlay
-          if (_isFetchingPdf && _cachedPdfBytes == null)
+          // Clean, quiet loading spinner with NO noisy text
+          if (_isLoading && hasSource && !_loadFailed)
             Container(
-              color: Colors.black.withValues(alpha: 0.85),
+              color: bgDark.withValues(alpha: 0.7),
               child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                  margin: const EdgeInsets.symmetric(horizontal: 32),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF140604),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: primaryColor.withValues(alpha: 0.4), width: 1.2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: primaryColor.withValues(alpha: 0.15),
-                        blurRadius: 16,
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircularProgressIndicator(
-                        value: _downloadProgress > 0 ? _downloadProgress : null,
-                        color: primaryColor,
-                        strokeWidth: 3,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _downloadProgress > 0
-                            ? 'Downloading Rulebook: ${(_downloadProgress * 100).toInt()}%'
-                            : 'Fetching & Caching Rulebook...',
-                        style: GoogleFonts.rajdhani(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Stored locally in cache for instant future access',
-                        style: GoogleFonts.rajdhani(
-                          color: Colors.white54,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                child: SizedBox(
+                  width: 36,
+                  height: 36,
+                  child: CircularProgressIndicator(
+                    color: primaryColor,
+                    strokeWidth: 2.5,
                   ),
                 ),
               ),
@@ -327,18 +239,18 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
         ],
       ),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: cardBg,
           border: Border(
-            top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+            top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
           ),
         ),
         child: SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Smooth Hardware-Accelerated Page Scrubber / Slider
+              // Page slider if multiple pages
               if (_pageCount > 1 && !_loadFailed) ...[
                 Row(
                   children: [
@@ -347,9 +259,7 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
                       tooltip: 'Previous Page',
                       visualDensity: VisualDensity.compact,
                       onPressed: _currentPage > 1
-                          ? () {
-                              _pdfViewerController.previousPage();
-                            }
+                          ? () => _pdfViewerController.previousPage()
                           : null,
                     ),
                     Expanded(
@@ -359,9 +269,9 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
                           inactiveTrackColor: Colors.white.withValues(alpha: 0.15),
                           thumbColor: primaryColor,
                           overlayColor: primaryColor.withValues(alpha: 0.2),
-                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                          overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-                          trackHeight: 3,
+                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
+                          overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+                          trackHeight: 2.5,
                         ),
                         child: Slider(
                           value: _currentPage.toDouble().clamp(1.0, _pageCount.toDouble()),
@@ -371,9 +281,7 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
                           onChanged: (val) {
                             final targetPage = val.round();
                             if (targetPage != _currentPage) {
-                              setState(() {
-                                _currentPage = targetPage;
-                              });
+                              setState(() => _currentPage = targetPage);
                               _pdfViewerController.jumpToPage(targetPage);
                             }
                           },
@@ -385,59 +293,42 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
                       tooltip: 'Next Page',
                       visualDensity: VisualDensity.compact,
                       onPressed: _currentPage < _pageCount
-                          ? () {
-                              _pdfViewerController.nextPage();
-                            }
+                          ? () => _pdfViewerController.nextPage()
                           : null,
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: primaryColor.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
-                      ),
-                      child: Text(
-                        'P. $_currentPage/$_pageCount',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    Text(
+                      '$_currentPage / $_pageCount',
+                      style: GoogleFonts.rajdhani(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
               ],
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Venue: ${widget.event.venue}',
-                          style: const TextStyle(color: Colors.white70, fontSize: 11),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          'Time: ${widget.event.time}',
-                          style: TextStyle(color: primaryColor, fontSize: 11, fontWeight: FontWeight.w600),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        if (widget.event.venue.isNotEmpty)
+                          Text(
+                            'Venue: ${widget.event.venue}',
+                            style: const TextStyle(color: Colors.white70, fontSize: 11),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        if (widget.event.time.isNotEmpty)
+                          Text(
+                            'Time: ${widget.event.time}',
+                            style: TextStyle(color: primaryColor, fontSize: 11, fontWeight: FontWeight.w600),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                       ],
-                    ),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.check_circle_outline, size: 16, color: Colors.white),
-                    label: const Text('GOT IT', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
                 ],
@@ -452,8 +343,8 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
   Widget _buildEmptyState({
     required String title,
     required String subtitle,
-    required IconData icon,
   }) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(28.0),
@@ -461,22 +352,22 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
+                color: Colors.white.withValues(alpha: 0.04),
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white12),
               ),
-              child: Icon(icon, size: 48, color: Colors.white38),
+              child: Icon(Icons.menu_book_outlined, size: 42, color: primaryColor.withValues(alpha: 0.6)),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 16),
             Text(
               title,
               style: GoogleFonts.orbitron(
-                fontSize: 15,
+                fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
-                letterSpacing: 1.1,
+                letterSpacing: 1.0,
               ),
               textAlign: TextAlign.center,
             ),
@@ -485,23 +376,10 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
               subtitle,
               style: GoogleFonts.rajdhani(
                 fontSize: 13,
-                color: AppTheme.metallicSilver,
+                color: Colors.white60,
                 height: 1.4,
               ),
               textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 22),
-            OutlinedButton.icon(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back, size: 16, color: Colors.white70),
-              label: Text(
-                'RETURN TO EVENT DETAILS',
-                style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.white24),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
             ),
           ],
         ),
@@ -509,65 +387,56 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
     );
   }
 
-  Widget _buildLoadFailedState(String originalUrl) {
+  Widget _buildLoadFailedState() {
+    final primaryColor = Theme.of(context).colorScheme.primary;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Container(
-          padding: const EdgeInsets.all(22),
-          decoration: BoxDecoration(
-            color: const Color(0xFF140806),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.neonOrange.withValues(alpha: 0.5)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.picture_as_pdf_outlined, color: AppTheme.neonOrange, size: 48),
-              const SizedBox(height: 14),
-              Text(
-                'DOCUMENT LINK READY',
-                style: GoogleFonts.orbitron(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: 1.1,
-                ),
+        padding: const EdgeInsets.all(28.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.description_outlined, size: 42, color: primaryColor.withValues(alpha: 0.7)),
+            const SizedBox(height: 14),
+            Text(
+              'RULEBOOK ACCESS UPDATING',
+              style: GoogleFonts.orbitron(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 1.0,
               ),
-              const SizedBox(height: 10),
-              Text(
-                'This rulebook is hosted externally (e.g. Google Drive/Docs). Click below to view the official document in your browser or drive reader.',
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'The document is being synced from the festival repository. Please try again shortly.',
+              style: GoogleFonts.rajdhani(
+                fontSize: 13,
+                color: Colors.white60,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 18),
+            OutlinedButton(
+              onPressed: () {
+                setState(() {
+                  _loadFailed = false;
+                  _isLoading = true;
+                });
+              },
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text(
+                'RETRY ACCESS',
                 style: GoogleFonts.rajdhani(
-                  fontSize: 13,
-                  color: AppTheme.metallicSilver,
-                  height: 1.4,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 18),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => _openExternalLink(originalUrl),
-                  icon: const Icon(Icons.open_in_new, color: Colors.black, size: 18),
-                  label: Text(
-                    'OPEN OFFICIAL RULEBOOK',
-                    style: GoogleFonts.rajdhani(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 14,
-                      color: Colors.black,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.neonOrange,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

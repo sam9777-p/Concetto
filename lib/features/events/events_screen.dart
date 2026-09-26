@@ -648,7 +648,10 @@ class EventCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (event.prizePool.isNotEmpty)
+                  if (event.prizePool.isNotEmpty &&
+                      event.category != 'Workshops' &&
+                      !event.isStageExperience &&
+                      !event.isWatchableOnly)
                     Positioned(
                       bottom: 8,
                       left: 8,
