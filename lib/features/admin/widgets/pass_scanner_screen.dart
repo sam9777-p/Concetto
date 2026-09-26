@@ -93,7 +93,7 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
     String? userIdHint;
     Map<String, dynamic>? passData;
 
-    // Check if payload is JSON formatted: {"uid":"...","passId":"...", ...}
+    // Check if payload is JSON formatted: {"passId":"...", ...} or raw pass ID string
     if (cleanInput.startsWith('{') && cleanInput.endsWith('}')) {
       try {
         final decoded = jsonDecode(cleanInput);
@@ -103,10 +103,6 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
           }
           if (decoded.containsKey('uid')) {
             userIdHint = decoded['uid'].toString();
-          }
-          // Self-contained attendee payload from QR code
-          if (decoded.containsKey('name') || decoded.containsKey('college') || decoded.containsKey('email')) {
-            passData = Map<String, dynamic>.from(decoded);
           }
         }
       } catch (_) {}
@@ -120,11 +116,12 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
 
     for (final db in databases) {
       try {
-        // 1. Check in 'passes' collection by doc ID
-        final passDoc = await db.collection('passes').doc(passIdToSearch).get().timeout(const Duration(seconds: 4));
+        // 1. Fetch directly from 'users' collection by document ID (passId)
+        final passDoc = await db.collection('users').doc(passIdToSearch).get().timeout(const Duration(seconds: 4));
         if (passDoc.exists && passDoc.data() != null) {
           passData = passDoc.data()!;
-          resolvedUserId = passData['userId']?.toString() ?? passData['uid']?.toString() ?? resolvedUserId;
+          resolvedPassId = passData['passId']?.toString() ?? passIdToSearch;
+          resolvedUserId = passData['uid']?.toString() ?? passDoc.id;
           break;
         }
 
@@ -137,27 +134,35 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
             .timeout(const Duration(seconds: 4));
         if (userQuery.docs.isNotEmpty) {
           passData = userQuery.docs.first.data();
-          resolvedPassId = passData['passId']?.toString() ?? resolvedPassId;
+          resolvedPassId = passData['passId']?.toString() ?? passIdToSearch;
           resolvedUserId = passData['uid']?.toString() ?? userQuery.docs.first.id;
           break;
         }
 
-        // 3. If userIdHint exists, check 'users' doc by UID
+        // 3. If userIdHint was provided, check 'users' by UID
         if (userIdHint != null && userIdHint.isNotEmpty) {
-          final userDoc = await db.collection('users').doc(userIdHint).get().timeout(const Duration(seconds: 4));
-          if (userDoc.exists && userDoc.data() != null) {
-            passData = userDoc.data()!;
-            resolvedPassId = passData['passId']?.toString() ?? resolvedPassId;
-            resolvedUserId = userDoc.id;
+          final uDoc = await db.collection('users').doc(userIdHint).get().timeout(const Duration(seconds: 4));
+          if (uDoc.exists && uDoc.data() != null) {
+            passData = uDoc.data()!;
+            resolvedPassId = passData['passId']?.toString() ?? passIdToSearch;
+            resolvedUserId = uDoc.id;
             break;
           }
         }
 
-        // 4. Fallback check formatted ID (e.g. CON-26-...)
+        // 4. Fallback check formatted ID (e.g. CON-26-...) in 'users'
         if (!passIdToSearch.startsWith('CON-')) {
           final formatted = 'CON-26-${passIdToSearch.toUpperCase()}';
+          final fDoc = await db.collection('users').doc(formatted).get().timeout(const Duration(seconds: 4));
+          if (fDoc.exists && fDoc.data() != null) {
+            passData = fDoc.data()!;
+            resolvedPassId = formatted;
+            resolvedUserId = passData['uid']?.toString() ?? fDoc.id;
+            break;
+          }
+
           final pQuery = await db
-              .collection('passes')
+              .collection('users')
               .where('passId', isEqualTo: formatted)
               .limit(1)
               .get()
@@ -165,14 +170,14 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
           if (pQuery.docs.isNotEmpty) {
             passData = pQuery.docs.first.data();
             resolvedPassId = formatted;
-            resolvedUserId = passData['userId']?.toString() ?? '';
+            resolvedUserId = passData['uid']?.toString() ?? pQuery.docs.first.id;
             break;
           }
         }
       } catch (e) {
-        debugPrint('Error searching pass in ${db.databaseId}: $e');
+        debugPrint('Error searching user in ${db.databaseId}: $e');
         if (e.toString().contains('permission-denied')) {
-          firestoreError = 'Permission Denied: Please check Firestore rules in Firebase Console.';
+          firestoreError = 'Permission Denied: Please check Firestore rules for "users" in Firebase Console.';
         }
       }
     }
@@ -213,8 +218,8 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
         _isProcessing = false;
         _isError = true;
         _statusMessage = firestoreError != null
-            ? 'Firestore Permission Denied. Please ensure read rules for "passes" are enabled in Firebase Console.'
-            : 'Pass "$passIdToSearch" not found in database.';
+            ? 'Firestore Permission Denied. Please ensure read rules for "users" are enabled in Firebase Console.'
+            : 'Pass "$passIdToSearch" not found in users database.';
       });
       HapticFeedback.vibrate();
     }

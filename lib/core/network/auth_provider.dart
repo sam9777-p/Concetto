@@ -50,16 +50,7 @@ class AttendeeProfile {
       college.toLowerCase().contains('iit (ism)') ||
       email.toLowerCase().endsWith('@iitism.ac.in');
 
-  String get qrPayload => jsonEncode({
-        'uid': uid,
-        'passId': passId,
-        'name': name,
-        'email': email,
-        'phone': phone,
-        'college': college,
-        'passType': passType,
-        'passCategory': passCategoryTitle,
-      });
+  String get qrPayload => passId;
 
   AttendeeProfile copyWith({
     String? uid,
@@ -128,19 +119,18 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
     return list;
   }
 
-  static Future<void> _persistUserAndPassToFirestore({
+  static Future<void> _persistUserToFirestore({
     required String uid,
     required String passId,
     required Map<String, dynamic> userData,
-    required Map<String, dynamic> passData,
   }) async {
     for (final db in _getFirestoreInstances()) {
       try {
         await Future.wait([
           db.collection('users').doc(uid).set(userData, SetOptions(merge: true)),
-          db.collection('passes').doc(passId).set(passData, SetOptions(merge: true)),
+          db.collection('users').doc(passId).set(userData, SetOptions(merge: true)),
         ]).timeout(const Duration(seconds: 4));
-        debugPrint('Successfully persisted user and pass to Firestore database ${db.databaseId}');
+        debugPrint('Successfully persisted user to Firestore database ${db.databaseId}');
       } catch (e) {
         debugPrint('Notice persisting to Firestore (${db.databaseId}): $e');
       }
@@ -285,7 +275,7 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
     await _saveProfileToLocalCache(profile);
 
     // Save to Firestore in background
-    _persistUserAndPassToFirestore(
+    _persistUserToFirestore(
       uid: user.uid,
       passId: passId,
       userData: {
@@ -298,21 +288,6 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
         'passId': passId,
         'passType': passType,
         'passCategory': AttendeeProfile.passCategoryNames[passType] ?? 'STUDENT PASS',
-        'createdAt': FieldValue.serverTimestamp(),
-        'createdAtIso': DateTime.now().toIso8601String(),
-      },
-      passData: {
-        'passId': passId,
-        'uid': user.uid,
-        'userId': user.uid,
-        'name': name,
-        'email': user.email!,
-        'phone': user.phoneNumber ?? '',
-        'college': college,
-        'isIitIsm': isIit,
-        'passType': passType,
-        'passCategory': AttendeeProfile.passCategoryNames[passType] ?? 'STUDENT PASS',
-        'status': 'active',
         'createdAt': FieldValue.serverTimestamp(),
         'createdAtIso': DateTime.now().toIso8601String(),
       },
@@ -430,22 +405,6 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
       'createdAtIso': DateTime.now().toIso8601String(),
     };
 
-    final passData = {
-      'passId': passId,
-      'uid': user.uid,
-      'userId': user.uid,
-      'name': name.trim(),
-      'email': cleanEmail,
-      'phone': phone.trim(),
-      'college': college.trim(),
-      'isIitIsm': isIitIsm,
-      'passType': defaultPassType,
-      'passCategory': passCategoryTitle,
-      'status': 'active',
-      'createdAt': FieldValue.serverTimestamp(),
-      'createdAtIso': DateTime.now().toIso8601String(),
-    };
-
     // 4. Save to local cache immediately
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -463,12 +422,11 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
       );
     } catch (_) {}
 
-    // 5. Persist to Firestore: `users` and `passes` collections
-    await _persistUserAndPassToFirestore(
+    // 5. Persist to Firestore: ONLY `users` collection!
+    await _persistUserToFirestore(
       uid: user.uid,
       passId: passId,
       userData: userData,
-      passData: passData,
     );
 
     // 6. User cannot login until email is verified, so sign out
