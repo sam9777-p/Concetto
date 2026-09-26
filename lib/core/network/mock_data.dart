@@ -1626,8 +1626,8 @@ INTERNAL TIMELINE:
       order: 2,
     ),
     CoreTeamMember(
-      name: 'Arun Dayal',
-      role: '2nd Co-convener',
+      name: 'Prof. Arun Udai',
+      role: 'Co-Convenor',
       vertical: 'Faculty Leadership',
       phone: '+91 95231 25843',
       email: 'arunudai@iitism.ac.in',
@@ -1808,7 +1808,7 @@ INTERNAL TIMELINE:
     ),
     CoreTeamMember(
       name: 'Manas Gupta',
-      role: 'Event Head',
+      role: 'Event Management Head',
       vertical: 'Event Management',
       phone: '+91-9044566755',
       email: '23je0547@iitism.ac.in',

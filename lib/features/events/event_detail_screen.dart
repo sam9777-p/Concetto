@@ -355,13 +355,7 @@ class EventDetailScreen extends StatelessWidget {
                         Expanded(
                           flex: 3,
                           child: ElevatedButton.icon(
-                            onPressed: () {
-                              if (event.registrationUrl.isNotEmpty) {
-                                _launchExternalUrl(context, event.registrationUrl);
-                              } else {
-                                _showRegistrationSheet(context, primaryColor);
-                              }
-                            },
+                            onPressed: () => _showRegistrationSheet(context, primaryColor),
                             icon: const Icon(
                               Icons.how_to_reg,
                               color: Colors.black,
@@ -386,7 +380,7 @@ class EventDetailScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         Expanded(
                           flex: 2,
                           child: OutlinedButton.icon(
@@ -405,6 +399,21 @@ class EventDetailScreen extends StatelessWidget {
                             ),
                           ),
                         ),
+                        if (event.registrationUrl.isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          IconButton.outlined(
+                            onPressed: () => _launchExternalUrl(context, event.registrationUrl),
+                            icon: const Icon(Icons.open_in_browser, size: 18),
+                            tooltip: 'Official Google Form (External)',
+                            style: IconButton.styleFrom(
+                              padding: const EdgeInsets.all(12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ],

@@ -48,4 +48,29 @@ class CoreTeamMember {
       'order': order,
     };
   }
+
+  CoreTeamMember copyWith({
+    String? name,
+    String? role,
+    String? vertical,
+    String? phone,
+    String? email,
+    String? imageUrl,
+    String? year,
+    String? quote,
+    int? order,
+  }) {
+    return CoreTeamMember(
+      name: name ?? this.name,
+      role: role ?? this.role,
+      vertical: vertical ?? this.vertical,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
+      imageUrl: imageUrl ?? this.imageUrl,
+      year: year ?? this.year,
+      quote: quote ?? this.quote,
+      order: order ?? this.order,
+    );
+  }
 }
+

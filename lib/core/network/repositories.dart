@@ -16,11 +16,9 @@ class MasterAdminConfig {
       sha256.convert(utf8.encode(input)).toString();
 
   // One-way cryptographic SHA-256 hashes only. Strictly case-sensitive, no alternatives accepted.
-  // Master Password: 'concetto@master2026'
   static const String _masterHash =
       'e64575142425195ea6195639cc0cacb60173d19ffacfa535a6fd79401f1d0c2d';
 
-  // Developer Password: 'COncetto2026@56932!'
   static const String _devHash =
       '40a0702c53def4d439c9aea8dc0de47a289d5382a51b4e120f1f68ae3fdb48bb';
 
@@ -515,7 +513,7 @@ class FirestoreService {
 
     for (final member in MockData.team) {
       try {
-        final docId = 'team_${member.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_')}';
+        final docId = 'team_${member.order.toString().padLeft(2, '0')}_${member.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_')}';
         await _db.collection('team').doc(docId).set(member.toJson());
         teamCount++;
       } catch (e) {
@@ -534,15 +532,34 @@ class FirestoreService {
 
   Future<List<CoreTeamMember>> getTeam() async {
     try {
-      final snapshot = await _db.collection('team').get();
+      final snapshot = await _db.collection('team').get().timeout(const Duration(milliseconds: 700));
       if (snapshot.docs.isNotEmpty) {
-        return snapshot.docs
+        final list = snapshot.docs
             .map((doc) => CoreTeamMember.fromJson(doc.data()))
             .toList();
+        final mockMap = {for (var m in MockData.team) m.name: m};
+        for (int i = 0; i < list.length; i++) {
+          final mock = mockMap[list[i].name] ??
+              (list[i].name.contains('Arun') ? mockMap['Prof. Arun Udai'] : null);
+          if (mock != null) {
+            list[i] = list[i].copyWith(
+              name: mock.name,
+              role: mock.role,
+              quote: list[i].quote.isEmpty ? mock.quote : list[i].quote,
+              phone: list[i].phone.isEmpty ? mock.phone : list[i].phone,
+              imageUrl: list[i].imageUrl.isEmpty ? mock.imageUrl : list[i].imageUrl,
+              order: mock.order,
+            );
+          }
+        }
+        list.sort((a, b) => a.order.compareTo(b.order));
+        if (list.length >= 50) {
+          return list;
+        }
       }
       return MockData.team;
     } catch (e) {
-      debugPrint('Firestore getTeam notice: $e. Falling back to mock data.');
+      debugPrint('Firestore getTeam notice: $e. Falling back to verified mock data.');
       return MockData.team;
     }
   }

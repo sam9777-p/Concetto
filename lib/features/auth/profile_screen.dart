@@ -953,7 +953,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               if (_selectedTeamFilter == 'Tech & Dev') return v.contains('development') || v.contains('web') || v.contains('app') || v.contains('design');
               if (_selectedTeamFilter == 'Operations') return v.contains('operation') || v.contains('security') || v.contains('hospitality') || v.contains('doc');
               return true;
-            }).toList();
+            }).toList()
+              ..sort((a, b) => a.order.compareTo(b.order));
 
             return RepaintBoundary(
               child: ListView.builder(
@@ -1030,43 +1031,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${member.role} • ${member.vertical}',
+                      member.role,
                       style: GoogleFonts.rajdhani(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: primaryColor.withValues(alpha: 0.9),
                       ),
                     ),
-                    if (member.year.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        member.year,
-                        style: GoogleFonts.rajdhani(fontSize: 11, color: AppTheme.metallicMuted),
-                      ),
-                    ],
-                    if (member.phone.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      InkWell(
-                        onTap: () => _launchPhone(context, member.phone),
-                        borderRadius: BorderRadius.circular(4),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.phone_rounded, size: 12, color: primaryColor),
-                            const SizedBox(width: 5),
-                            Text(
-                              member.phone,
-                              style: GoogleFonts.rajdhani(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white.withValues(alpha: 0.95),
-                                letterSpacing: 0.4,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
