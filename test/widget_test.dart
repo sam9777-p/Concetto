@@ -12,6 +12,11 @@ void main() {
     );
     await tester.pump();
 
+    // Tap the splash screen to navigate immediately to home
+    await tester.tap(find.byType(GestureDetector).first);
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
+
     final navBarFinder = find.byType(NavigationBar);
     expect(navBarFinder, findsOneWidget);
 
@@ -19,6 +24,7 @@ void main() {
     expect(find.descendant(of: navBarFinder, matching: find.text('Home')), findsOneWidget);
     expect(find.descendant(of: navBarFinder, matching: find.text('Events')), findsOneWidget);
     expect(find.descendant(of: navBarFinder, matching: find.text('Schedule')), findsOneWidget);
+    expect(find.descendant(of: navBarFinder, matching: find.text('Store')), findsOneWidget);
     expect(find.descendant(of: navBarFinder, matching: find.text('Profile')), findsOneWidget);
 
     // Advance time to allow any delayed animations to complete

@@ -49,6 +49,22 @@ class AttendeeProfile {
 class AuthNotifier extends Notifier<AttendeeProfile> {
   @override
   AttendeeProfile build() {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null && user.email != null) {
+        final displayName = user.displayName ?? user.email!.split('@').first;
+        return AttendeeProfile(
+          uid: user.uid,
+          name: displayName.isNotEmpty ? displayName : 'Concetto Explorer',
+          email: user.email!,
+          college: 'Registered Participant',
+          phone: user.phoneNumber ?? '+91 85030 86164',
+          passId: 'CON-2026-${(user.uid.length >= 4 ? user.uid.substring(0, 4) : "7492").toUpperCase()}',
+          isGuest: false,
+          registeredEventIds: const ['robowars_15kg', 'masterstack'],
+        );
+      }
+    } catch (_) {}
     return _initialGuestProfile();
   }
 
