@@ -89,6 +89,7 @@ class FirestoreConfig {
 
 class FirestoreService {
   final FirebaseFirestore? _customDb;
+  final MongoService _mongo = MongoService();
 
   FirestoreService({FirebaseFirestore? db}) : _customDb = db;
 
@@ -507,7 +508,8 @@ class FirestoreService {
   }
 
   Future<Map<String, int>> seedAllDataToFirestore() async {
-    final eventsCount = await seedMockEventsToFirestore();
+    final eventsRes = await seedMockEventsToFirestore();
+    final eventsCount = eventsRes.count;
     int announcementsCount = 0;
     int teamCount = 0;
 
