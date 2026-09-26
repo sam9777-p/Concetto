@@ -5,6 +5,8 @@ class EventItem {
   final List<String> tags;
   final String venue;
   final String time;
+  final String startTime;
+  final String endTime;
   final String description;
   final String posterUrl;
   final String date;
@@ -38,6 +40,8 @@ class EventItem {
     this.tags = const [],
     required this.venue,
     required this.time,
+    String? startTime,
+    String? endTime,
     required this.description,
     required this.posterUrl,
     this.date = 'Oct 10-12, 2026',
@@ -62,7 +66,24 @@ class EventItem {
     this.isVisible = true,
     this.scheduleBreakdown = '',
     this.stages = const [],
-  });
+  })  : startTime = (startTime != null && startTime.isNotEmpty)
+            ? startTime
+            : deriveStartTime(time),
+        endTime = (endTime != null && endTime.isNotEmpty)
+            ? endTime
+            : deriveEndTime(time);
+
+  static String deriveStartTime(String t) {
+    if (t.isEmpty) return '';
+    final parts = t.split(RegExp(r'[-–to]'));
+    return parts.isNotEmpty ? parts[0].trim() : '';
+  }
+
+  static String deriveEndTime(String t) {
+    if (t.isEmpty) return '';
+    final parts = t.split(RegExp(r'[-–to]'));
+    return parts.length > 1 ? parts[1].trim() : '';
+  }
 
   /// Dynamically computed readable team size label
   String get displayTeamSize {
@@ -80,6 +101,8 @@ class EventItem {
     List<String>? tags,
     String? venue,
     String? time,
+    String? startTime,
+    String? endTime,
     String? description,
     String? posterUrl,
     String? date,
@@ -129,6 +152,8 @@ class EventItem {
       tags: tags ?? this.tags,
       venue: venue ?? this.venue,
       time: time ?? this.time,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
       description: description ?? this.description,
       posterUrl: posterUrl ?? this.posterUrl,
       date: date ?? this.date,
@@ -226,6 +251,8 @@ class EventItem {
               : const []),
       venue: json['venue'] ?? '',
       time: json['time'] ?? '',
+      startTime: json['startTime'] ?? json['start_time'] ?? '',
+      endTime: json['endTime'] ?? json['end_time'] ?? '',
       description: json['description'] ?? '',
       posterUrl: json['posterUrl'] ?? '',
       date: json['date'] ?? 'Oct 10-12, 2026',
@@ -260,6 +287,8 @@ class EventItem {
       'tags': tags,
       'venue': venue,
       'time': time,
+      'startTime': startTime,
+      'endTime': endTime,
       'description': description,
       'posterUrl': posterUrl,
       'date': date,

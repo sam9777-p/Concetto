@@ -12,42 +12,30 @@ import 'mongo_service.dart';
 // --- Master & Developer Access Config ---
 class MasterAdminConfig {
   static String _sha256(String input) =>
-      sha256.convert(utf8.encode(input.trim())).toString();
+      sha256.convert(utf8.encode(input)).toString();
 
-  // One-way cryptographic SHA-256 hashes only. No plaintext passwords stored in codebase.
-  static const Set<String> _masterHashes = {
-    '5a4233cf81ed1fca72116a51ccadbf4a51f7711deec0863b62e7b2012f576847', // Concetto@Master2026 (Recommended Medium)
-    '90271daa673ea2276ffa4946b7c5279236abece4a915bc614899d80b94977083', // Concetto@Master26
-    'e64575142425195ea6195639cc0cacb60173d19ffacfa535a6fd79401f1d0c2d', // concetto@master2026 (Lowercase)
-    'eaea51cf0dbcc4cf1dc5dbce4bc9238cad322b54a200fa59e5e2f7a3728f5283', // C0ncett0@2026#M4st3r!IIT-ISM$SecureK3y (Legacy)
-    '9f14066c615fb38e9dc9d37537651c6c57f92ef3d9f10f4439c367ec16ef784d', // Backup Hash
-    '964c06cf059d38072023cb3a9eeea53099049a47fae3dd56784d65c3bbbf3266', // Fallback Hash
-  };
+  // One-way cryptographic SHA-256 hashes only. Strictly case-sensitive, no alternatives accepted.
+  // Master Password: 'concetto@master2026'
+  static const String _masterHash =
+      'e64575142425195ea6195639cc0cacb60173d19ffacfa535a6fd79401f1d0c2d';
 
-  static const Set<String> _devHashes = {
-    '5be94082176724a0f5749c390e2dabfb3371b043a0b11f3a16cdb7718db5c6c9', // concetto2026@dev2!2! (New pattern password)
-    'a2758c42c67f4ac142fab40cb530f47a7631a2852733c023987584217f9abaf0', // Concetto2026@dev2!2! (Capitalized)
-    '790368e8bc60e0549c6befa0fc8f75b950db969fb160bbfa19f455a3b09fbbf2', // concetto@dev2026#2!2!
-    '579d4bdbeb5fd48c1be9d5535944bce84d826cf34bb824f2a676dc0f776d49eb', // Concetto#Dev2026
-    'c3afeda924b7aa8ee676743bde7916df23abf0015308c3a12638b9be567593ac', // Concetto#Dev26
-    '6686a704038445f00b1e64ecdcc218171f795447956d887fac0066d30e173968', // concetto@dev2026
-    '3ef43f49615fc64904c92f6b0d78338fb4b11561493b250aa1a1843cc6a325da', // Legacy
-    '7e8e7c10b7ba48c582ffec96ce08b7eebf09b552bb7cfd72bfdb293be8ec673e', // Backup Hash
-  };
+  // Developer Password: 'COncetto2026@56932!'
+  static const String _devHash =
+      '40a0702c53def4d439c9aea8dc0de47a289d5382a51b4e120f1f68ae3fdb48bb';
 
-  /// Verifies Master General Password via cryptographic SHA-256 matching
+  /// Verifies Master General Password strictly (case-sensitive, exact match)
   static bool verifyMaster(String entered) {
-    if (entered.trim().isEmpty) return false;
-    return _masterHashes.contains(_sha256(entered));
+    if (entered.isEmpty) return false;
+    return _sha256(entered) == _masterHash;
   }
 
   /// Legacy alias
   static bool verify(String entered) => verifyMaster(entered);
 
-  /// Verifies Developer Password via cryptographic SHA-256 matching
+  /// Verifies Developer Password strictly (case-sensitive, exact match)
   static bool verifyDev(String entered) {
-    if (entered.trim().isEmpty) return false;
-    return _devHashes.contains(_sha256(entered));
+    if (entered.isEmpty) return false;
+    return _sha256(entered) == _devHash;
   }
 
   /// Verifies login to Organizer Portal (accepts Master or Developer)

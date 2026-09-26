@@ -74,4 +74,12 @@ docs/*credential*
 *.csv
 docs/*.txt
 
+# Test folders and test scripts
+test/
+tool/*test*
+tool/test_firestore.py
+tool/test_mongo_dart.dart
+tool/test_rtdb.py
+
+
 

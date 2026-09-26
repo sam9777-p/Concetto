@@ -61,6 +61,34 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     }
   }
 
+  int _parseTimeToMinutes(String timeStr) {
+    if (timeStr.isEmpty || timeStr.toUpperCase() == 'TBD') return 9999;
+    final start = timeStr.split(RegExp(r'[-–to]'))[0].trim();
+    final regExp = RegExp(r'(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?', caseSensitive: false);
+    final match = regExp.firstMatch(start);
+    if (match == null) return 9999;
+
+    int hour = int.tryParse(match.group(1) ?? '0') ?? 0;
+    final minute = int.tryParse(match.group(2) ?? '0') ?? 0;
+    final period = match.group(3)?.toUpperCase();
+
+    if (period == 'PM' && hour < 12) hour += 12;
+    if (period == 'AM' && hour == 12) hour = 0;
+    if (period == null && hour >= 1 && hour <= 8) hour += 12;
+
+    return hour * 60 + minute;
+  }
+
+  String _getEventStartTimeForDay(EventItem e, String dayFilter) {
+    for (final s in e.stages) {
+      if (s.date.contains(dayFilter) && s.time.isNotEmpty) {
+        return s.time;
+      }
+    }
+    if (e.startTime.isNotEmpty) return e.startTime;
+    return e.time;
+  }
+
   @override
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).colorScheme.primary;
@@ -253,6 +281,15 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           return matchesDirect || matchesStage || matchesGeneral;
         }).toList();
 
+        // Sort all day events chronologically according to their starting time
+        dayEvents.sort((a, b) {
+          final timeA = _parseTimeToMinutes(_getEventStartTimeForDay(a, selectedDateFilter));
+          final timeB = _parseTimeToMinutes(_getEventStartTimeForDay(b, selectedDateFilter));
+          final cmp = timeA.compareTo(timeB);
+          if (cmp != 0) return cmp;
+          return a.title.compareTo(b.title);
+        });
+
         if (dayEvents.isEmpty) {
           return Center(
             child: Padding(
@@ -315,55 +352,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             key: PageStorageKey<int>(dayIndex),
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
             physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-            itemCount: dayEvents.length + (hasNextDay ? 1 : 0),
+            itemCount: dayEvents.length,
             itemBuilder: (context, index) {
-              // Footer pull & tap card to transition to next day
-              if (index == dayEvents.length) {
-                final nextDay = _festivalDays[dayIndex + 1];
-                return Padding(
-                  padding: const EdgeInsets.only(top: 20, bottom: 20),
-                  child: Center(
-                    child: InkWell(
-                      onTap: _goToNextDay,
-                      borderRadius: BorderRadius.circular(24),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: primaryColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: primaryColor.withValues(alpha: 0.4),
-                            width: 1.0,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: primaryColor.withValues(alpha: 0.1),
-                              blurRadius: 10,
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.arrow_upward_rounded, size: 16, color: primaryColor),
-                            const SizedBox(width: 8),
-                            Text(
-                              'PULL UP OR TAP TO VIEW ${nextDay['day']!.toUpperCase()} (${nextDay['label']!.toUpperCase()})',
-                              style: GoogleFonts.orbitron(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.8,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }
-
               final event = dayEvents[index];
               final isLastEvent = index == dayEvents.length - 1 && !hasNextDay;
               final stageForDay = event.stages.where((s) => s.date.contains(selectedDateFilter)).firstOrNull;

@@ -301,28 +301,53 @@ class EventDetailScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                  ] else if (event.registrationUrl.contains('razorpay.com') || event.category == 'Workshops') ...[
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () => _launchExternalUrl(context, event.registrationUrl),
-                        icon: const Icon(Icons.payment_rounded, color: Colors.black, size: 18),
-                        label: const Text(
-                          'REGISTER & ENROLL (OFFICIAL PORTAL)',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                            letterSpacing: 0.8,
-                            fontSize: 13,
+                  ] else if (event.category == 'Workshops' || event.registrationUrl.contains('razorpay.com')) ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: event.rulebookUrl.isNotEmpty ? 3 : 1,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _launchExternalUrl(context, event.registrationUrl),
+                            icon: const Icon(Icons.payment_rounded, color: Colors.black, size: 18),
+                            label: const Text(
+                              'ENROLL NOW',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                letterSpacing: 0.8,
+                                fontSize: 13,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryColor,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              elevation: 4,
+                            ),
                           ),
                         ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryColor,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          elevation: 4,
-                        ),
-                      ),
+                        if (event.rulebookUrl.isNotEmpty) ...[
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: OutlinedButton.icon(
+                              onPressed: () => _launchExternalUrl(context, event.rulebookUrl),
+                              icon: const Icon(Icons.school_rounded, size: 16),
+                              label: const Text(
+                                'CURRICULUM',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ] else ...[
                     Row(
@@ -1107,7 +1132,7 @@ class EventDetailScreen extends StatelessWidget {
 
       final title = Uri.encodeComponent('CONCETTO: ${event.title}');
       final venue = Uri.encodeComponent(event.venue.isNotEmpty ? '${event.venue}, IIT (ISM) Dhanbad' : 'IIT (ISM) Dhanbad');
-      final desc = Uri.encodeComponent('${event.description}\n\nCategory: ${event.category}\nPrize Pool: ${event.prizePool}\nOrganized by: ${event.organizerClub}\nOfficial Web: https://concetto-ashen.vercel.app');
+      final desc = Uri.encodeComponent('${event.description}\n\nCategory: ${event.category}\nPrize Pool: ${event.prizePool}\nOrganized by: ${event.organizerClub}\nOfficial Web: https://www.concetto.in');
 
       final intentUri = Uri.parse('https://calendar.google.com/calendar/render?action=TEMPLATE&text=$title&dates=$startStr/$endStr&details=$desc&location=$venue');
 

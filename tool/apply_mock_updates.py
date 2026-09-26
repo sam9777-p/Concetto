@@ -94,7 +94,7 @@ old_kryptoes = """    EventItem(
       prizePool: 'TBD',
       teamSize: 'Solo (1 Performer)',
       description: 'The premier solo dance face-off at IIT (ISM) Dhanbad organized by LITM (Legends In The Making). Freshers and campus dancers clash on stage across Hip Hop, Freestyle, Popping, Waacking, and Contemporary styles to crown the ultimate dance champion of Concetto!',
-      posterUrl: 'https://concetto-ashen.vercel.app/events/kryptos.png',
+      posterUrl: 'https://www.concetto.in/events/kryptos.png',
       registrationUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdSvIrxl8SFP16c3nVU4ZvfCux_QbSUCxSosBAMZMCsHnG_jQ/viewform',
       rulebookUrl: '',
       coordinatorName: 'Concetto Organizing Team',

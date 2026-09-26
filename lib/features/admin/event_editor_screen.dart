@@ -36,6 +36,8 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
   late TextEditingController _customClubController;
   late TextEditingController _venueController;
   late TextEditingController _timeController;
+  late TextEditingController _startTimeController;
+  late TextEditingController _endTimeController;
   late TextEditingController _dateController;
   late TextEditingController _prizePoolController;
   late TextEditingController _teamSizeController;
@@ -111,21 +113,21 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
   ];
 
   final List<Map<String, String>> _officialPosterPresets = [
-    {'name': 'Default / General', 'url': 'https://concetto-ashen.vercel.app/events/general.png'},
-    {'name': 'RoboWars', 'url': 'https://concetto-ashen.vercel.app/events/roboWars.png'},
-    {'name': 'CaseBlitz', 'url': 'https://concetto-ashen.vercel.app/events/Caseblitz.png'},
-    {'name': 'QuesTree', 'url': 'https://concetto-ashen.vercel.app/events/questree.png'},
-    {'name': 'DevDash', 'url': 'https://concetto-ashen.vercel.app/events/devdash.jpg'},
-    {'name': 'Sparkathon', 'url': 'https://concetto-ashen.vercel.app/events/Saparkthon.jpeg'},
-    {'name': 'AeroGlide', 'url': 'https://concetto-ashen.vercel.app/events/AeroGlide.png'},
-    {'name': 'Gate Craft', 'url': 'https://concetto-ashen.vercel.app/events/GateCraft.png'},
-    {'name': 'Mathalon', 'url': 'https://concetto-ashen.vercel.app/events/mathalon.png'},
-    {'name': 'Archway Arena', 'url': 'https://concetto-ashen.vercel.app/events/archway-arena.png'},
-    {'name': 'Edge AI', 'url': 'https://concetto-ashen.vercel.app/events/EdgeAi.png'},
-    {'name': 'DJ Night', 'url': 'https://concetto-ashen.vercel.app/events/dj-night.png'},
-    {'name': 'Comedy Night', 'url': 'https://concetto-ashen.vercel.app/events/comedy-night.png'},
-    {'name': 'Star Night', 'url': 'https://concetto-ashen.vercel.app/events/star-night.png'},
-    {'name': 'Stunt Show', 'url': 'https://concetto-ashen.vercel.app/events/stunt-show.png'},
+    {'name': 'Default / General', 'url': 'https://www.concetto.in/events/general.png'},
+    {'name': 'RoboWars', 'url': 'https://www.concetto.in/events/roboWars.png'},
+    {'name': 'CaseBlitz', 'url': 'https://www.concetto.in/events/Caseblitz.png'},
+    {'name': 'QuesTree', 'url': 'https://www.concetto.in/events/questree.png'},
+    {'name': 'DevDash', 'url': 'https://www.concetto.in/events/devdash.jpg'},
+    {'name': 'Sparkathon', 'url': 'https://www.concetto.in/events/Saparkthon.jpeg'},
+    {'name': 'AeroGlide', 'url': 'https://www.concetto.in/events/AeroGlide.png'},
+    {'name': 'Gate Craft', 'url': 'https://www.concetto.in/events/GateCraft.png'},
+    {'name': 'Mathalon', 'url': 'https://www.concetto.in/events/mathalon.png'},
+    {'name': 'Archway Arena', 'url': 'https://www.concetto.in/events/archway-arena.png'},
+    {'name': 'Edge AI', 'url': 'https://www.concetto.in/events/EdgeAi.png'},
+    {'name': 'DJ Night', 'url': 'https://www.concetto.in/events/dj-night.png'},
+    {'name': 'Comedy Night', 'url': 'https://www.concetto.in/events/comedy-night.png'},
+    {'name': 'Star Night', 'url': 'https://www.concetto.in/events/star-night.png'},
+    {'name': 'Stunt Show', 'url': 'https://www.concetto.in/events/stunt-show.png'},
   ];
 
   final List<String> _venueSuggestions = [
@@ -179,11 +181,18 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
 
     final initialPoster = (e?.posterUrl != null && e!.posterUrl.isNotEmpty)
         ? e.posterUrl
-        : 'https://concetto-ashen.vercel.app/events/general.png';
+        : 'https://www.concetto.in/events/general.png';
     _posterUrlController = TextEditingController(text: initialPoster);
 
     _dateController = TextEditingController(text: e?.date ?? 'Oct 10, 2026');
-    _timeController = TextEditingController(text: e?.time ?? '10:00 AM - 01:00 PM');
+    final initialTime = e?.time ?? '10:00 AM - 01:00 PM';
+    _timeController = TextEditingController(text: initialTime);
+    _startTimeController = TextEditingController(
+      text: e?.startTime.isNotEmpty == true ? e!.startTime : EventItem.deriveStartTime(initialTime),
+    );
+    _endTimeController = TextEditingController(
+      text: e?.endTime.isNotEmpty == true ? e!.endTime : EventItem.deriveEndTime(initialTime),
+    );
     _venueController = TextEditingController(text: e?.venue ?? 'Central Arena (SAC Ground)');
     _prizePoolController = TextEditingController(text: e?.prizePool ?? '₹ 30,000');
     _teamSizeController = TextEditingController(text: e?.teamSize ?? '1 - 4 Members');
@@ -227,6 +236,8 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
     _customClubController.dispose();
     _venueController.dispose();
     _timeController.dispose();
+    _startTimeController.dispose();
+    _endTimeController.dispose();
     _dateController.dispose();
     _prizePoolController.dispose();
     _teamSizeController.dispose();
@@ -254,6 +265,99 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
 
     final allCombined = [..._selectedCategories, ...existingCustomTags];
     _tagsController.text = allCombined.join(', ');
+  }
+
+  Future<void> _pickDate() async {
+    DateTime initial = DateTime(2026, 10, 10);
+    final current = _dateController.text;
+    if (current.contains('Oct 8')) initial = DateTime(2026, 10, 8);
+    if (current.contains('Oct 9')) initial = DateTime(2026, 10, 9);
+    if (current.contains('Oct 10')) initial = DateTime(2026, 10, 10);
+    if (current.contains('Oct 11')) initial = DateTime(2026, 10, 11);
+    if (current.contains('Oct 12')) initial = DateTime(2026, 10, 12);
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2026, 1, 1),
+      lastDate: DateTime(2026, 12, 31),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: AppTheme.neonOrange,
+              onPrimary: Colors.black,
+              surface: AppTheme.cardSurface,
+              onSurface: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      setState(() {
+        _dateController.text = '${monthNames[picked.month - 1]} ${picked.day}, ${picked.year}';
+      });
+    }
+  }
+
+  Future<void> _pickTime({required bool isStart}) async {
+    final controller = isStart ? _startTimeController : _endTimeController;
+    TimeOfDay initial = isStart ? const TimeOfDay(hour: 10, minute: 0) : const TimeOfDay(hour: 13, minute: 0);
+
+    if (controller.text.isNotEmpty) {
+      final reg = RegExp(r'(\d+):?(\d*)\s*(AM|PM)?', caseSensitive: false);
+      final m = reg.firstMatch(controller.text);
+      if (m != null) {
+        int h = int.tryParse(m.group(1) ?? '10') ?? 10;
+        int min = int.tryParse(m.group(2) ?? '0') ?? 0;
+        final ampm = (m.group(3) ?? 'AM').toUpperCase();
+        if (ampm == 'PM' && h < 12) h += 12;
+        if (ampm == 'AM' && h == 12) h = 0;
+        initial = TimeOfDay(hour: h, minute: min);
+      }
+    }
+
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initial,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: AppTheme.neonOrange,
+              onPrimary: Colors.black,
+              surface: AppTheme.cardSurface,
+              onSurface: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      final hour12 = picked.hourOfPeriod == 0 ? 12 : picked.hourOfPeriod;
+      final minuteStr = picked.minute.toString().padLeft(2, '0');
+      final periodStr = picked.period == DayPeriod.am ? 'AM' : 'PM';
+      final formatted = '${hour12.toString().padLeft(2, '0')}:$minuteStr $periodStr';
+
+      setState(() {
+        if (isStart) {
+          _startTimeController.text = formatted;
+        } else {
+          _endTimeController.text = formatted;
+        }
+        if (_startTimeController.text.isNotEmpty && _endTimeController.text.isNotEmpty) {
+          _timeController.text = '${_startTimeController.text} - ${_endTimeController.text}';
+        } else if (_startTimeController.text.isNotEmpty) {
+          _timeController.text = _startTimeController.text;
+        }
+      });
+    }
   }
 
   Future<void> _launchExternalUrl(String rawUrl, String label) async {
@@ -628,7 +732,7 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
 
     final cleanPosterUrl = _posterUrlController.text.trim().isNotEmpty
         ? _posterUrlController.text.trim()
-        : 'https://concetto-ashen.vercel.app/events/general.png';
+        : 'https://www.concetto.in/events/general.png';
 
     final finalSpecificPassword = _specificPasswordController.text.trim().isNotEmpty
         ? _specificPasswordController.text.trim()
@@ -669,6 +773,8 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
       tags: parsedTags.isNotEmpty ? parsedTags : _selectedCategories.toList(),
       venue: _venueController.text.trim(),
       time: _timeController.text.trim(),
+      startTime: _startTimeController.text.trim(),
+      endTime: _endTimeController.text.trim(),
       date: _dateController.text.trim(),
       prizePool: primaryCategory.toLowerCase() == 'workshops' ? '' : _prizePoolController.text.trim(),
       teamSize: computedTeamSize,
@@ -677,7 +783,7 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
       isOpenRegistration: _isOpenRegistration,
       description: _descriptionController.text.trim(),
       posterUrl: cleanPosterUrl,
-      rulebookUrl: (_isStageExperience || primaryCategory.toLowerCase() == 'workshops') ? '' : _rulebookUrlController.text.trim(),
+      rulebookUrl: _isStageExperience ? '' : _rulebookUrlController.text.trim(),
       registrationUrl: _isStageExperience ? '' : _registrationUrlController.text.trim(),
       coordinatorName: _coordinatorNameController.text.trim(),
       coordinatorEmail: _coordinatorEmailController.text.trim(),
@@ -880,6 +986,7 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isWorkshop = _selectedCategories.any((c) => c.toLowerCase() == 'workshops');
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBg,
       appBar: AppBar(
@@ -1181,23 +1288,42 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
             ),
             const SizedBox(height: 12),
 
+            // Date Selection with Calendar Picker
+            _buildTextField(
+              controller: _dateController,
+              label: 'Event Date (Tap to Pick from Calendar) *',
+              hint: 'Select event date',
+              readOnly: true,
+              onTap: _pickDate,
+              prefixIcon: const Icon(Icons.calendar_month, color: AppTheme.neonOrange),
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Date is required' : null,
+            ),
+            const SizedBox(height: 12),
+
+            // Separate Starting & Ending Time Pickers (Clock Type)
             Row(
               children: [
                 Expanded(
                   child: _buildTextField(
-                    controller: _dateController,
-                    label: 'Date *',
-                    hint: 'e.g. Oct 10, 2026',
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Date is required' : null,
+                    controller: _startTimeController,
+                    label: 'Start Time (Clock) *',
+                    hint: 'Tap to pick clock',
+                    readOnly: true,
+                    onTap: () => _pickTime(isStart: true),
+                    prefixIcon: const Icon(Icons.access_time_rounded, color: AppTheme.cyberAmber),
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Start time required' : null,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildTextField(
-                    controller: _timeController,
-                    label: 'Time Slot *',
-                    hint: 'e.g. 10:00 AM - 01:00 PM',
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Time is required' : null,
+                    controller: _endTimeController,
+                    label: 'End Time (Clock) *',
+                    hint: 'Tap to pick clock',
+                    readOnly: true,
+                    onTap: () => _pickTime(isStart: false),
+                    prefixIcon: const Icon(Icons.alarm_off_rounded, color: AppTheme.cyberAmber),
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'End time required' : null,
                   ),
                 ),
               ],
@@ -1487,7 +1613,7 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
 
             // 4. Details & Team Size / Prize Pool
             _buildSectionHeader('4. DETAILS & REGISTRATION SPECS', Icons.groups_outlined),
-            if (!_selectedCategories.contains('Workshops')) ...[
+            if (!_selectedCategories.any((c) => c.toLowerCase() == 'workshops')) ...[
               _buildTextField(
                 controller: _prizePoolController,
                 label: 'Prize Money',
@@ -1764,7 +1890,7 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
                           child: CachedNetworkImage(
                             imageUrl: _posterUrlController.text.trim().isNotEmpty
                                 ? _posterUrlController.text.trim()
-                                : 'https://concetto-ashen.vercel.app/events/general.png',
+                                : 'https://www.concetto.in/events/general.png',
                             fit: BoxFit.cover,
                             placeholder: (_, _) => Container(color: Colors.black38, child: const Center(child: CircularProgressIndicator(strokeWidth: 2))),
                             errorWidget: (_, _, _) => Container(
@@ -1875,15 +2001,19 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
                         Expanded(
                           child: _buildTextField(
                             controller: _rulebookUrlController,
-                            label: 'Rulebook Link (PDF / Drive)',
-                            hint: 'https://.../rulebook.pdf',
+                            label: isWorkshop
+                                ? 'Course Curriculum Link (Drive / PDF)'
+                                : 'Rulebook Link (PDF / Drive)',
+                            hint: isWorkshop
+                                ? 'https://drive.google.com/... or PDF link'
+                                : 'https://.../rulebook.pdf',
                           ),
                         ),
                         const SizedBox(width: 8),
                         IconButton(
-                          tooltip: 'Test Rulebook Link in Browser',
+                          tooltip: isWorkshop ? 'Test Course Curriculum Link' : 'Test Rulebook Link in Browser',
                           icon: const Icon(Icons.open_in_new, color: AppTheme.cyberAmber),
-                          onPressed: () => _launchExternalUrl(_rulebookUrlController.text, 'Rulebook Link'),
+                          onPressed: () => _launchExternalUrl(_rulebookUrlController.text, isWorkshop ? 'Course Curriculum Link' : 'Rulebook Link'),
                         ),
                       ],
                     ),
@@ -1895,15 +2025,19 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
                         Expanded(
                           child: _buildTextField(
                             controller: _registrationUrlController,
-                            label: 'Registration Form (Google Form / Unstop Link)',
-                            hint: 'https://docs.google.com/forms/d/e/.../viewform',
+                            label: isWorkshop
+                                ? 'Enrollment Portal (Razorpay / Registration Link)'
+                                : 'Registration Form (Google Form / Unstop Link)',
+                            hint: isWorkshop
+                                ? 'https://pages.razorpay.com/...'
+                                : 'https://docs.google.com/forms/d/e/.../viewform',
                           ),
                         ),
                         const SizedBox(width: 8),
                         IconButton(
-                          tooltip: 'Test Google Form Link in Browser',
+                          tooltip: isWorkshop ? 'Test Enrollment Link' : 'Test Google Form Link in Browser',
                           icon: const Icon(Icons.open_in_new, color: AppTheme.cyberAmber),
-                          onPressed: () => _launchExternalUrl(_registrationUrlController.text, 'Google Form Link'),
+                          onPressed: () => _launchExternalUrl(_registrationUrlController.text, isWorkshop ? 'Enrollment Link' : 'Google Form Link'),
                         ),
                       ],
                     ),
@@ -2123,6 +2257,9 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
     int maxLines = 1,
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
+    Widget? prefixIcon,
+    bool readOnly = false,
+    VoidCallback? onTap,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2140,6 +2277,8 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
           controller: controller,
           maxLines: maxLines,
           keyboardType: keyboardType,
+          readOnly: readOnly,
+          onTap: onTap,
           style: GoogleFonts.rajdhani(
             color: Colors.white,
             fontSize: 15,
@@ -2149,6 +2288,7 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
           decoration: InputDecoration(
             filled: true,
             fillColor: AppTheme.cardSurface,
+            prefixIcon: prefixIcon,
             hintText: hint,
             hintStyle: GoogleFonts.rajdhani(color: Colors.white30),
             enabledBorder: OutlineInputBorder(
