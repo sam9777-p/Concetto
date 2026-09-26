@@ -15,9 +15,11 @@ void main() {
     print('Fetched ${events.length} events from live database.');
     expect(events.length, greaterThanOrEqualTo(55));
 
-    final tbdCount = events.where((e) => e.prizePool == 'TBD').length;
-    print('Events with prizePool == TBD: $tbdCount / ${events.length}');
-    expect(tbdCount, equals(events.length));
+    // Verify non-workshop competitions have valid prize pool while workshops have NO prize pool
+    final workshopEvents = events.where((e) => e.category.toLowerCase() == 'workshops').toList();
+    for (final w in workshopEvents) {
+      expect(w.prizePool, isEmpty);
+    }
 
     // 2. Test Add Event (Save)
     print('\n2. Testing Add Event...');

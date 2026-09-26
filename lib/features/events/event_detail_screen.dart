@@ -243,7 +243,11 @@ class EventDetailScreen extends StatelessWidget {
                             Text(event.teamSize, style: Theme.of(context).textTheme.bodyMedium),
                           ],
                         ),
-                      if (event.prizePool.isNotEmpty && !event.isWatchableOnly && !event.isStageExperience)
+                      if (event.prizePool.isNotEmpty &&
+                          event.prizePool != '0' &&
+                          !event.isWatchableOnly &&
+                          !event.isStageExperience &&
+                          event.category != 'Workshops')
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -326,7 +330,13 @@ class EventDetailScreen extends StatelessWidget {
                         Expanded(
                           flex: 3,
                           child: ElevatedButton.icon(
-                            onPressed: () => _showRegistrationSheet(context, primaryColor),
+                            onPressed: () {
+                              if (event.registrationUrl.isNotEmpty) {
+                                _launchExternalUrl(context, event.registrationUrl);
+                              } else {
+                                _showRegistrationSheet(context, primaryColor);
+                              }
+                            },
                             icon: const Icon(
                               Icons.how_to_reg,
                               color: Colors.black,
@@ -351,7 +361,7 @@ class EventDetailScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         Expanded(
                           flex: 2,
                           child: OutlinedButton.icon(
@@ -370,21 +380,6 @@ class EventDetailScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (event.registrationUrl.isNotEmpty) ...[
-                          const SizedBox(width: 8),
-                          IconButton.outlined(
-                            onPressed: () => _launchExternalUrl(context, event.registrationUrl),
-                            icon: const Icon(Icons.open_in_browser, size: 18),
-                            tooltip: 'Official Registration Portal',
-                            style: IconButton.styleFrom(
-                              padding: const EdgeInsets.all(12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
-                              ),
-                            ),
-                          ),
-                        ],
                       ],
                     ),
                   ],

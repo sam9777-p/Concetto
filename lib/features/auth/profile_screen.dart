@@ -957,9 +957,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF110604),
+        color: AppTheme.cardSurface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: primaryColor.withValues(alpha: 0.3), width: 0.8),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.25), width: 0.8),
         boxShadow: [
           BoxShadow(
             color: primaryColor.withValues(alpha: 0.05),
@@ -1022,6 +1022,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       Text(
                         member.year,
                         style: GoogleFonts.rajdhani(fontSize: 11, color: AppTheme.metallicMuted),
+                      ),
+                    ],
+                    if (member.phone.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      InkWell(
+                        onTap: () => _launchPhone(context, member.phone),
+                        borderRadius: BorderRadius.circular(4),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.phone_rounded, size: 12, color: primaryColor),
+                            const SizedBox(width: 5),
+                            Text(
+                              member.phone,
+                              style: GoogleFonts.rajdhani(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white.withValues(alpha: 0.95),
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ],

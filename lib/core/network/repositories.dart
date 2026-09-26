@@ -25,10 +25,13 @@ class MasterAdminConfig {
   };
 
   static const Set<String> _devHashes = {
-    '579d4bdbeb5fd48c1be9d5535944bce84d826cf34bb824f2a676dc0f776d49eb', // Concetto#Dev2026 (Recommended Medium)
+    '5be94082176724a0f5749c390e2dabfb3371b043a0b11f3a16cdb7718db5c6c9', // concetto2026@dev2!2! (New pattern password)
+    'a2758c42c67f4ac142fab40cb530f47a7631a2852733c023987584217f9abaf0', // Concetto2026@dev2!2! (Capitalized)
+    '790368e8bc60e0549c6befa0fc8f75b950db969fb160bbfa19f455a3b09fbbf2', // concetto@dev2026#2!2!
+    '579d4bdbeb5fd48c1be9d5535944bce84d826cf34bb824f2a676dc0f776d49eb', // Concetto#Dev2026
     'c3afeda924b7aa8ee676743bde7916df23abf0015308c3a12638b9be567593ac', // Concetto#Dev26
-    '6686a704038445f00b1e64ecdcc218171f795447956d887fac0066d30e173968', // concetto@dev2026 (Lowercase)
-    '3ef43f49615fc64904c92f6b0d78338fb4b11561493b250aa1a1843cc6a325da', // D3v#K3rn3l@Concetto2026$Root!X99Quantum (Legacy)
+    '6686a704038445f00b1e64ecdcc218171f795447956d887fac0066d30e173968', // concetto@dev2026
+    '3ef43f49615fc64904c92f6b0d78338fb4b11561493b250aa1a1843cc6a325da', // Legacy
     '7e8e7c10b7ba48c582ffec96ce08b7eebf09b552bb7cfd72bfdb293be8ec673e', // Backup Hash
   };
 

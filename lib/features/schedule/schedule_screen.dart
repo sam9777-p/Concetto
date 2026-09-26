@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -18,58 +17,63 @@ class ScheduleScreen extends ConsumerStatefulWidget {
 
 class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   int _selectedDayIndex = 0;
-  int _slideDirection = 1; // 1 = forward, -1 = backward
-  bool _isTransitioning = false;
+  late final PageController _pageController;
   double _pullExtent = 0.0;
-  int _pullDirection = 0; // 1 = pulled up at bottom for next day, -1 = pulled down at top for prev day
   bool _hapticFired = false;
-  static const double _pullThreshold = 65.0;
-  DateTime _lastTransitionTime = DateTime.now();
+  static const double _pullThreshold = 55.0;
 
   final List<Map<String, String>> _festivalDays = [
-    {'day': 'Thursday', 'date': 'Oct 8', 'label': 'Thursday • Inauguration & CaseBlitz'},
-    {'day': 'Friday', 'date': 'Oct 9', 'label': 'Friday • Keynotes & Competitions'},
-    {'day': 'Saturday', 'date': 'Oct 10', 'label': 'Saturday • Battles & Workshops'},
-    {'day': 'Sunday', 'date': 'Oct 11', 'label': 'Sunday • Grand Finale & Star Night'},
+    {'day': 'Day 0', 'date': 'Oct 8', 'label': 'Thursday'},
+    {'day': 'Day 1', 'date': 'Oct 9', 'label': 'Friday'},
+    {'day': 'Day 2', 'date': 'Oct 10', 'label': 'Saturday'},
+    {'day': 'Day 3', 'date': 'Oct 11', 'label': 'Sunday'},
   ];
 
-  void _changeDay(int newIndex, {required int direction}) {
-    if (newIndex < 0 || newIndex >= _festivalDays.length || _isTransitioning) return;
-    final now = DateTime.now();
-    if (now.difference(_lastTransitionTime).inMilliseconds < 450) return;
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _selectedDayIndex);
+  }
 
-    _lastTransitionTime = now;
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onTabTapped(int index) {
+    if (index < 0 || index >= _festivalDays.length || _selectedDayIndex == index) return;
     setState(() {
-      _slideDirection = direction;
-      _selectedDayIndex = newIndex;
-      _isTransitioning = true;
+      _selectedDayIndex = index;
       _pullExtent = 0.0;
-      _pullDirection = 0;
       _hapticFired = false;
     });
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOutCubic,
+    );
+  }
 
-    Future.delayed(const Duration(milliseconds: 380), () {
-      if (mounted) {
-        setState(() {
-          _isTransitioning = false;
-          _pullExtent = 0.0;
-          _pullDirection = 0;
-          _hapticFired = false;
-        });
-      }
-    });
+  void _goToNextDay() {
+    if (_selectedDayIndex < _festivalDays.length - 1) {
+      _onTabTapped(_selectedDayIndex + 1);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).colorScheme.primary;
+    final cardBg = Theme.of(context).colorScheme.surface;
+    final bgDark = Theme.of(context).scaffoldBackgroundColor;
     final eventsAsync = ref.watch(eventsProvider);
 
     return Scaffold(
-      backgroundColor: AppTheme.scaffoldBg,
+      backgroundColor: bgDark,
       appBar: AppBar(
-        backgroundColor: AppTheme.scaffoldBg,
+        backgroundColor: bgDark,
         surfaceTintColor: Colors.transparent,
+        elevation: 0,
         title: Text(
           'FESTIVAL TIMELINE',
           style: GoogleFonts.orbitron(
@@ -95,23 +99,19 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 3),
                     child: InkWell(
-                      onTap: () {
-                        if (_selectedDayIndex != index && !_isTransitioning) {
-                          _changeDay(index, direction: index > _selectedDayIndex ? 1 : -1);
-                        }
-                      },
+                      onTap: () => _onTabTapped(index),
                       borderRadius: BorderRadius.circular(12),
                       child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 220),
+                        duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.symmetric(vertical: 9),
                         decoration: BoxDecoration(
                           gradient: isSelected ? AppTheme.electricFireGradient : null,
-                          color: isSelected ? null : const Color(0xFF140604),
+                          color: isSelected ? null : cardBg,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isSelected
                                 ? Colors.transparent
-                                : primaryColor.withValues(alpha: 0.3),
+                                : primaryColor.withValues(alpha: 0.25),
                             width: 0.8,
                           ),
                           boxShadow: isSelected
@@ -148,7 +148,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                                   fontWeight: FontWeight.w700,
                                   color: isSelected
                                       ? Colors.black87
-                                      : AppTheme.metallicMuted,
+                                      : Colors.white60,
                                 ),
                               ),
                             ),
@@ -162,7 +162,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             ),
           ),
 
-          // Timeline Banner (Zero-overflow responsive row)
+          // Timeline Subtitle Banner
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
             child: Row(
@@ -174,9 +174,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.rajdhani(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.0,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.2,
                       color: primaryColor,
                     ),
                   ),
@@ -195,200 +195,28 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             ),
           ),
 
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
 
-          // Dynamic Vertical Timeline with Hard Pull / Overscroll Gesture & Swipe Day Switching
+          // Native Butterworth PageView - zero oscillation, 120 FPS swiping
           Expanded(
-            child: Listener(
-              onPointerUp: (event) {
-                if (_isTransitioning) return;
-                if (_pullExtent >= _pullThreshold) {
-                  final dir = _pullDirection;
-                  final target = dir == 1 ? _selectedDayIndex + 1 : _selectedDayIndex - 1;
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: _festivalDays.length,
+              onPageChanged: (index) {
+                if (_selectedDayIndex != index) {
                   setState(() {
+                    _selectedDayIndex = index;
                     _pullExtent = 0.0;
-                    _pullDirection = 0;
-                    _hapticFired = false;
-                  });
-                  if (dir == 1 && target < _festivalDays.length) {
-                    _changeDay(target, direction: 1);
-                  } else if (dir == -1 && target >= 0) {
-                    _changeDay(target, direction: -1);
-                  }
-                } else if (_pullExtent > 0) {
-                  setState(() {
-                    _pullExtent = 0.0;
-                    _pullDirection = 0;
                     _hapticFired = false;
                   });
                 }
               },
-              child: GestureDetector(
-                onHorizontalDragEnd: (details) {
-                  if (_isTransitioning) return;
-                  if (details.primaryVelocity != null) {
-                    if (details.primaryVelocity! < -250 && _selectedDayIndex < _festivalDays.length - 1) {
-                      _changeDay(_selectedDayIndex + 1, direction: 1);
-                    } else if (details.primaryVelocity! > 250 && _selectedDayIndex > 0) {
-                      _changeDay(_selectedDayIndex - 1, direction: -1);
-                    }
-                  }
-                },
-                child: Stack(
-                  children: [
-                    NotificationListener<ScrollNotification>(
-                      onNotification: (notification) {
-                        if (_isTransitioning) return false;
-
-                        final now = DateTime.now();
-                        if (now.difference(_lastTransitionTime).inMilliseconds < 450) {
-                          return false;
-                        }
-
-                        if (notification is ScrollUpdateNotification) {
-                          final m = notification.metrics;
-                          // Bottom pull (pulling up at bottom of day list to go next)
-                          if (m.pixels > m.maxScrollExtent && _selectedDayIndex < _festivalDays.length - 1) {
-                            final extent = (m.pixels - m.maxScrollExtent).clamp(0.0, 120.0);
-                            if ((extent - _pullExtent).abs() > 1.0) {
-                              if (extent >= _pullThreshold && !_hapticFired) {
-                                HapticFeedback.lightImpact();
-                                _hapticFired = true;
-                              } else if (extent < _pullThreshold) {
-                                _hapticFired = false;
-                              }
-                              setState(() {
-                                _pullExtent = extent;
-                                _pullDirection = 1;
-                              });
-                            }
-                          }
-                          // Top pull (pulling down at top of day list to go prev)
-                          else if (m.pixels < m.minScrollExtent && _selectedDayIndex > 0) {
-                            final extent = (m.minScrollExtent - m.pixels).clamp(0.0, 120.0);
-                            if ((extent - _pullExtent).abs() > 1.0) {
-                              if (extent >= _pullThreshold && !_hapticFired) {
-                                HapticFeedback.lightImpact();
-                                _hapticFired = true;
-                              } else if (extent < _pullThreshold) {
-                                _hapticFired = false;
-                              }
-                              setState(() {
-                                _pullExtent = extent;
-                                _pullDirection = -1;
-                              });
-                            }
-                          }
-                          // In-bounds normal scrolling
-                          else if (_pullExtent > 0 && m.pixels >= m.minScrollExtent && m.pixels <= m.maxScrollExtent) {
-                            setState(() {
-                              _pullExtent = 0.0;
-                              _pullDirection = 0;
-                              _hapticFired = false;
-                            });
-                          }
-                        } else if (notification is ScrollEndNotification) {
-                          if (_pullExtent > 0 && _pullExtent < _pullThreshold) {
-                            setState(() {
-                              _pullExtent = 0.0;
-                              _pullDirection = 0;
-                              _hapticFired = false;
-                            });
-                          }
-                        }
-                        return false;
-                      },
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 320),
-                        switchInCurve: Curves.easeOutCubic,
-                        switchOutCurve: Curves.easeInCubic,
-                        transitionBuilder: (child, animation) {
-                          return FadeTransition(
-                            opacity: animation,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: Offset(_slideDirection > 0 ? 0.08 : -0.08, 0.0),
-                                end: Offset.zero,
-                              ).animate(animation),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: KeyedSubtree(
-                          key: ValueKey<int>(_selectedDayIndex),
-                          child: _buildDayEventsList(context, _selectedDayIndex, eventsAsync, primaryColor),
-                        ),
-                      ),
-                    ),
-
-                    // Minimal Floating Pull Indicator (arrow + day name)
-                    _buildPullIndicator(primaryColor),
-                  ],
-                ),
-              ),
+              itemBuilder: (context, dayIndex) {
+                return _buildDayEventsList(context, dayIndex, eventsAsync, primaryColor);
+              },
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildPullIndicator(Color primaryColor) {
-    if (_pullExtent < 12.0 || _pullDirection == 0) return const SizedBox.shrink();
-
-    final isTriggered = _pullExtent >= _pullThreshold;
-    final isNext = _pullDirection == 1;
-    final String targetDay = isNext
-        ? (_selectedDayIndex < _festivalDays.length - 1 ? (_festivalDays[_selectedDayIndex + 1]['day'] ?? '') : '')
-        : (_selectedDayIndex > 0 ? (_festivalDays[_selectedDayIndex - 1]['day'] ?? '') : '');
-
-    if (targetDay.isEmpty) return const SizedBox.shrink();
-
-    return Positioned(
-      top: isNext ? null : 16,
-      bottom: isNext ? 24 : null,
-      left: 0,
-      right: 0,
-      child: Center(
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: isTriggered ? primaryColor : const Color(0xFF140604).withValues(alpha: 0.95),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: isTriggered ? Colors.white : primaryColor.withValues(alpha: 0.6),
-              width: isTriggered ? 1.5 : 1.0,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isTriggered ? primaryColor.withValues(alpha: 0.6) : Colors.black54,
-                blurRadius: isTriggered ? 16 : 8,
-                spreadRadius: isTriggered ? 2 : 0,
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                isNext ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-                size: 16,
-                color: isTriggered ? Colors.black : primaryColor,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                targetDay.toUpperCase(),
-                style: GoogleFonts.orbitron(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.8,
-                  color: isTriggered ? Colors.black : Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -399,9 +227,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     AsyncValue<List<EventItem>> eventsAsync,
     Color primaryColor,
   ) {
+    final cardBg = Theme.of(context).colorScheme.surface;
+
     return eventsAsync.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(color: AppTheme.neonOrange),
+      loading: () => Center(
+        child: CircularProgressIndicator(color: primaryColor),
       ),
       error: (err, _) => Center(
         child: Padding(
@@ -415,7 +245,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       data: (events) {
         final selectedDateFilter = _festivalDays[dayIndex]['date']!;
 
-        // Filter events scheduled on this day (direct match or stage match)
+        // Filter events scheduled on this day
         final dayEvents = events.where((e) {
           final matchesDirect = e.date.contains(selectedDateFilter);
           final matchesStage = e.stages.any((s) => s.date.contains(selectedDateFilter));
@@ -455,276 +285,325 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           );
         }
 
-        return ListView.builder(
-          key: PageStorageKey<int>(dayIndex),
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
-          physics: const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics()),
-          itemCount: dayEvents.length,
-          itemBuilder: (context, index) {
-            final event = dayEvents[index];
-            final isLastEvent = index == dayEvents.length - 1;
-            final stageForDay = event.stages.where((s) => s.date.contains(selectedDateFilter)).firstOrNull;
-            final displayTime = (stageForDay != null && stageForDay.time.isNotEmpty)
-                ? stageForDay.time
-                : event.time;
-            final displayVenue = (stageForDay != null && stageForDay.venue.isNotEmpty)
-                ? stageForDay.venue
-                : event.venue;
+        final bool hasNextDay = dayIndex < _festivalDays.length - 1;
 
-            // Single-pass Stack layout (No IntrinsicHeight) for 120 FPS speed
-            return Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // Connecting timeline line
-                if (!isLastEvent)
-                  Positioned(
-                    left: 6,
-                    top: 22,
-                    bottom: 0,
-                    child: Container(
-                      width: 2,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            primaryColor.withValues(alpha: 0.6),
-                            primaryColor.withValues(alpha: 0.12),
+        return NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            if (notification is ScrollUpdateNotification) {
+              final m = notification.metrics;
+              if (m.pixels > m.maxScrollExtent && hasNextDay) {
+                final extent = (m.pixels - m.maxScrollExtent);
+                if (extent >= _pullThreshold && !_hapticFired) {
+                  HapticFeedback.lightImpact();
+                  _hapticFired = true;
+                  _pullExtent = extent;
+                }
+              }
+            } else if (notification is ScrollEndNotification) {
+              if (_pullExtent >= _pullThreshold && hasNextDay) {
+                _pullExtent = 0.0;
+                _hapticFired = false;
+                _goToNextDay();
+              } else {
+                _pullExtent = 0.0;
+                _hapticFired = false;
+              }
+            }
+            return false;
+          },
+          child: ListView.builder(
+            key: PageStorageKey<int>(dayIndex),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            itemCount: dayEvents.length + (hasNextDay ? 1 : 0),
+            itemBuilder: (context, index) {
+              // Footer pull & tap card to transition to next day
+              if (index == dayEvents.length) {
+                final nextDay = _festivalDays[dayIndex + 1];
+                return Padding(
+                  padding: const EdgeInsets.only(top: 20, bottom: 20),
+                  child: Center(
+                    child: InkWell(
+                      onTap: _goToNextDay,
+                      borderRadius: BorderRadius.circular(24),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: primaryColor.withValues(alpha: 0.4),
+                            width: 1.0,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: primaryColor.withValues(alpha: 0.1),
+                              blurRadius: 10,
+                            ),
                           ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.arrow_upward_rounded, size: 16, color: primaryColor),
+                            const SizedBox(width: 8),
+                            Text(
+                              'PULL UP OR TAP TO VIEW ${nextDay['day']!.toUpperCase()} (${nextDay['label']!.toUpperCase()})',
+                              style: GoogleFonts.orbitron(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.8,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ),
+                );
+              }
 
-                // Dot indicator
-                Positioned(
-                  left: 0,
-                  top: 14,
-                  child: Container(
-                    width: 14,
-                    height: 14,
-                    decoration: BoxDecoration(
-                      color: primaryColor,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: primaryColor.withValues(alpha: 0.6),
-                          blurRadius: 7,
-                          spreadRadius: 1,
+              final event = dayEvents[index];
+              final isLastEvent = index == dayEvents.length - 1 && !hasNextDay;
+              final stageForDay = event.stages.where((s) => s.date.contains(selectedDateFilter)).firstOrNull;
+              final displayTime = (stageForDay != null && stageForDay.time.isNotEmpty)
+                  ? stageForDay.time
+                  : event.time;
+              final displayVenue = (stageForDay != null && stageForDay.venue.isNotEmpty)
+                  ? stageForDay.venue
+                  : event.venue;
+
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Connecting timeline line
+                  if (!isLastEvent)
+                    Positioned(
+                      left: 6,
+                      top: 22,
+                      bottom: 0,
+                      child: Container(
+                        width: 2,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              primaryColor.withValues(alpha: 0.6),
+                              primaryColor.withValues(alpha: 0.12),
+                            ],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
 
-                // Event Schedule Card
-                Padding(
-                  padding: const EdgeInsets.only(left: 26, bottom: 14),
-                  child: InkWell(
-                    onTap: () => context.push('/events/detail', extra: event),
-                    borderRadius: BorderRadius.circular(14),
+                  // Dot indicator
+                  Positioned(
+                    left: 0,
+                    top: 14,
                     child: Container(
-                      padding: const EdgeInsets.all(12),
+                      width: 14,
+                      height: 14,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF110604),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: primaryColor.withValues(alpha: 0.35),
-                          width: 0.8,
-                        ),
+                        color: primaryColor,
+                        shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: primaryColor.withValues(alpha: 0.06),
-                            blurRadius: 8,
+                            color: primaryColor.withValues(alpha: 0.6),
+                            blurRadius: 7,
+                            spreadRadius: 1,
                           ),
                         ],
                       ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Poster image with cache
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(9),
-                            child: SizedBox(
-                              width: 80,
-                              height: 60,
-                              child: Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  event.posterUrl.startsWith('assets/')
+                    ),
+                  ),
+
+                  // Event Schedule Card
+                  Container(
+                    margin: const EdgeInsets.only(left: 28, bottom: 16),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: primaryColor.withValues(alpha: 0.35),
+                        width: 0.8,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => context.push('/events/${event.id}'),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // 1:1 Square Thumbnail
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: SizedBox(
+                                  width: 72,
+                                  height: 72,
+                                  child: event.posterUrl.startsWith('assets/')
                                       ? Image.asset(
                                           event.posterUrl,
                                           fit: BoxFit.cover,
-                                          errorBuilder: (_, _, _) => Container(
-                                            color: const Color(0xFF1A0A08),
-                                            child: const Icon(Icons.bolt, color: Colors.white24, size: 22),
+                                          errorBuilder: (context, error, stackTrace) => Container(
+                                            color: const Color(0xFF1E0A08),
+                                            child: const Icon(Icons.bolt, color: Colors.white24, size: 24),
                                           ),
                                         )
                                       : CachedNetworkImage(
                                           imageUrl: event.posterUrl,
                                           fit: BoxFit.cover,
-                                          placeholder: (_, _) => Container(color: const Color(0xFF140604)),
-                                          errorWidget: (_, _, _) => Container(
-                                            color: const Color(0xFF1A0A08),
-                                            child: const Icon(Icons.bolt, color: Colors.white24, size: 22),
+                                          placeholder: (context, url) => Container(
+                                            color: const Color(0xFF140604),
+                                            child: const Center(
+                                              child: SizedBox(
+                                                width: 16,
+                                                height: 16,
+                                                child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.neonOrange),
+                                              ),
+                                            ),
+                                          ),
+                                          errorWidget: (context, url, error) => Container(
+                                            color: const Color(0xFF1E0A08),
+                                            child: const Icon(Icons.bolt, color: Colors.white24, size: 24),
                                           ),
                                         ),
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          Colors.transparent,
-                                          Colors.black.withValues(alpha: 0.45),
-                                        ],
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
-                            ),
-                          ),
 
-                          const SizedBox(width: 10),
+                              const SizedBox(width: 12),
 
-                          // Text details
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Category badge + Time
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              // Event Details
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Flexible(
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Flexible(
-                                            child: Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 6,
-                                                vertical: 2,
+                                    // Tags & Time Row
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: primaryColor.withValues(alpha: 0.15),
+                                            borderRadius: BorderRadius.circular(4),
+                                            border: Border.all(
+                                              color: primaryColor.withValues(alpha: 0.4),
+                                              width: 0.6,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            event.category.toUpperCase(),
+                                            style: GoogleFonts.rajdhani(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 0.5,
+                                              color: primaryColor,
+                                            ),
+                                          ),
+                                        ),
+                                        if (event.isStageExperience || event.isWatchableOnly) ...[
+                                          const SizedBox(width: 4),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFFFB300).withValues(alpha: 0.15),
+                                              borderRadius: BorderRadius.circular(4),
+                                              border: Border.all(
+                                                color: const Color(0xFFFFB300).withValues(alpha: 0.4),
+                                                width: 0.6,
                                               ),
-                                              decoration: BoxDecoration(
-                                                color: primaryColor.withValues(alpha: 0.15),
-                                                borderRadius: BorderRadius.circular(5),
-                                                border: Border.all(
-                                                  color: primaryColor.withValues(alpha: 0.4),
-                                                ),
-                                              ),
-                                              child: Text(
-                                                event.category.toUpperCase(),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: GoogleFonts.rajdhani(
-                                                  fontSize: 9,
-                                                  fontWeight: FontWeight.w800,
-                                                  color: primaryColor,
-                                                  letterSpacing: 0.7,
-                                                ),
+                                            ),
+                                            child: Text(
+                                              'OPEN',
+                                              style: GoogleFonts.rajdhani(
+                                                fontSize: 9.5,
+                                                fontWeight: FontWeight.bold,
+                                                letterSpacing: 0.5,
+                                                color: const Color(0xFFFFB300),
                                               ),
                                             ),
                                           ),
-                                          if (event.isWatchableOnly) ...[
-                                            const SizedBox(width: 4),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 4,
-                                                vertical: 2,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: Colors.amber.withValues(alpha: 0.15),
-                                                borderRadius: BorderRadius.circular(4),
-                                                border: Border.all(
-                                                  color: Colors.amber.withValues(alpha: 0.5),
-                                                  width: 0.7,
-                                                ),
-                                              ),
-                                              child: Text(
-                                                'OPEN',
-                                                style: GoogleFonts.rajdhani(
-                                                  fontSize: 8,
-                                                  fontWeight: FontWeight.w800,
-                                                  color: Colors.amber,
-                                                  letterSpacing: 0.5,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
                                         ],
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
+                                        const Spacer(),
                                         Icon(Icons.access_time, size: 11, color: primaryColor),
-                                        const SizedBox(width: 3),
-                                        Text(
-                                          displayTime,
-                                          style: GoogleFonts.rajdhani(
-                                            fontSize: 10.5,
-                                            fontWeight: FontWeight.w700,
-                                            color: primaryColor,
+                                        const SizedBox(width: 4),
+                                        Flexible(
+                                          child: Text(
+                                            displayTime,
+                                            style: GoogleFonts.rajdhani(
+                                              fontSize: 10.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: primaryColor,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
                                       ],
                                     ),
-                                  ],
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  stageForDay != null ? '${event.title} — ${stageForDay.name}' : event.title,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.rajdhani(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                    height: 1.2,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Row(
-                                        children: [
-                                          const Icon(Icons.location_on_outlined, size: 12, color: Colors.grey),
-                                          const SizedBox(width: 3),
-                                          Expanded(
-                                            child: Text(
-                                              displayVenue,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: GoogleFonts.rajdhani(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w500,
-                                                color: Colors.white60,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
+
+                                    const SizedBox(height: 6),
+
+                                    // Title
+                                    Text(
+                                      event.title,
+                                      style: GoogleFonts.orbitron(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                        color: Colors.white,
                                       ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    const SizedBox(width: 6),
-                                    const Icon(Icons.arrow_forward_ios, size: 10, color: Colors.white38),
+
+                                    const SizedBox(height: 6),
+
+                                    // Venue & Chevron
+                                    Row(
+                                      children: [
+                                        Icon(Icons.location_on_outlined, size: 12, color: Colors.white54),
+                                        const SizedBox(width: 4),
+                                        Expanded(
+                                          child: Text(
+                                            displayVenue,
+                                            style: GoogleFonts.rajdhani(
+                                              fontSize: 11,
+                                              color: Colors.white60,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        Icon(Icons.chevron_right, size: 14, color: Colors.white30),
+                                      ],
+                                    ),
                                   ],
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ).animate().fadeIn(duration: 200.ms, delay: (index * 25).clamp(0, 250).ms);
-          },
+                ],
+              );
+            },
+          ),
         );
       },
     );

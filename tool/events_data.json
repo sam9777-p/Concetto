@@ -20,7 +20,7 @@
     "registrationUrl": "https://docs.google.com/forms/d/e/1FAIpQLSdSvIrxl8SFP16c3nVU4ZvfCux_QbSUCxSosBAMZMCsHnG_jQ/viewform",
     "coordinatorName": "Utkarsh",
     "coordinatorContact": "concetto@iitism.ac.in",
-    "organizerClub": "Product Management \u00d7 180DC",
+    "organizerClub": "Product Management × 180DC",
     "coordinatorEmail": "concetto@iitism.ac.in",
     "coordinatorPhone": "+91 98765 43210",
     "passwordHash": "",
@@ -31,7 +31,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "pmx180dc_caseblitz",
-    "id": "pmx180dc_caseblitz"
+    "id": "pmx180dc_caseblitz",
+    "minTeamSize": 1,
+    "maxTeamSize": 4,
+    "isOpenRegistration": false
   },
   {
     "title": "Grand Inauguration & Fest Overview",
@@ -44,11 +47,11 @@
     ],
     "venue": "Penman Auditorium",
     "time": "05:00 PM - 08:00 PM",
-    "description": "The official grand opening of Concetto'26 Centenary Edition.\n\nINTERNAL TIMELINE:\n\u2022 04:00 PM \u2013 05:00 PM: Chief / Guest Arrival\n\u2022 05:00 PM \u2013 06:00 PM: INAUGURATION & Lamp Lighting\n\u2022 06:00 PM \u2013 07:00 PM: Welcome Address + Director / Chief Guest\n\u2022 07:00 PM \u2013 08:00 PM: Concetto Introduction + Fest Overview",
+    "description": "The official grand opening of Concetto'26 Centenary Edition.\n\nINTERNAL TIMELINE:\n• 04:00 PM – 05:00 PM: Chief / Guest Arrival\n• 05:00 PM – 06:00 PM: INAUGURATION & Lamp Lighting\n• 06:00 PM – 07:00 PM: Welcome Address + Director / Chief Guest\n• 07:00 PM – 08:00 PM: Concetto Introduction + Fest Overview",
     "posterUrl": "https://concetto-ashen.vercel.app/events/general.png",
     "date": "Oct 8, 2026",
     "prizePool": "TBD",
-    "teamSize": "",
+    "teamSize": "Open Registration",
     "rulebookUrl": "",
     "registrationUrl": "",
     "coordinatorName": "Concetto Organizing Team",
@@ -64,10 +67,13 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "inauguration_ceremony",
-    "id": "inauguration_ceremony"
+    "id": "inauguration_ceremony",
+    "minTeamSize": 1,
+    "maxTeamSize": 1,
+    "isOpenRegistration": true
   },
   {
-    "title": "QuesTree \u201926",
+    "title": "QuesTree ’26",
     "category": "Management",
     "tags": [
       "Management",
@@ -98,7 +104,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "questree__26",
-    "id": "questree__26"
+    "id": "questree__26",
+    "minTeamSize": 1,
+    "maxTeamSize": 3,
+    "isOpenRegistration": false
   },
   {
     "title": "Mathalon",
@@ -132,7 +141,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "mathalon",
-    "id": "mathalon"
+    "id": "mathalon",
+    "minTeamSize": 1,
+    "maxTeamSize": 2,
+    "isOpenRegistration": false
   },
   {
     "title": "Campus Treasure Hunt Challenge",
@@ -165,10 +177,13 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "treasure_hunt_day1",
-    "id": "treasure_hunt_day1"
+    "id": "treasure_hunt_day1",
+    "minTeamSize": 2,
+    "maxTeamSize": 4,
+    "isOpenRegistration": false
   },
   {
-    "title": "VibeHack \u201926 (DevDash)",
+    "title": "VibeHack ’26 (DevDash)",
     "category": "Coding",
     "tags": [
       "Coding",
@@ -198,10 +213,13 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "vibehack__26",
-    "id": "vibehack__26"
+    "id": "vibehack__26",
+    "minTeamSize": 1,
+    "maxTeamSize": 3,
+    "isOpenRegistration": false
   },
   {
-    "title": "Game Zone \u2014 Team Arena Challenges",
+    "title": "Game Zone — Team Arena Challenges",
     "category": "Fun",
     "tags": [
       "Fun",
@@ -215,7 +233,7 @@
     "posterUrl": "https://concetto-ashen.vercel.app/events/general.png",
     "date": "Oct 9, 2026",
     "prizePool": "TBD",
-    "teamSize": "Open to All",
+    "teamSize": "Open Registration",
     "rulebookUrl": "",
     "registrationUrl": "",
     "coordinatorName": "Concetto Organizing Team",
@@ -231,7 +249,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "game_zone_day1",
-    "id": "game_zone_day1"
+    "id": "game_zone_day1",
+    "minTeamSize": 1,
+    "maxTeamSize": 1,
+    "isOpenRegistration": true
   },
   {
     "title": "Code The Cosmos",
@@ -264,7 +285,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "code_the_cosmos",
-    "id": "code_the_cosmos"
+    "id": "code_the_cosmos",
+    "minTeamSize": 1,
+    "maxTeamSize": 3,
+    "isOpenRegistration": false
   },
   {
     "title": "Aethera",
@@ -298,7 +322,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "aethera",
-    "id": "aethera"
+    "id": "aethera",
+    "minTeamSize": 1,
+    "maxTeamSize": 3,
+    "isOpenRegistration": false
   },
   {
     "title": "Gate Craft",
@@ -332,7 +359,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "gate_craft",
-    "id": "gate_craft"
+    "id": "gate_craft",
+    "minTeamSize": 1,
+    "maxTeamSize": 3,
+    "isOpenRegistration": false
   },
   {
     "title": "Keynote Guest Talk 1",
@@ -348,7 +378,7 @@
     "posterUrl": "https://concetto-ashen.vercel.app/events/general.png",
     "date": "Oct 9, 2026",
     "prizePool": "TBD",
-    "teamSize": "",
+    "teamSize": "Open Registration",
     "rulebookUrl": "",
     "registrationUrl": "",
     "coordinatorName": "Concetto Organizing Team",
@@ -364,7 +394,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "guest_talk_1_day1",
-    "id": "guest_talk_1_day1"
+    "id": "guest_talk_1_day1",
+    "minTeamSize": 1,
+    "maxTeamSize": 1,
+    "isOpenRegistration": true
   },
   {
     "title": "AeroGlide (Mechismu)",
@@ -398,10 +431,13 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "aeroglide",
-    "id": "aeroglide"
+    "id": "aeroglide",
+    "minTeamSize": 2,
+    "maxTeamSize": 5,
+    "isOpenRegistration": false
   },
   {
-    "title": "Archway Arena \u201926",
+    "title": "Archway Arena ’26",
     "category": "Design",
     "tags": [
       "Design",
@@ -432,10 +468,13 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "archway_arena__26",
-    "id": "archway_arena__26"
+    "id": "archway_arena__26",
+    "minTeamSize": 2,
+    "maxTeamSize": 4,
+    "isOpenRegistration": false
   },
   {
-    "title": "ForkLift \u201926",
+    "title": "ForkLift ’26",
     "category": "Coding",
     "tags": [
       "Coding",
@@ -466,7 +505,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "forklift__26",
-    "id": "forklift__26"
+    "id": "forklift__26",
+    "minTeamSize": 1,
+    "maxTeamSize": 3,
+    "isOpenRegistration": false
   },
   {
     "title": "Quantum Mania",
@@ -500,7 +542,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "quantum_mania",
-    "id": "quantum_mania"
+    "id": "quantum_mania",
+    "minTeamSize": 1,
+    "maxTeamSize": 3,
+    "isOpenRegistration": false
   },
   {
     "title": "Tech Visionary Guest Talk 2",
@@ -516,7 +561,7 @@
     "posterUrl": "https://concetto-ashen.vercel.app/events/general.png",
     "date": "Oct 9, 2026",
     "prizePool": "TBD",
-    "teamSize": "",
+    "teamSize": "Open Registration",
     "rulebookUrl": "",
     "registrationUrl": "",
     "coordinatorName": "Concetto Organizing Team",
@@ -532,7 +577,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "guest_talk_2_day1",
-    "id": "guest_talk_2_day1"
+    "id": "guest_talk_2_day1",
+    "minTeamSize": 1,
+    "maxTeamSize": 1,
+    "isOpenRegistration": true
   },
   {
     "title": "Logic Odyssey",
@@ -547,11 +595,11 @@
     ],
     "venue": "NLHC (4 halls)",
     "time": "05:00 PM - 06:00 PM",
-    "description": "Logic Odyssey is a ZIO-style, pen-and-paper logic and problem-solving competition featuring 4\u20136 challenging questions. With 90 minutes to solve, participants will test their logical reasoning, mathematical thinking, analytical ability, and problem-solving skills.",
+    "description": "Logic Odyssey is a ZIO-style, pen-and-paper logic and problem-solving competition featuring 4–6 challenging questions. With 90 minutes to solve, participants will test their logical reasoning, mathematical thinking, analytical ability, and problem-solving skills.",
     "posterUrl": "https://concetto-ashen.vercel.app/events/logicOdyssey.png",
     "date": "Oct 9, 2026",
     "prizePool": "TBD",
-    "teamSize": "Individual (1 Member)",
+    "teamSize": "Open Registration",
     "rulebookUrl": "https://docs.google.com/document/d/1WYPSjvhgbtxNUSOyx0kb6k5dx7_jGywL/edit?usp=sharing&ouid=114871654953852545282&rtpof=true&sd=true",
     "registrationUrl": "https://docs.google.com/forms/d/e/1FAIpQLSckWsaTB5QKfhzriT0sWN6a5INiZnVTPsU0bNupnC5upwNP6g/viewform",
     "coordinatorName": "Vishal",
@@ -567,10 +615,13 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "logic_odyssey",
-    "id": "logic_odyssey"
+    "id": "logic_odyssey",
+    "minTeamSize": 1,
+    "maxTeamSize": 1,
+    "isOpenRegistration": true
   },
   {
-    "title": "Reservoir Making \u2014 IADC (Crack the Crude)",
+    "title": "Reservoir Making — IADC (Crack the Crude)",
     "category": "Departmental",
     "tags": [
       "Departmental",
@@ -581,7 +632,7 @@
     ],
     "venue": "NLHC",
     "time": "05:00 PM - 06:00 PM",
-    "description": "A two-round technical competition designed to test participants\u2019 petroleum engineering knowledge, analytical thinking, and practical skills. The first round features a fast-paced petroleum-themed identification challenge where participants recognize equipment, geological formations, and industry concepts under time pressure. The top-performing teams advance to the second round, where they apply their understanding by designing and constructing a functional reservoir model to demonstrate concepts such as porosity, permeability, fluid migration, and hydrocarbon trapping.",
+    "description": "A two-round technical competition designed to test participants’ petroleum engineering knowledge, analytical thinking, and practical skills. The first round features a fast-paced petroleum-themed identification challenge where participants recognize equipment, geological formations, and industry concepts under time pressure. The top-performing teams advance to the second round, where they apply their understanding by designing and constructing a functional reservoir model to demonstrate concepts such as porosity, permeability, fluid migration, and hydrocarbon trapping.",
     "posterUrl": "https://concetto-ashen.vercel.app/events/reservoir-making.png",
     "date": "Oct 9, 2026",
     "prizePool": "TBD",
@@ -601,7 +652,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "reservoir_making___iadc",
-    "id": "reservoir_making___iadc"
+    "id": "reservoir_making___iadc",
+    "minTeamSize": 2,
+    "maxTeamSize": 4,
+    "isOpenRegistration": false
   },
   {
     "title": "CELEBRITY COMEDY NIGHT",
@@ -618,7 +672,7 @@
     "posterUrl": "https://concetto-ashen.vercel.app/events/comedy-night.png",
     "date": "Oct 9, 2026",
     "prizePool": "TBD",
-    "teamSize": "",
+    "teamSize": "Open Registration",
     "rulebookUrl": "",
     "registrationUrl": "",
     "coordinatorName": "Concetto Organizing Team",
@@ -634,10 +688,13 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "comedy_night_live",
-    "id": "comedy_night_live"
+    "id": "comedy_night_live",
+    "minTeamSize": 1,
+    "maxTeamSize": 1,
+    "isOpenRegistration": true
   },
   {
-    "title": "TiNAS \u201926",
+    "title": "TiNAS ’26",
     "category": "Coding",
     "tags": [
       "Coding",
@@ -668,7 +725,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "tinas__26",
-    "id": "tinas__26"
+    "id": "tinas__26",
+    "minTeamSize": 1,
+    "maxTeamSize": 3,
+    "isOpenRegistration": false
   },
   {
     "title": "Sparkathon 2.0",
@@ -703,10 +763,13 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "sparkathon",
-    "id": "sparkathon"
+    "id": "sparkathon",
+    "minTeamSize": 2,
+    "maxTeamSize": 4,
+    "isOpenRegistration": false
   },
   {
-    "title": "Minute to Win It \u2014 Fast Reflex Games",
+    "title": "Minute to Win It — Fast Reflex Games",
     "category": "Fun",
     "tags": [
       "Fun",
@@ -720,7 +783,7 @@
     "posterUrl": "https://concetto-ashen.vercel.app/events/general.png",
     "date": "Oct 10, 2026",
     "prizePool": "TBD",
-    "teamSize": "Solo / Duo",
+    "teamSize": "Open Registration",
     "rulebookUrl": "",
     "registrationUrl": "",
     "coordinatorName": "Concetto Organizing Team",
@@ -736,7 +799,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "minute_to_win_it",
-    "id": "minute_to_win_it"
+    "id": "minute_to_win_it",
+    "minTeamSize": 1,
+    "maxTeamSize": 1,
+    "isOpenRegistration": true
   },
   {
     "title": "Escape Room",
@@ -769,7 +835,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "escape_room",
-    "id": "escape_room"
+    "id": "escape_room",
+    "minTeamSize": 2,
+    "maxTeamSize": 4,
+    "isOpenRegistration": false
   },
   {
     "title": "Edge AI Challenge",
@@ -803,7 +872,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "edge_ai_challenge",
-    "id": "edge_ai_challenge"
+    "id": "edge_ai_challenge",
+    "minTeamSize": 2,
+    "maxTeamSize": 3,
+    "isOpenRegistration": false
   },
   {
     "title": "MLMTE Quiz Club Quiz",
@@ -836,7 +908,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "mlmte_quiz_club_quiz",
-    "id": "mlmte_quiz_club_quiz"
+    "id": "mlmte_quiz_club_quiz",
+    "minTeamSize": 2,
+    "maxTeamSize": 2,
+    "isOpenRegistration": false
   },
   {
     "title": "Hands-on Tech Workshop",
@@ -852,7 +927,7 @@
     "description": "Industry-led practical developer masterclass focused on deploying production LLMs, fine-tuning lightweight models, and low-latency inference on GPUs.",
     "posterUrl": "https://concetto-ashen.vercel.app/events/general.png",
     "date": "Oct 10, 2026",
-    "prizePool": "TBD",
+    "prizePool": "",
     "teamSize": "Open Registration",
     "rulebookUrl": "",
     "registrationUrl": "",
@@ -869,7 +944,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "hands_on_workshop_day2",
-    "id": "hands_on_workshop_day2"
+    "id": "hands_on_workshop_day2",
+    "minTeamSize": 1,
+    "maxTeamSize": 1,
+    "isOpenRegistration": true
   },
   {
     "title": "AnGD 3D Animation",
@@ -883,7 +961,7 @@
     ],
     "venue": "Online",
     "time": "12:00 PM - 01:00 PM",
-    "description": "Then. Now. Next. is a 15-day 3D animation competition where participants bring their creativity to life through 3D modelling, animation, and visual storytelling based on a given theme. Showcase your technical and artistic skills and create something truly engaging for Concetto\u201926.",
+    "description": "Then. Now. Next. is a 15-day 3D animation competition where participants bring their creativity to life through 3D modelling, animation, and visual storytelling based on a given theme. Showcase your technical and artistic skills and create something truly engaging for Concetto’26.",
     "posterUrl": "https://concetto-ashen.vercel.app/events/angd-3d-animation.png",
     "date": "Oct 10, 2026",
     "prizePool": "TBD",
@@ -903,7 +981,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "angd_3d_animation",
-    "id": "angd_3d_animation"
+    "id": "angd_3d_animation",
+    "minTeamSize": 1,
+    "maxTeamSize": 3,
+    "isOpenRegistration": false
   },
   {
     "title": "Industry Leader Guest Talk 1",
@@ -919,7 +1000,7 @@
     "posterUrl": "https://concetto-ashen.vercel.app/events/general.png",
     "date": "Oct 10, 2026",
     "prizePool": "TBD",
-    "teamSize": "",
+    "teamSize": "Open Registration",
     "rulebookUrl": "",
     "registrationUrl": "",
     "coordinatorName": "Concetto Organizing Team",
@@ -935,7 +1016,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "guest_talk_1_day2",
-    "id": "guest_talk_1_day2"
+    "id": "guest_talk_1_day2",
+    "minTeamSize": 1,
+    "maxTeamSize": 1,
+    "isOpenRegistration": true
   },
   {
     "title": "ChakraVyuh",
@@ -969,7 +1053,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "chakravyuh",
-    "id": "chakravyuh"
+    "id": "chakravyuh",
+    "minTeamSize": 2,
+    "maxTeamSize": 4,
+    "isOpenRegistration": false
   },
   {
     "title": "ALCHEMIST",
@@ -1002,7 +1089,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "alchemist",
-    "id": "alchemist"
+    "id": "alchemist",
+    "minTeamSize": 2,
+    "maxTeamSize": 3,
+    "isOpenRegistration": false
   },
   {
     "title": "MECHISMU EXTREME BIKE STUNT SHOW",
@@ -1020,7 +1110,7 @@
     "posterUrl": "https://concetto-ashen.vercel.app/events/stunt-show.png",
     "date": "Oct 10, 2026",
     "prizePool": "TBD",
-    "teamSize": "",
+    "teamSize": "Open Registration",
     "rulebookUrl": "",
     "registrationUrl": "",
     "coordinatorName": "Utkarsh",
@@ -1036,10 +1126,13 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "stunt_show_mechismu",
-    "id": "stunt_show_mechismu"
+    "id": "stunt_show_mechismu",
+    "minTeamSize": 1,
+    "maxTeamSize": 1,
+    "isOpenRegistration": true
   },
   {
-    "title": "ConvCup \u201926",
+    "title": "ConvCup ’26",
     "category": "Coding",
     "tags": [
       "Coding",
@@ -1070,7 +1163,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "convcup__26",
-    "id": "convcup__26"
+    "id": "convcup__26",
+    "minTeamSize": 1,
+    "maxTeamSize": 3,
+    "isOpenRegistration": false
   },
   {
     "title": "AutoNav",
@@ -1104,7 +1200,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "autonav",
-    "id": "autonav"
+    "id": "autonav",
+    "minTeamSize": 2,
+    "maxTeamSize": 4,
+    "isOpenRegistration": false
   },
   {
     "title": "Innovation Keynote Guest Talk 2",
@@ -1120,7 +1219,7 @@
     "posterUrl": "https://concetto-ashen.vercel.app/events/general.png",
     "date": "Oct 10, 2026",
     "prizePool": "TBD",
-    "teamSize": "",
+    "teamSize": "Open Registration",
     "rulebookUrl": "",
     "registrationUrl": "",
     "coordinatorName": "Concetto Organizing Team",
@@ -1136,7 +1235,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "guest_talk_2_day2",
-    "id": "guest_talk_2_day2"
+    "id": "guest_talk_2_day2",
+    "minTeamSize": 1,
+    "maxTeamSize": 1,
+    "isOpenRegistration": true
   },
   {
     "title": "Q-Blueprint",
@@ -1169,7 +1271,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "q_blueprint",
-    "id": "q_blueprint"
+    "id": "q_blueprint",
+    "minTeamSize": 1,
+    "maxTeamSize": 2,
+    "isOpenRegistration": false
   },
   {
     "title": "Equity Auction",
@@ -1204,7 +1309,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "equity_auction",
-    "id": "equity_auction"
+    "id": "equity_auction",
+    "minTeamSize": 1,
+    "maxTeamSize": 4,
+    "isOpenRegistration": false
   },
   {
     "title": "MEGA EDM & DJ NIGHT",
@@ -1221,7 +1329,7 @@
     "posterUrl": "https://concetto-ashen.vercel.app/events/dj-night.png",
     "date": "Oct 10, 2026",
     "prizePool": "TBD",
-    "teamSize": "",
+    "teamSize": "Open Registration",
     "rulebookUrl": "",
     "registrationUrl": "",
     "coordinatorName": "Concetto Organizing Team",
@@ -1237,10 +1345,13 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "dj_night_party",
-    "id": "dj_night_party"
+    "id": "dj_night_party",
+    "minTeamSize": 1,
+    "maxTeamSize": 1,
+    "isOpenRegistration": true
   },
   {
-    "title": "Pixel Perfect \u201926",
+    "title": "Pixel Perfect ’26",
     "category": "Design",
     "tags": [
       "Design",
@@ -1271,10 +1382,13 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "pixel_perfect__26",
-    "id": "pixel_perfect__26"
+    "id": "pixel_perfect__26",
+    "minTeamSize": 1,
+    "maxTeamSize": 2,
+    "isOpenRegistration": false
   },
   {
-    "title": "Seek the Civil Geek \u201926",
+    "title": "Seek the Civil Geek ’26",
     "category": "Departmental",
     "tags": [
       "Departmental",
@@ -1304,7 +1418,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "seek_the_civil_geek__26",
-    "id": "seek_the_civil_geek__26"
+    "id": "seek_the_civil_geek__26",
+    "minTeamSize": 2,
+    "maxTeamSize": 2,
+    "isOpenRegistration": false
   },
   {
     "title": "Fun Games Arena & Interactive Booths",
@@ -1321,7 +1438,7 @@
     "posterUrl": "https://concetto-ashen.vercel.app/events/general.png",
     "date": "Oct 11, 2026",
     "prizePool": "TBD",
-    "teamSize": "Open Entry",
+    "teamSize": "Open Registration",
     "rulebookUrl": "",
     "registrationUrl": "",
     "coordinatorName": "Concetto Organizing Team",
@@ -1337,10 +1454,13 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "fun_games_arena",
-    "id": "fun_games_arena"
+    "id": "fun_games_arena",
+    "minTeamSize": 1,
+    "maxTeamSize": 1,
+    "isOpenRegistration": true
   },
   {
-    "title": "ROBO WARS \u2014 Combat Robotics Championship",
+    "title": "ROBO WARS — Combat Robotics Championship",
     "category": "Robotics",
     "tags": [
       "Robotics",
@@ -1351,7 +1471,7 @@
     ],
     "venue": "SAC Ground Arena",
     "time": "10:00 AM - 06:00 PM",
-    "description": "The undisputed colosseum of Concetto! Heavyweight custom combat robots clash in a reinforced polycarbonate cage until destruction or knockout.\n\nINTERNAL TIMELINE:\n\u2022 10:00 AM \u2013 12:00 PM: RoboWars \u2014 Main Rounds\n\u2022 05:00 PM \u2013 06:00 PM: ROBO WARS \u2014 GRAND FINAL under stadium spotlights!",
+    "description": "The undisputed colosseum of Concetto! Heavyweight custom combat robots clash in a reinforced polycarbonate cage until destruction or knockout.\n\nINTERNAL TIMELINE:\n• 10:00 AM – 12:00 PM: RoboWars — Main Rounds\n• 05:00 PM – 06:00 PM: ROBO WARS — GRAND FINAL under stadium spotlights!",
     "posterUrl": "https://concetto-ashen.vercel.app/events/robowars.webp",
     "date": "Oct 11, 2026",
     "prizePool": "TBD",
@@ -1371,7 +1491,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "robowars",
-    "id": "robowars"
+    "id": "robowars",
+    "minTeamSize": 2,
+    "maxTeamSize": 6,
+    "isOpenRegistration": false
   },
   {
     "title": "Next-Gen AI & Robotics Workshop",
@@ -1387,7 +1510,7 @@
     "description": "Expert-led intensive workshop on ROS2 (Robot Operating System), SLAM algorithms, and sensor fusion for autonomous mobile robots.",
     "posterUrl": "https://concetto-ashen.vercel.app/events/general.png",
     "date": "Oct 11, 2026",
-    "prizePool": "TBD",
+    "prizePool": "",
     "teamSize": "Open Registration",
     "rulebookUrl": "",
     "registrationUrl": "",
@@ -1404,7 +1527,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "emerging_tech_workshop_day3",
-    "id": "emerging_tech_workshop_day3"
+    "id": "emerging_tech_workshop_day3",
+    "minTeamSize": 1,
+    "maxTeamSize": 1,
+    "isOpenRegistration": true
   },
   {
     "title": "SBT Quiz",
@@ -1438,7 +1564,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "sbt_quiz",
-    "id": "sbt_quiz"
+    "id": "sbt_quiz",
+    "minTeamSize": 1,
+    "maxTeamSize": 2,
+    "isOpenRegistration": false
   },
   {
     "title": "Fault Hunt",
@@ -1473,10 +1602,13 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "fault_hunt",
-    "id": "fault_hunt"
+    "id": "fault_hunt",
+    "minTeamSize": 2,
+    "maxTeamSize": 4,
+    "isOpenRegistration": false
   },
   {
-    "title": "AppSurD \u201926",
+    "title": "AppSurD ’26",
     "category": "Coding",
     "tags": [
       "Coding",
@@ -1507,7 +1639,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "appsurd__26",
-    "id": "appsurd__26"
+    "id": "appsurd__26",
+    "minTeamSize": 1,
+    "maxTeamSize": 4,
+    "isOpenRegistration": false
   },
   {
     "title": "Futurist Keynote Guest Talk 1",
@@ -1523,7 +1658,7 @@
     "posterUrl": "https://concetto-ashen.vercel.app/events/general.png",
     "date": "Oct 11, 2026",
     "prizePool": "TBD",
-    "teamSize": "",
+    "teamSize": "Open Registration",
     "rulebookUrl": "",
     "registrationUrl": "",
     "coordinatorName": "Concetto Organizing Team",
@@ -1539,7 +1674,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "guest_talk_1_day3",
-    "id": "guest_talk_1_day3"
+    "id": "guest_talk_1_day3",
+    "minTeamSize": 1,
+    "maxTeamSize": 1,
+    "isOpenRegistration": true
   },
   {
     "title": "Code Wars",
@@ -1554,11 +1692,11 @@
     ],
     "venue": "NLHC Lab/ library 4th floor",
     "time": "02:00 PM - 03:00 PM",
-    "description": "Code Wars is an ICPC-style competitive programming team contest where teams of exactly 3 participants solve algorithmic problems within 2.5\u20133 hours. The contest tests problem-solving, coding skills, algorithmic thinking, and teamwork.",
+    "description": "Code Wars is an ICPC-style competitive programming team contest where teams of exactly 3 participants solve algorithmic problems within 2.5–3 hours. The contest tests problem-solving, coding skills, algorithmic thinking, and teamwork.",
     "posterUrl": "https://concetto-ashen.vercel.app/events/codewars.png",
     "date": "Oct 11, 2026",
     "prizePool": "TBD",
-    "teamSize": "Team of 3",
+    "teamSize": "3 Members",
     "rulebookUrl": "https://docs.google.com/document/d/1MdZxBX23qUzihYFlPsadoGJfmWvsVacj/edit?usp=drive_link&ouid=114871654953852545282&rtpof=true&sd=true",
     "registrationUrl": "https://docs.google.com/forms/d/e/1FAIpQLScyVg0RlpWugmEcvoXBjv_IioXpNF52GHYktbs1_uzpGFKDOA/viewform",
     "coordinatorName": "Vishal",
@@ -1574,7 +1712,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "code_wars",
-    "id": "code_wars"
+    "id": "code_wars",
+    "minTeamSize": 3,
+    "maxTeamSize": 3,
+    "isOpenRegistration": false
   },
   {
     "title": "SPE Event (Stand Tall - Jack Up Challenge)",
@@ -1608,7 +1749,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "spe_event",
-    "id": "spe_event"
+    "id": "spe_event",
+    "minTeamSize": 2,
+    "maxTeamSize": 4,
+    "isOpenRegistration": false
   },
   {
     "title": "AutoExpo",
@@ -1626,7 +1770,7 @@
     "posterUrl": "https://concetto-ashen.vercel.app/events/autoexpo.png",
     "date": "Oct 11, 2026",
     "prizePool": "TBD",
-    "teamSize": "",
+    "teamSize": "Open Registration",
     "rulebookUrl": "",
     "registrationUrl": "https://docs.google.com/forms/d/e/1FAIpQLSctS1LsOcJ1hKPcWviCkS8n0stpTfjkZtSyFjfHnuHk1T7Kyw/viewform",
     "coordinatorName": "Utkarsh",
@@ -1642,7 +1786,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "autoexpo",
-    "id": "autoexpo"
+    "id": "autoexpo",
+    "minTeamSize": 1,
+    "maxTeamSize": 1,
+    "isOpenRegistration": true
   },
   {
     "title": "AnGD Game Jam (RRR-A Game Jam)",
@@ -1656,7 +1803,7 @@
     ],
     "venue": "Hybrid (NLHC 1 ROOM)",
     "time": "04:00 PM - 05:00 PM",
-    "description": "RRR \u2013 A Game Jam is a 9-day game development challenge where participants turn their ideas into playable games based on a surprise theme. Teams can use any game engine, experiment with gameplay and creativity, and present their final creation at Concetto\u201926.",
+    "description": "RRR – A Game Jam is a 9-day game development challenge where participants turn their ideas into playable games based on a surprise theme. Teams can use any game engine, experiment with gameplay and creativity, and present their final creation at Concetto’26.",
     "posterUrl": "https://concetto-ashen.vercel.app/events/angd-game-jam.png",
     "date": "Oct 11, 2026",
     "prizePool": "TBD",
@@ -1676,7 +1823,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "angd_game_jam",
-    "id": "angd_game_jam"
+    "id": "angd_game_jam",
+    "minTeamSize": 1,
+    "maxTeamSize": 4,
+    "isOpenRegistration": false
   },
   {
     "title": "Distinguished Alumni Guest Talk 2",
@@ -1692,7 +1842,7 @@
     "posterUrl": "https://concetto-ashen.vercel.app/events/general.png",
     "date": "Oct 11, 2026",
     "prizePool": "TBD",
-    "teamSize": "",
+    "teamSize": "Open Registration",
     "rulebookUrl": "",
     "registrationUrl": "",
     "coordinatorName": "Concetto Organizing Team",
@@ -1708,7 +1858,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "guest_talk_2_day3",
-    "id": "guest_talk_2_day3"
+    "id": "guest_talk_2_day3",
+    "minTeamSize": 1,
+    "maxTeamSize": 1,
+    "isOpenRegistration": true
   },
   {
     "title": "CELEBRITY STAR NIGHT (GRAND FINALE)",
@@ -1722,11 +1875,11 @@
     ],
     "venue": "Main Ground",
     "time": "08:00 PM - 11:00 PM",
-    "description": "The monumental finale of Concetto'26! Live in-concert performance by a top Bollywood / Indie headline artist. A colossal sensory experience with 10,000+ attendees, massive stage pyrotechnics, and unforgettable memories. Open entry with fest wristband.\n\nINTERNAL TIMELINE:\n\u2022 06:30 PM \u2013 07:30 PM: Star Night Preparation & Sound Check\n\u2022 07:30 PM \u2013 08:00 PM: Star Night Gates Open & Entry\n\u2022 08:00 PM \u2013 11:00 PM: STAR NIGHT LIVE IN-CONCERT",
+    "description": "The monumental finale of Concetto'26! Live in-concert performance by a top Bollywood / Indie headline artist. A colossal sensory experience with 10,000+ attendees, massive stage pyrotechnics, and unforgettable memories. Open entry with fest wristband.\n\nINTERNAL TIMELINE:\n• 06:30 PM – 07:30 PM: Star Night Preparation & Sound Check\n• 07:30 PM – 08:00 PM: Star Night Gates Open & Entry\n• 08:00 PM – 11:00 PM: STAR NIGHT LIVE IN-CONCERT",
     "posterUrl": "https://concetto-ashen.vercel.app/events/star-night.png",
     "date": "Oct 11, 2026",
     "prizePool": "TBD",
-    "teamSize": "",
+    "teamSize": "Open Registration",
     "rulebookUrl": "",
     "registrationUrl": "",
     "coordinatorName": "Concetto Organizing Team",
@@ -1742,10 +1895,13 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "star_night_celebrity",
-    "id": "star_night_celebrity"
+    "id": "star_night_celebrity",
+    "minTeamSize": 1,
+    "maxTeamSize": 1,
+    "isOpenRegistration": true
   },
   {
-    "title": "Prom Night '26 \u2014 Centenary Kickoff Gala",
+    "title": "Prom Night '26 — Centenary Kickoff Gala",
     "category": "Pre-Event",
     "tags": [
       "Pre-Events",
@@ -1759,7 +1915,7 @@
     "posterUrl": "https://concetto-ashen.vercel.app/events/general.png",
     "date": "Oct 6, 2026",
     "prizePool": "TBD",
-    "teamSize": "Open to All",
+    "teamSize": "Open Registration",
     "rulebookUrl": "",
     "registrationUrl": "",
     "coordinatorName": "Concetto Organizing Team",
@@ -1775,10 +1931,13 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "prom_night_pre",
-    "id": "prom_night_pre"
+    "id": "prom_night_pre",
+    "minTeamSize": 1,
+    "maxTeamSize": 1,
+    "isOpenRegistration": true
   },
   {
-    "title": "Kryptoes '26 \u2014 Solo Dance Showdown",
+    "title": "Kryptoes '26 — Solo Dance Showdown",
     "category": "Pre-Event",
     "tags": [
       "Pre-Events",
@@ -1794,7 +1953,7 @@
     "posterUrl": "https://concetto-ashen.vercel.app/events/kryptos.png",
     "date": "Oct 6, 2026",
     "prizePool": "TBD",
-    "teamSize": "Solo (1 Performer)",
+    "teamSize": "Solo (1 Member)",
     "rulebookUrl": "",
     "registrationUrl": "https://docs.google.com/forms/d/e/1FAIpQLSdSvIrxl8SFP16c3nVU4ZvfCux_QbSUCxSosBAMZMCsHnG_jQ/viewform",
     "coordinatorName": "Concetto Organizing Team",
@@ -1810,7 +1969,10 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "kryptoes_pre",
-    "id": "kryptoes_pre"
+    "id": "kryptoes_pre",
+    "minTeamSize": 1,
+    "maxTeamSize": 1,
+    "isOpenRegistration": false
   },
   {
     "title": "Open Air Movie Night",
@@ -1827,7 +1989,7 @@
     "posterUrl": "https://concetto-ashen.vercel.app/events/movie-night.png",
     "date": "Oct 7, 2026",
     "prizePool": "TBD",
-    "teamSize": "Open to All",
+    "teamSize": "Open Registration",
     "rulebookUrl": "",
     "registrationUrl": "",
     "coordinatorName": "Concetto Organizing Team",
@@ -1843,6 +2005,9 @@
     "isVisible": true,
     "scheduleBreakdown": "",
     "_id": "movie_night_pre",
-    "id": "movie_night_pre"
+    "id": "movie_night_pre",
+    "minTeamSize": 1,
+    "maxTeamSize": 1,
+    "isOpenRegistration": true
   }
 ]
