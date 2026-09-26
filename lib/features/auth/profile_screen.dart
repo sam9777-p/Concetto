@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/network/auth_provider.dart';
 import '../../core/network/repositories.dart';
 import '../../core/theme/app_theme.dart';
@@ -44,7 +45,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'ATTENDEE PORTAL',
+          'ABOUT CONCETTO',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.5,
@@ -52,6 +53,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         centerTitle: false,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.shield_outlined, size: 18, color: Colors.white24),
+            tooltip: 'Staff Portal',
+            onPressed: () {
+              AdminLoginDialog.show(
+                context,
+                onSuccess: (isDeveloper) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => AdminDashboardScreen(initialIsDeveloper: isDeveloper),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
           if (!user.isGuest)
             IconButton(
               icon: const Icon(Icons.logout),
@@ -89,14 +106,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   .animate()
                   .fadeIn(duration: 400.ms, delay: 100.ms),
 
-            const SizedBox(height: 18),
-
-            // Organizer Portal Card
-            _buildOrganizerPortalCard(context, primaryColor)
-                .animate()
-                .fadeIn(duration: 400.ms, delay: 150.ms),
-
-            const SizedBox(height: 28),
+            const SizedBox(height: 20),
 
             // Official About Us & Centenary Heritage Section
             _buildAboutUsSection(primaryColor, secondaryColor)
@@ -130,6 +140,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             _buildHelpdeskCard(primaryColor, secondaryColor)
                 .animate()
                 .fadeIn(duration: 400.ms, delay: 500.ms),
+
+            const SizedBox(height: 36),
+
+            // Discreet Organizer Access at the very last of the page
+            _buildDiscreetOrganizerAccess(context),
 
             const SizedBox(height: 40),
           ],
@@ -449,97 +464,40 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  // --- 2b. Organizer & Club Portal ---
-  Widget _buildOrganizerPortalCard(BuildContext context, Color primaryColor) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.cardSurface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.neonOrange.withValues(alpha: 0.4), width: 1),
-        gradient: AppTheme.darkCardGradient,
-        boxShadow: AppTheme.neonGlow(opacity: 0.15, blur: 10),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: () {
-            AdminLoginDialog.show(
-              context,
-              onSuccess: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const AdminDashboardScreen(),
-                  ),
-                );
-              },
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppTheme.neonOrange.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppTheme.neonOrange.withValues(alpha: 0.5)),
-                  ),
-                  child: const Icon(Icons.admin_panel_settings_outlined, color: AppTheme.neonOrange, size: 26),
+  // --- 2b. Discreet Organizer & Staff Portal ---
+  Widget _buildDiscreetOrganizerAccess(BuildContext context) {
+    return Center(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () {
+          AdminLoginDialog.show(
+            context,
+            onSuccess: (isDeveloper) {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => AdminDashboardScreen(initialIsDeveloper: isDeveloper),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          Text(
-                            'ORGANIZER PORTAL',
-                            style: GoogleFonts.orbitron(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.0,
-                              color: Colors.white,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppTheme.cyberAmber.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: AppTheme.cyberAmber, width: 0.8),
-                            ),
-                            child: Text(
-                              'CLUB HEADS',
-                              style: GoogleFonts.rajdhani(
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.cyberAmber,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        'Manage, add, and publish festival events',
-                        style: GoogleFonts.rajdhani(
-                          fontSize: 13,
-                          color: AppTheme.metallicMuted,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
+              );
+            },
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.lock_outline, size: 12, color: AppTheme.metallicMuted.withValues(alpha: 0.35)),
+              const SizedBox(width: 6),
+              Text(
+                'Staff & Organizer Portal',
+                style: GoogleFonts.rajdhani(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.metallicMuted.withValues(alpha: 0.4),
+                  letterSpacing: 0.8,
                 ),
-                const Icon(Icons.arrow_forward_ios, size: 14, color: AppTheme.neonOrange),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -1030,7 +988,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   radius: 22,
                   backgroundImage: member.imageUrl.startsWith('assets/')
                       ? AssetImage(member.imageUrl) as ImageProvider
-                      : (member.imageUrl.isNotEmpty ? NetworkImage(member.imageUrl) : null),
+                      : (member.imageUrl.isNotEmpty ? CachedNetworkImageProvider(member.imageUrl) : null),
                   backgroundColor: primaryColor.withValues(alpha: 0.15),
                   child: member.imageUrl.isEmpty
                       ? Icon(Icons.person, color: primaryColor, size: 20)

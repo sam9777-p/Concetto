@@ -10,7 +10,8 @@ void main() {
         child: MyApp(),
       ),
     );
-    await tester.pump();
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pump(const Duration(milliseconds: 500));
 
     final navBarFinder = find.byType(NavigationBar);
     expect(navBarFinder, findsOneWidget);
@@ -19,7 +20,7 @@ void main() {
     expect(find.descendant(of: navBarFinder, matching: find.text('Home')), findsOneWidget);
     expect(find.descendant(of: navBarFinder, matching: find.text('Events')), findsOneWidget);
     expect(find.descendant(of: navBarFinder, matching: find.text('Schedule')), findsOneWidget);
-    expect(find.descendant(of: navBarFinder, matching: find.text('Profile')), findsOneWidget);
+    expect(find.descendant(of: navBarFinder, matching: find.text('About')), findsOneWidget);
 
     // Advance time to allow any delayed animations to complete
     await tester.pump(const Duration(seconds: 1));

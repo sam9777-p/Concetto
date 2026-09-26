@@ -24,6 +24,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
 
   final List<String> _categories = [
     'All',
+    'Workshops',
     'Pre-Events',
     'Flagship',
     'Robotics',
@@ -78,10 +79,10 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
             onPressed: () {
               AdminLoginDialog.show(
                 context,
-                onSuccess: () {
+                onSuccess: (isDeveloper) {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => const AdminDashboardScreen(),
+                      builder: (context) => AdminDashboardScreen(initialIsDeveloper: isDeveloper),
                     ),
                   );
                 },
@@ -226,17 +227,6 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Prom Night \'26 • Kryptoes Dance Showdown • Movie Night',
-                              style: GoogleFonts.rajdhani(
-                                color: Colors.white70,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
                           ],
                         ),
                       ),
@@ -379,6 +369,8 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
 
     // Filter by category & search query
     final filteredEvents = events.where((event) {
+      if (!event.isVisible) return false;
+
       final isPreEvent = event.category.toLowerCase().contains('pre') ||
           event.id.contains('_pre') ||
           event.id.contains('preevent') ||
@@ -387,6 +379,12 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
       final bool matchesCategory;
       if (selectedCategory == 'All') {
         matchesCategory = true;
+      } else if (selectedCategory == 'Workshops') {
+        matchesCategory = event.category.toLowerCase().contains('workshop') ||
+            event.tags.any((t) => t.toLowerCase().contains('workshop')) ||
+            event.title.toLowerCase().contains('biology') ||
+            event.title.toLowerCase().contains('agentic') ||
+            event.title.toLowerCase().contains('workshop');
       } else if (selectedCategory == 'Pre-Events') {
         matchesCategory = isPreEvent;
       } else if (selectedCategory == 'Flagship') {

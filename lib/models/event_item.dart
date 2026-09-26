@@ -16,12 +16,17 @@ class EventItem {
   final String coordinatorContact;
   final bool isFlagship;
   final bool isWatchableOnly;
+  final bool isStageExperience;
 
   final String organizerClub;
   final String coordinatorEmail;
   final String coordinatorPhone;
   final String passwordHash;
+  final String specificPassword;
   final String updatedAt;
+  final bool isVisible;
+  final String scheduleBreakdown;
+  final List<EventStage> stages;
 
   EventItem({
     required this.id,
@@ -43,9 +48,14 @@ class EventItem {
     this.coordinatorEmail = '',
     this.coordinatorPhone = '',
     this.passwordHash = '',
+    this.specificPassword = '',
     this.updatedAt = '',
     this.isFlagship = false,
     this.isWatchableOnly = false,
+    this.isStageExperience = false,
+    this.isVisible = true,
+    this.scheduleBreakdown = '',
+    this.stages = const [],
   });
 
   EventItem copyWith({
@@ -68,9 +78,14 @@ class EventItem {
     String? coordinatorEmail,
     String? coordinatorPhone,
     String? passwordHash,
+    String? specificPassword,
     String? updatedAt,
     bool? isFlagship,
     bool? isWatchableOnly,
+    bool? isStageExperience,
+    bool? isVisible,
+    String? scheduleBreakdown,
+    List<EventStage>? stages,
   }) {
     return EventItem(
       id: id ?? this.id,
@@ -92,13 +107,28 @@ class EventItem {
       coordinatorEmail: coordinatorEmail ?? this.coordinatorEmail,
       coordinatorPhone: coordinatorPhone ?? this.coordinatorPhone,
       passwordHash: passwordHash ?? this.passwordHash,
+      specificPassword: specificPassword ?? this.specificPassword,
       updatedAt: updatedAt ?? this.updatedAt,
       isFlagship: isFlagship ?? this.isFlagship,
       isWatchableOnly: isWatchableOnly ?? this.isWatchableOnly,
+      isStageExperience: isStageExperience ?? this.isStageExperience,
+      isVisible: isVisible ?? this.isVisible,
+      scheduleBreakdown: scheduleBreakdown ?? this.scheduleBreakdown,
+      stages: stages ?? this.stages,
     );
   }
 
   factory EventItem.fromJson(Map<String, dynamic> json, String id) {
+    List<EventStage> parsedStages = const [];
+    if (json['stages'] is List) {
+      parsedStages = (json['stages'] as List)
+          .whereType<Map>()
+          .map((s) => EventStage.fromJson(Map<String, dynamic>.from(s)))
+          .toList();
+    }
+
+    final isStage = json['isStageExperience'] ?? json['isWatchableOnly'] ?? false;
+
     return EventItem(
       id: id,
       title: json['title'] ?? '',
@@ -113,7 +143,7 @@ class EventItem {
       posterUrl: json['posterUrl'] ?? '',
       date: json['date'] ?? 'Oct 10-12, 2026',
       prizePool: json['prizePool'] ?? '',
-      teamSize: json['teamSize'] ?? '1 - 4 Members',
+      teamSize: json['teamSize'] ?? (isStage ? '' : '1 - 4 Members'),
       rulebookUrl: json['rulebookUrl'] ?? '',
       registrationUrl: json['registrationUrl'] ?? '',
       coordinatorName: json['coordinatorName'] ?? '',
@@ -122,9 +152,14 @@ class EventItem {
       coordinatorEmail: json['coordinatorEmail'] ?? '',
       coordinatorPhone: json['coordinatorPhone'] ?? (json['coordinatorContact'] ?? ''),
       passwordHash: json['passwordHash'] ?? '',
+      specificPassword: json['specificPassword'] ?? '',
       updatedAt: json['updatedAt'] ?? '',
       isFlagship: json['isFlagship'] ?? false,
-      isWatchableOnly: json['isWatchableOnly'] ?? false,
+      isWatchableOnly: isStage,
+      isStageExperience: isStage,
+      isVisible: json['isVisible'] ?? true,
+      scheduleBreakdown: json['scheduleBreakdown'] ?? '',
+      stages: parsedStages,
     );
   }
 
@@ -148,9 +183,50 @@ class EventItem {
       'coordinatorEmail': coordinatorEmail,
       'coordinatorPhone': coordinatorPhone.isNotEmpty ? coordinatorPhone : coordinatorContact,
       'passwordHash': passwordHash,
+      'specificPassword': specificPassword,
       'updatedAt': updatedAt,
       'isFlagship': isFlagship,
-      'isWatchableOnly': isWatchableOnly,
+      'isWatchableOnly': isWatchableOnly || isStageExperience,
+      'isStageExperience': isStageExperience,
+      'isVisible': isVisible,
+      'scheduleBreakdown': scheduleBreakdown,
+      'stages': stages.map((s) => s.toJson()).toList(),
+    };
+  }
+}
+
+class EventStage {
+  final String name;
+  final String date;
+  final String time;
+  final String venue;
+  final String synopsis;
+
+  const EventStage({
+    required this.name,
+    this.date = '',
+    this.time = '',
+    this.venue = '',
+    this.synopsis = '',
+  });
+
+  factory EventStage.fromJson(Map<String, dynamic> json) {
+    return EventStage(
+      name: json['name']?.toString() ?? '',
+      date: json['date']?.toString() ?? '',
+      time: json['time']?.toString() ?? '',
+      venue: json['venue']?.toString() ?? '',
+      synopsis: json['synopsis']?.toString() ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'date': date,
+      'time': time,
+      'venue': venue,
+      'synopsis': synopsis,
     };
   }
 }

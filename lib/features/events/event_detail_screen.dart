@@ -81,13 +81,14 @@ class EventDetailScreen extends StatelessWidget {
                     context,
                     event: event,
                     actionTitle: 'Edit Event',
-                    onAuthorized: (passcode, isMaster) {
+                    onAuthorized: (masterPass, secondaryPass, isDevOverride) {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => EventEditorScreen(
                             initialEvent: event,
-                            authorizedPasscode: passcode,
-                            isMasterAdmin: isMaster,
+                            authorizedPasscode: secondaryPass,
+                            isMasterAdmin: true,
+                            isDeveloperMode: isDevOverride,
                           ),
                         ),
                       );
@@ -233,7 +234,7 @@ class EventDetailScreen extends StatelessWidget {
                           Text(event.time, style: Theme.of(context).textTheme.bodyMedium),
                         ],
                       ),
-                      if (event.teamSize.isNotEmpty && !event.isWatchableOnly)
+                      if (event.teamSize.isNotEmpty && !event.isWatchableOnly && !event.isStageExperience)
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -242,7 +243,7 @@ class EventDetailScreen extends StatelessWidget {
                             Text(event.teamSize, style: Theme.of(context).textTheme.bodyMedium),
                           ],
                         ),
-                      if (event.prizePool.isNotEmpty && !event.isWatchableOnly)
+                      if (event.prizePool.isNotEmpty && !event.isWatchableOnly && !event.isStageExperience)
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -261,8 +262,8 @@ class EventDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 28),
 
-                  // Action Buttons: In-App Register (only for registrable) vs Open Entry
-                  if (event.isWatchableOnly) ...[
+                  // Action Buttons: Stage Experience vs Workshop Razorpay vs Standard In-App Register
+                  if (event.isWatchableOnly || event.isStageExperience) ...[
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
@@ -294,6 +295,29 @@ class EventDetailScreen extends StatelessWidget {
                             ),
                           ),
                         ],
+                      ),
+                    ),
+                  ] else if (event.registrationUrl.contains('razorpay.com') || event.category == 'Workshops') ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _launchExternalUrl(context, event.registrationUrl),
+                        icon: const Icon(Icons.payment_rounded, color: Colors.black, size: 18),
+                        label: const Text(
+                          'REGISTER & ENROLL (OFFICIAL PORTAL)',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                            letterSpacing: 0.8,
+                            fontSize: 13,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          elevation: 4,
+                        ),
                       ),
                     ),
                   ] else ...[
@@ -351,7 +375,7 @@ class EventDetailScreen extends StatelessWidget {
                           IconButton.outlined(
                             onPressed: () => _launchExternalUrl(context, event.registrationUrl),
                             icon: const Icon(Icons.open_in_browser, size: 18),
-                            tooltip: 'Official Google Form (External)',
+                            tooltip: 'Official Registration Portal',
                             style: IconButton.styleFrom(
                               padding: const EdgeInsets.all(12),
                               shape: RoundedRectangleBorder(
@@ -362,6 +386,64 @@ class EventDetailScreen extends StatelessWidget {
                           ),
                         ],
                       ],
+                    ),
+                  ],
+
+                  // Schedule Breakdown & Timeline
+                  if (event.scheduleBreakdown.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    Text(
+                      'EVENT SCHEDULE BREAKDOWN & TIMELINE',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                          ),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF120504),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: primaryColor.withValues(alpha: 0.35)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: primaryColor.withValues(alpha: 0.08),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.timeline_rounded, color: primaryColor, size: 18),
+                              const SizedBox(width: 8),
+                              Text(
+                                'OFFICIAL ROUNDS SCHEDULE',
+                                style: GoogleFonts.rajdhani(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryColor,
+                                  letterSpacing: 1.1,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            event.scheduleBreakdown,
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 13.5,
+                              color: Colors.white.withValues(alpha: 0.88),
+                              height: 1.45,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
 
@@ -464,21 +546,85 @@ class EventDetailScreen extends StatelessWidget {
 
                   const SizedBox(height: 32),
 
-                  // Schedule Breakdown
-                  Text(
-                    'SCHEDULE BREAKDOWN',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: primaryColor,
+                  // Schedule Breakdown (Only displayed if actual stages or breakdown exists)
+                  if (event.stages.isNotEmpty) ...[
+                    Text(
+                      'SCHEDULE BREAKDOWN & ROUNDS',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                          ),
+                    ),
+                    const SizedBox(height: 14),
+                    ...event.stages.map((stage) {
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF140604),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
                         ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildScheduleItem(context, 'Registration & Reporting', '09:00 AM - 10:00 AM'),
-                  _buildScheduleItem(context, 'Opening Briefing & Rules', '10:00 AM - 10:30 AM'),
-                  _buildScheduleItem(context, 'Round 1 / Preliminary Session', '10:30 AM - 01:00 PM'),
-                  _buildScheduleItem(context, 'Lunch & Setup Break', '01:00 PM - 02:00 PM'),
-                  _buildScheduleItem(context, 'Grand Finale / Final Pitch', '02:00 PM - 04:30 PM'),
-                  _buildScheduleItem(context, 'Evaluation & Prize Distribution', '04:30 PM - 05:30 PM'),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: primaryColor.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(Icons.timer_outlined, color: primaryColor, size: 20),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    stage.name,
+                                    style: GoogleFonts.orbitron(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      if (stage.date.isNotEmpty) ...[
+                                        Icon(Icons.calendar_today, size: 12, color: primaryColor),
+                                        const SizedBox(width: 4),
+                                        Text(stage.date, style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 12)),
+                                        const SizedBox(width: 10),
+                                      ],
+                                      if (stage.time.isNotEmpty) ...[
+                                        Icon(Icons.access_time, size: 12, color: primaryColor),
+                                        const SizedBox(width: 4),
+                                        Text(stage.time, style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 12)),
+                                      ],
+                                    ],
+                                  ),
+                                  if (stage.synopsis.isNotEmpty) ...[
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      stage.synopsis,
+                                      style: GoogleFonts.rajdhani(
+                                        fontSize: 12,
+                                        color: Colors.white60,
+                                        height: 1.3,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 24),
+                  ],
 
                   const SizedBox(height: 32),
 
@@ -501,48 +647,6 @@ class EventDetailScreen extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildScheduleItem(BuildContext context, String activity, String time) {
-    final primaryColor = Theme.of(context).colorScheme.primary;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Column(
-              children: [
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: primaryColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                Expanded(
-                  child: Container(
-                    width: 2,
-                    color: primaryColor.withValues(alpha: 0.25),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(activity, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                const SizedBox(height: 2),
-                Text(time, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -896,7 +1000,7 @@ class EventDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Venue: ${event.venue}\nSaved directly in Firestore. Present this QR at the venue entrance.',
+                  'Venue: ${event.venue}\nOfficial Pass Registered. Present this QR at the venue entrance.',
                   style: const TextStyle(color: Colors.white60, fontSize: 10.5),
                   textAlign: TextAlign.center,
                 ),

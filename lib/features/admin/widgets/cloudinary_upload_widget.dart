@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/network/cloudinary_config.dart';
 import '../../../core/network/cloudinary_service.dart';
 import '../../../core/theme/app_theme.dart';
@@ -54,11 +55,6 @@ class _CloudinaryUploadWidgetState extends State<CloudinaryUploadWidget> {
       _uploadError = null;
     });
 
-    if (!CloudinaryConfig.isConfigured) {
-      _showCloudinaryConfigPrompt();
-      return;
-    }
-
     try {
       final XFile? file = await _picker.pickImage(
         source: source,
@@ -92,7 +88,7 @@ class _CloudinaryUploadWidgetState extends State<CloudinaryUploadWidget> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Poster uploaded successfully to Cloudinary!'),
+            content: Text('Poster uploaded successfully!'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -138,7 +134,7 @@ class _CloudinaryUploadWidgetState extends State<CloudinaryUploadWidget> {
                     style: GoogleFonts.rajdhani(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   subtitle: Text(
-                    'Upload image from device storage to Cloudinary',
+                    'Upload image from device storage',
                     style: GoogleFonts.rajdhani(color: AppTheme.metallicMuted),
                   ),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -174,49 +170,6 @@ class _CloudinaryUploadWidgetState extends State<CloudinaryUploadWidget> {
     );
   }
 
-  void _showCloudinaryConfigPrompt() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: AppTheme.scaffoldBg,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: AppTheme.cyberAmber, width: 1),
-          ),
-          title: Row(
-            children: [
-              const Icon(Icons.cloud_upload_outlined, color: AppTheme.cyberAmber),
-              const SizedBox(width: 10),
-              Text(
-                'Cloudinary Setup',
-                style: GoogleFonts.orbitron(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Cloudinary credentials are not configured yet.\n\nYou can:\n1. Paste a direct image URL or choose a preset right now.\n2. Or enter your Cloud Name and Unsigned Preset in lib/core/network/cloudinary_config.dart whenever ready!',
-                style: GoogleFonts.rajdhani(fontSize: 14, color: AppTheme.metallicSilver, height: 1.4),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'GOT IT',
-                style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, color: AppTheme.neonOrange),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   void _showPresetPicker() {
     showDialog(
@@ -281,7 +234,7 @@ class _CloudinaryUploadWidgetState extends State<CloudinaryUploadWidget> {
                               width: isSelected ? 2 : 0.8,
                             ),
                             image: DecorationImage(
-                              image: NetworkImage(preset['url']!),
+                              image: CachedNetworkImageProvider(preset['url']!),
                               fit: BoxFit.cover,
                             ),
                           ),
@@ -344,10 +297,20 @@ class _CloudinaryUploadWidgetState extends State<CloudinaryUploadWidget> {
               fit: StackFit.expand,
               children: [
                 if (hasImage)
-                  Image.network(
-                    widget.currentImageUrl,
+                  CachedNetworkImage(
+                    imageUrl: widget.currentImageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Center(
+                    placeholder: (context, url) => Container(
+                      color: const Color(0xFF140604),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(color: AppTheme.neonOrange, strokeWidth: 2),
+                        ),
+                      ),
+                    ),
+                    errorWidget: (context, error, stackTrace) => Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -377,7 +340,7 @@ class _CloudinaryUploadWidgetState extends State<CloudinaryUploadWidget> {
                           ),
                         ),
                         Text(
-                          'Upload via Cloudinary, choose a preset, or enter URL',
+                          'Upload image, choose a preset, or enter URL',
                           style: GoogleFonts.rajdhani(fontSize: 12, color: AppTheme.metallicMuted),
                         ),
                       ],
@@ -402,7 +365,7 @@ class _CloudinaryUploadWidgetState extends State<CloudinaryUploadWidget> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'Uploading to Cloudinary: ${(_uploadProgress * 100).toInt()}%',
+                            'Uploading: ${(_uploadProgress * 100).toInt()}%',
                             style: GoogleFonts.rajdhani(
                               color: Colors.white,
                               fontSize: 14,
@@ -445,7 +408,7 @@ class _CloudinaryUploadWidgetState extends State<CloudinaryUploadWidget> {
               flex: 3,
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.cloud_upload_outlined, size: 18),
-                label: const Text('UPLOAD (CLOUDINARY)'),
+                label: const Text('UPLOAD POSTER'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.neonOrange,
                   foregroundColor: Colors.black,

@@ -152,7 +152,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
           SafeArea(
             child: RepaintBoundary(
               child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
+                physics: const ClampingScrollPhysics(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -401,38 +401,44 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             // Top Edition Pill
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFFF5722), Color(0xFFFFA000)],
-                    ),
-                    borderRadius: BorderRadius.circular(6),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFFF5722).withValues(alpha: 0.4),
-                        blurRadius: 8,
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFF5722), Color(0xFFFFA000)],
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.star, size: 10, color: Colors.black),
-                      const SizedBox(width: 4),
-                      Text(
-                        'CENTENARY EDITION • 1926-2026',
-                        style: GoogleFonts.rajdhani(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.black,
-                          letterSpacing: 0.8,
+                      borderRadius: BorderRadius.circular(6),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF5722).withValues(alpha: 0.4),
+                          blurRadius: 8,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.star, size: 10, color: Colors.black),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            'CENTENARY EDITION • 1926-2026',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.black,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 Text(
                   'IIT (ISM)',
                   style: GoogleFonts.rajdhani(
@@ -608,21 +614,28 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(Icons.radar, size: 16, color: widget.primaryColor),
-                  const SizedBox(width: 6),
-                  Text(
-                    'MISSION LAUNCH TELEMETRY',
-                    style: GoogleFonts.rajdhani(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.3,
-                      color: widget.primaryColor,
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.radar, size: 16, color: widget.primaryColor),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'MISSION LAUNCH TELEMETRY',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.rajdhani(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.3,
+                          color: widget.primaryColor,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                 decoration: BoxDecoration(
@@ -809,21 +822,28 @@ extension _HomeScreenHelpers on _HomeScreenState {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(Icons.campaign, size: 18, color: primaryColor),
-                  const SizedBox(width: 8),
-                  Text(
-                    'LIVE TRANSMISSIONS & ALERTS',
-                    style: GoogleFonts.rajdhani(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.3,
-                      color: primaryColor,
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.campaign, size: 18, color: primaryColor),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'LIVE TRANSMISSIONS & ALERTS',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.rajdhani(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.3,
+                          color: primaryColor,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                 decoration: BoxDecoration(
@@ -994,23 +1014,28 @@ extension _HomeScreenHelpers on _HomeScreenState {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: tagColor.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: tagColor.withValues(alpha: 0.5)),
-                  ),
-                  child: Text(
-                    ann.tag,
-                    style: GoogleFonts.rajdhani(
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.bold,
-                      color: tagColor,
-                      letterSpacing: 0.8,
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: tagColor.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: tagColor.withValues(alpha: 0.5)),
+                    ),
+                    child: Text(
+                      ann.tag,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.bold,
+                        color: tagColor,
+                        letterSpacing: 0.8,
+                      ),
                     ),
                   ),
                 ),
+                const SizedBox(width: 6),
                 Text(
                   dateStr,
                   style: GoogleFonts.rajdhani(fontSize: 10.5, color: Colors.white54),
@@ -1052,13 +1077,17 @@ extension _HomeScreenHelpers on _HomeScreenState {
             children: [
               Icon(Icons.auto_graph_rounded, size: 16, color: primaryColor),
               const SizedBox(width: 6),
-              Text(
-                'WHY CONCETTO? • FESTIVAL IMPACT',
-                style: GoogleFonts.rajdhani(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.3,
-                  color: primaryColor,
+              Expanded(
+                child: Text(
+                  'WHY CONCETTO? • FESTIVAL IMPACT',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.rajdhani(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.3,
+                    color: primaryColor,
+                  ),
                 ),
               ),
             ],
@@ -1139,13 +1168,17 @@ extension _HomeScreenHelpers on _HomeScreenState {
             children: [
               Icon(Icons.dashboard_customize, size: 16, color: primaryColor),
               const SizedBox(width: 6),
-              Text(
-                'COMMAND DECK • QUICK ACCESS',
-                style: GoogleFonts.rajdhani(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.3,
-                  color: primaryColor,
+              Expanded(
+                child: Text(
+                  'COMMAND DECK • QUICK ACCESS',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.rajdhani(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.3,
+                    color: primaryColor,
+                  ),
                 ),
               ),
             ],
@@ -1284,24 +1317,32 @@ extension _HomeScreenHelpers on _HomeScreenState {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(Icons.stars_rounded, size: 18, color: primaryColor),
-                  const SizedBox(width: 8),
-                  Text(
-                    'FLAGSHIP ARENAS & HIGHLIGHTS',
-                    style: GoogleFonts.rajdhani(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.3,
-                      color: primaryColor,
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.stars_rounded, size: 18, color: primaryColor),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'FLAGSHIP ARENAS & HIGHLIGHTS',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.rajdhani(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.3,
+                          color: primaryColor,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               InkWell(
                 onTap: () => context.go('/events'),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       'View All 100+',
@@ -1542,11 +1583,18 @@ extension _HomeScreenHelpers on _HomeScreenState {
   Widget _buildLeadershipVoicesSection(Color primaryColor) {
     final quotes = [
       {
-        'name': 'Prof. Gopi Krishna Dondapati',
-        'role': 'Treasurer & Faculty',
-        'image': 'assets/about/prof_gopi_krishna.png',
+        'name': 'Prof. Vasanta Govind Kumar Villuri',
+        'role': 'Convenor',
+        'image': 'assets/about/convener.png',
         'quote':
-            'As we commemorate the Centenary Year of IIT (ISM) Dhanbad, this edition holds a special significance as we celebrate a century of excellence, legacy, and learning. As the Treasurer, I believe that responsible financial management, transparency, and accountability are essential for transforming ideas into meaningful experiences. This fest is the result of collective effort, dedication, and teamwork from every individual involved.',
+            'It gives immense pleasure to welcome you to CONCETTO 2026, the techno-management festival of IIT (ISM) Dhanbad, as we celebrate the institution’s remarkable centenary journey. For a century, IIT (ISM) has stood as a beacon of academic excellence, cutting-edge research, and visionary leadership. CONCETTO 2026 is a reflection of this profound legacy—a vibrant arena where intellect meets innovation, where ideas take flight, and where tomorrow’s leaders and changemakers are forged. I extend a warm welcome to all students, faculty, researchers, industry leaders, and tech enthusiasts. Let us come together to celebrate innovation, embrace challenges, and build a brighter future.',
+      },
+      {
+        'name': 'Prof. Niptika Jana',
+        'role': 'Co-Convenor',
+        'image': 'assets/about/co_convener.png',
+        'quote':
+            '“The future belongs to those who believe in the beauty of their dreams.” — Eleanor Roosevelt\n\nFor a century, IIT (ISM) Dhanbad has stood as a place where curiosity meets knowledge, and knowledge finds its way into innovation. From its beginnings as the Indian School of Mines to its emergence as a premier institution of science, technology and management, its journey has been shaped by generations of minds that dared to explore, question and create. CONCETTO’26 Centauri Synapse carries forward this spirit. It is a celebration of ideas that challenge the familiar, creativity that transcends boundaries, and young minds that dare to imagine what comes next. As IIT (ISM) Dhanbad marks 100 years of excellence, the fest becomes a reflection of a legacy that has always looked ahead. As Co-Convenor, it is a privilege to be a part of this celebration. I extend my warmest wishes to all participants and appreciate the tireless efforts of the organising team, volunteers, supporters and sponsors who have brought this vision to life.\n\nMay CONCETTO’26 be a celebration not only of what we know, but of the questions that awaken the mind and the ideas that shape tomorrow.',
       },
       {
         'name': 'Arun Dayal',
@@ -1556,25 +1604,32 @@ extension _HomeScreenHelpers on _HomeScreenState {
             'India is now driven by a strong thrust towards startups, indigenous manufacturing, digital public infrastructure, and self-reliance in critical technologies, including medical and defence technologies. This transformation is creating unprecedented opportunities for young innovators to turn ideas into technologies, products, and enterprises that address real-world challenges.\nCONCETTO 2026 provides a platform where curiosity meets technology, creativity meets entrepreneurship, and ideas evolve into meaningful solutions. As IIT (ISM) Dhanbad celebrates a century of excellence, I invite students, researchers, innovators, and industry enthusiasts to use this platform to experiment, collaborate, compete, and create.\nLet us nurture a spirit of innovation that is not limited to solving problems, but aspires to build technologies and enterprises for a self-reliant, technologically empowered India.\n\nWelcome to CONCETTO 2026!',
       },
       {
+        'name': 'Prof. Gopi Krishna Dondapati',
+        'role': 'Treasurer & Faculty',
+        'image': 'assets/about/prof_gopi_krishna.png',
+        'quote':
+            'As we commemorate the Centenary Year of IIT (ISM) Dhanbad, this edition holds a special significance as we celebrate a century of excellence, legacy, and learning. As the Treasurer, I believe that responsible financial management, transparency, and accountability are essential for transforming ideas into meaningful experiences. This fest is the result of collective effort, dedication, and teamwork from every individual involved. I sincerely appreciate the commitment of the whole team and look forward to witnessing Concetto’26 become a memorable platform where ideas are shared, talents are showcased, and innovation inspires us all.',
+      },
+      {
         'name': 'Rahul Kumar',
-        'role': 'Advisory Committee',
+        'role': 'Student Advisor',
         'image': 'assets/about/rahul_kumar.png',
         'quote':
-            'It is a privilege to welcome you to Concetto 2026, the premier techno-management festival of IIT (ISM) Dhanbad. As our institute celebrates a monumental century of academic brilliance and innovation, this edition stands as a tribute to our rich legacy and a stepping stone toward a limitless future.',
+            'It is a privilege to welcome you to Concetto 2026, the premier techno-management festival of IIT (ISM) Dhanbad. As our institute celebrates a monumental century of academic brilliance and innovation, this edition stands as a tribute to our rich legacy and a stepping stone toward a limitless future. A century of excellence has proven that progress belongs to those who dare to rethink the status quo. CONCETTO2026 stands as a testament to our institute’s enduring commitment to scientific brilliance and technical ingenuity. As Student Advisor, I am honoured to support a festival that turns ambitious concepts into tangible reality. I extend my warmest welcome to all participants. May your time here spark breakthroughs, forge lifelong connections, and inspire you to build a smarter tomorrow.',
       },
       {
         'name': 'Badal Singh Naik',
         'role': 'Student Advisor',
         'image': 'assets/about/badal_singh.png',
         'quote':
-            'Concetto stands as a vibrant platform where innovation meets imagination and ideas transform into possibilities. My vision has always been to work with dedication, embrace challenges, and strive to deliver the very best. I believe that excellence is not merely a destination, but a continuous journey driven by passion, perseverance, and teamwork.',
+            'Concetto stands as a vibrant platform where innovation meets imagination and ideas transform into possibilities. My vision has always been to work with dedication, embrace challenges, and strive to deliver the very best. I believe that excellence is not merely a destination, but a continuous journey driven by passion, perseverance, and teamwork. May Concetto continue to inspire young minds, encourage bold thinking, and create an environment where curiosity thrives. I extend my best wishes to the entire team for a successful and enriching edition of Concetto, filled with learning, innovation, and memorable experiences.',
       },
       {
         'name': 'Sourav Dutta',
         'role': 'Student Advisor',
         'image': 'assets/about/sourav_dutta.png',
         'quote':
-            'It is my immense pleasure to welcome you to Concetto 2026, the annual techno-management fest of IIT (ISM), Dhanbad—where ideas take shape, innovation takes flight, and technology meets purpose. I encourage every participant to explore, experiment, compete, and learn beyond the boundaries of the classroom.',
+            'It is my immense pleasure to welcome you to Concetto 2026, the annual techno-management fest of IIT (ISM), Dhanbad—where ideas take shape, innovation takes flight, and technology meets purpose. I encourage every participant to explore, experiment, compete, and learn beyond the boundaries of the classroom. May this vibrant convergence inspire curiosity, nurture innovation, and empower young minds to address real-world challenges. Let us celebrate the spirit of discovery and the limitless potential of young minds. Best wishes to all participants and organizers for a remarkable and inspiring Concetto 2026.',
       },
     ];
 
@@ -2317,7 +2372,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                   },
                   icon: const Icon(Icons.assignment_turned_in, size: 18, color: Colors.black),
                   label: Text(
-                    'BOOK PASS & STAY (GOOGLE FORM)',
+                    'BOOK PASS & ACCOMMODATION',
                     style: GoogleFonts.orbitron(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w900,
@@ -2392,13 +2447,17 @@ extension _HomeScreenHelpers on _HomeScreenState {
                   child: Icon(Icons.account_balance, size: 16, color: primaryColor),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  '100 YEARS OF LEGACY • IIT (ISM)',
-                  style: GoogleFonts.rajdhani(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: primaryColor,
-                    letterSpacing: 1.2,
+                Expanded(
+                  child: Text(
+                    '100 YEARS OF LEGACY • IIT (ISM)',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.rajdhani(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: primaryColor,
+                      letterSpacing: 1.2,
+                    ),
                   ),
                 ),
               ],

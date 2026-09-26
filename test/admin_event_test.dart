@@ -3,7 +3,11 @@ import 'package:concetto/models/event_item.dart';
 import 'package:concetto/core/network/repositories.dart';
 import 'package:concetto/core/network/cloudinary_config.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences.setMockInitialValues({});
   group('Admin & Event Management Unit Tests', () {
     test('EventItem serialization supports organizing club and passcode hash', () {
       final event = EventItem(
@@ -40,9 +44,9 @@ void main() {
     });
 
     test('MasterAdminConfig verifies correct master passwords', () {
-      expect(MasterAdminConfig.verify('concetto@admin2026'), isTrue);
-      expect(MasterAdminConfig.verify('concetto2026'), isTrue);
-      expect(MasterAdminConfig.verify('  concetto@admin2026  '), isTrue);
+      expect(MasterAdminConfig.verify('Concetto@Master2026'), isTrue);
+      expect(MasterAdminConfig.verify('Concetto@Master26'), isTrue);
+      expect(MasterAdminConfig.verify('  concetto@master2026  '), isTrue);
       expect(MasterAdminConfig.verify('wrong_password'), isFalse);
       expect(MasterAdminConfig.verify(''), isFalse);
     });
@@ -61,7 +65,17 @@ void main() {
       expect(CloudinaryConfig.posterPresets.isNotEmpty, isTrue);
       expect(CloudinaryConfig.posterPresets.first['title'], isNotNull);
       expect(CloudinaryConfig.posterPresets.first['url'], contains('http'));
-      expect(CloudinaryConfig.uploadUrl, contains('api.cloudinary.com'));
+      expect(CloudinaryConfig.apiKey, equals('571655651469164'));
+      expect(CloudinaryConfig.apiSecret, equals('hbL-NcjtC87u98k9SWx3C0X9OvQ'));
+      expect(CloudinaryConfig.folderPosters, equals('concetto_posters'));
+      expect(CloudinaryConfig.folderRulebooks, equals('concetto_rulebooks'));
+    });
+
+    test('CloudinaryConfig hardcoded cloudName and upload endpoints', () {
+      expect(CloudinaryConfig.cloudName, equals('dcfjykkek'));
+      expect(CloudinaryConfig.isConfigured, isTrue);
+      expect(CloudinaryConfig.imageUploadUrl, equals('https://api.cloudinary.com/v1_1/dcfjykkek/image/upload'));
+      expect(CloudinaryConfig.autoUploadUrl, equals('https://api.cloudinary.com/v1_1/dcfjykkek/auto/upload'));
     });
   });
 }

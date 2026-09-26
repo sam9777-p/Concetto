@@ -57,9 +57,9 @@ class MainWrapper extends StatelessWidget {
               label: 'Store',
             ),
             NavigationDestination(
-              icon: Icon(Icons.badge_outlined),
-              selectedIcon: Icon(Icons.badge),
-              label: 'Profile',
+              icon: Icon(Icons.info_outline),
+              selectedIcon: Icon(Icons.info),
+              label: 'About',
             ),
           ],
         ),
@@ -174,10 +174,12 @@ final goRouter = GoRouter(
             final event = extra?['event'] as EventItem?;
             final passcode = extra?['passcode'] as String?;
             final isMaster = extra?['isMaster'] as bool? ?? false;
+            final isDev = extra?['isDev'] as bool? ?? false;
             return EventEditorScreen(
               initialEvent: event,
               authorizedPasscode: passcode,
               isMasterAdmin: isMaster,
+              isDeveloperMode: isDev,
             );
           },
         ),

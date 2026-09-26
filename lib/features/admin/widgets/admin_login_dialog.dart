@@ -4,11 +4,14 @@ import '../../../core/network/repositories.dart';
 import '../../../core/theme/app_theme.dart';
 
 class AdminLoginDialog extends StatefulWidget {
-  final VoidCallback onSuccess;
+  final Function(bool isDeveloper) onSuccess;
 
   const AdminLoginDialog({super.key, required this.onSuccess});
 
-  static Future<void> show(BuildContext context, {required VoidCallback onSuccess}) {
+  static Future<void> show(
+    BuildContext context, {
+    required Function(bool isDeveloper) onSuccess,
+  }) {
     return showDialog(
       context: context,
       barrierDismissible: true,
@@ -36,7 +39,7 @@ class _AdminLoginDialogState extends State<AdminLoginDialog> {
     final password = _passwordController.text.trim();
     if (password.isEmpty) {
       setState(() {
-        _errorMessage = 'Please enter the Master Admin Password.';
+        _errorMessage = 'Please enter Master or Developer Password.';
       });
       return;
     }
@@ -46,15 +49,16 @@ class _AdminLoginDialogState extends State<AdminLoginDialog> {
       _errorMessage = null;
     });
 
-    final isValid = MasterAdminConfig.verify(password);
+    final isDev = MasterAdminConfig.verifyDev(password);
+    final isMaster = MasterAdminConfig.verifyMaster(password);
 
-    if (isValid) {
+    if (isDev || isMaster) {
       Navigator.of(context).pop();
-      widget.onSuccess();
+      widget.onSuccess(isDev);
     } else {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Invalid password. Please check with your fest convener.';
+        _errorMessage = 'Invalid password. Enter Master Password or Developer Password.';
       });
     }
   }

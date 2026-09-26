@@ -2,7 +2,7 @@ name: concetto
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.0+2003
 
 environment:
   sdk: ^3.11.3
@@ -31,6 +31,9 @@ dependencies:
   syncfusion_flutter_pdfviewer: ^34.2.9
   qr_flutter: ^4.1.0
   share_plus: ^13.3.0
+  mongo_dart: ^0.10.9
+  file_picker: ^13.1.0
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:
@@ -46,4 +49,3 @@ flutter:
     - assets/images/
     - assets/team/
     - assets/about/
-    - assets/rulebooks/
