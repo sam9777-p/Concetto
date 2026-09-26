@@ -119,24 +119,30 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                         ),
                         child: Column(
                           children: [
-                            Text(
-                              dayInfo['day']!,
-                              style: GoogleFonts.orbitron(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.2,
-                                color: isSelected ? Colors.black : Colors.white,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                dayInfo['day']!,
+                                style: GoogleFonts.orbitron(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2,
+                                  color: isSelected ? Colors.black : Colors.white,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 2),
-                            Text(
-                              dayInfo['date']!,
-                              style: GoogleFonts.rajdhani(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: isSelected
-                                    ? Colors.black87
-                                    : AppTheme.metallicMuted,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                dayInfo['date']!,
+                                style: GoogleFonts.rajdhani(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: isSelected
+                                      ? Colors.black87
+                                      : AppTheme.metallicMuted,
+                                ),
                               ),
                             ),
                           ],
@@ -155,15 +161,20 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  _festivalDays[_selectedDayIndex]['label']!.toUpperCase(),
-                  style: GoogleFonts.rajdhani(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.0,
-                    color: primaryColor,
+                Expanded(
+                  child: Text(
+                    _festivalDays[_selectedDayIndex]['label']!.toUpperCase(),
+                    style: GoogleFonts.rajdhani(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.0,
+                      color: primaryColor,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(width: 8),
                 Text(
                   'ALL TIMES IN IST',
                   style: GoogleFonts.rajdhani(
@@ -480,60 +491,68 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                                                     Row(
                                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                       children: [
+                                                        Expanded(
+                                                          child: Row(
+                                                            mainAxisSize: MainAxisSize.min,
+                                                            children: [
+                                                              Flexible(
+                                                                child: Container(
+                                                                  padding: const EdgeInsets.symmetric(
+                                                                    horizontal: 7,
+                                                                    vertical: 2.5,
+                                                                  ),
+                                                                  decoration: BoxDecoration(
+                                                                    color: primaryColor.withValues(alpha: 0.15),
+                                                                    borderRadius: BorderRadius.circular(6),
+                                                                    border: Border.all(
+                                                                      color: primaryColor.withValues(alpha: 0.4),
+                                                                    ),
+                                                                  ),
+                                                                  child: Text(
+                                                                    event.category.toUpperCase(),
+                                                                    maxLines: 1,
+                                                                    overflow: TextOverflow.ellipsis,
+                                                                    style: GoogleFonts.rajdhani(
+                                                                      fontSize: 9.5,
+                                                                      fontWeight: FontWeight.w800,
+                                                                      color: primaryColor,
+                                                                      letterSpacing: 0.8,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                              if (event.isWatchableOnly) ...[
+                                                                const SizedBox(width: 5),
+                                                                Container(
+                                                                  padding: const EdgeInsets.symmetric(
+                                                                    horizontal: 5,
+                                                                    vertical: 2,
+                                                                  ),
+                                                                  decoration: BoxDecoration(
+                                                                    color: Colors.amber.withValues(alpha: 0.15),
+                                                                    borderRadius: BorderRadius.circular(4),
+                                                                    border: Border.all(
+                                                                      color: Colors.amber.withValues(alpha: 0.5),
+                                                                      width: 0.7,
+                                                                    ),
+                                                                  ),
+                                                                  child: Text(
+                                                                    'OPEN',
+                                                                    style: GoogleFonts.rajdhani(
+                                                                      fontSize: 8.5,
+                                                                      fontWeight: FontWeight.w800,
+                                                                      color: Colors.amber,
+                                                                      letterSpacing: 0.5,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 8),
                                                         Row(
                                                           mainAxisSize: MainAxisSize.min,
-                                                          children: [
-                                                            Container(
-                                                              padding: const EdgeInsets.symmetric(
-                                                                horizontal: 7,
-                                                                vertical: 2.5,
-                                                              ),
-                                                              decoration: BoxDecoration(
-                                                                color: primaryColor.withValues(alpha: 0.15),
-                                                                borderRadius: BorderRadius.circular(6),
-                                                                border: Border.all(
-                                                                  color: primaryColor.withValues(alpha: 0.4),
-                                                                ),
-                                                              ),
-                                                              child: Text(
-                                                                event.category.toUpperCase(),
-                                                                style: GoogleFonts.rajdhani(
-                                                                  fontSize: 9.5,
-                                                                  fontWeight: FontWeight.w800,
-                                                                  color: primaryColor,
-                                                                  letterSpacing: 0.8,
-                                                                ),
-                                                              ),
-                                                            ),
-                                                            if (event.isWatchableOnly) ...[
-                                                              const SizedBox(width: 5),
-                                                              Container(
-                                                                padding: const EdgeInsets.symmetric(
-                                                                  horizontal: 5,
-                                                                  vertical: 2,
-                                                                ),
-                                                                decoration: BoxDecoration(
-                                                                  color: Colors.amber.withValues(alpha: 0.15),
-                                                                  borderRadius: BorderRadius.circular(4),
-                                                                  border: Border.all(
-                                                                    color: Colors.amber.withValues(alpha: 0.5),
-                                                                    width: 0.7,
-                                                                  ),
-                                                                ),
-                                                                child: Text(
-                                                                  'OPEN',
-                                                                  style: GoogleFonts.rajdhani(
-                                                                    fontSize: 8.5,
-                                                                    fontWeight: FontWeight.w800,
-                                                                    color: Colors.amber,
-                                                                    letterSpacing: 0.5,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ],
-                                                        ),
-                                                        Row(
                                                           children: [
                                                             Icon(Icons.access_time, size: 12, color: primaryColor),
                                                             const SizedBox(width: 4),
@@ -666,15 +685,18 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                isTriggered
-                    ? 'Release to view $targetDay'
-                    : (isNext ? 'Pull up for $targetDay' : 'Pull down for $targetDay'),
-                style: GoogleFonts.orbitron(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.8,
-                  color: isTriggered ? Colors.black : Colors.white,
+              Flexible(
+                child: Text(
+                  isTriggered
+                      ? 'Release to view $targetDay'
+                      : (isNext ? 'Pull up for $targetDay' : 'Pull down for $targetDay'),
+                  style: GoogleFonts.orbitron(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8,
+                    color: isTriggered ? Colors.black : Colors.white,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

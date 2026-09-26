@@ -106,10 +106,11 @@ class _EventPasscodePromptState extends ConsumerState<EventPasscodePrompt> {
           borderRadius: BorderRadius.circular(16),
           gradient: AppTheme.darkCardGradient,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Row(
               children: [
                 Icon(
@@ -251,6 +252,7 @@ class _EventPasscodePromptState extends ConsumerState<EventPasscodePrompt> {
           ],
         ),
       ),
+    ),
     );
   }
 }

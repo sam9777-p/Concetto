@@ -100,14 +100,17 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     if (confirm != true) return;
 
     setState(() => _isSeeding = true);
-    final count = await ref.read(firestoreServiceProvider).seedMockEventsToFirestore();
+    final results = await ref.read(firestoreServiceProvider).seedAllDataToFirestore();
     ref.invalidate(eventsProvider);
+    ref.invalidate(announcementsProvider);
+    ref.invalidate(teamProvider);
     setState(() => _isSeeding = false);
 
     if (mounted) {
+      final total = (results['events'] ?? 0) + (results['announcements'] ?? 0) + (results['team'] ?? 0);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Successfully synced $count events to Cloud Firestore!'),
+          content: Text('Successfully synced $total items (${results['events']} events, ${results['announcements']} announcements, ${results['team']} team) to database "concetto"!'),
           backgroundColor: AppTheme.neonEmerald,
           behavior: SnackBarBehavior.floating,
         ),
@@ -566,12 +569,16 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 if (event.prizePool.isNotEmpty) ...[
                   Icon(Icons.emoji_events_outlined, size: 15, color: AppTheme.neonEmerald),
                   const SizedBox(width: 4),
-                  Text(
-                    event.prizePool,
-                    style: GoogleFonts.rajdhani(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.neonEmerald,
+                  Flexible(
+                    child: Text(
+                      event.prizePool,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.neonEmerald,
+                      ),
                     ),
                   ),
                 ],

@@ -6,6 +6,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/event_item.dart';
+import '../../core/network/repositories.dart';
 import '../admin/widgets/event_passcode_prompt.dart';
 import '../admin/event_editor_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -308,13 +309,16 @@ class EventDetailScreen extends StatelessWidget {
                               color: Colors.black,
                               size: 18,
                             ),
-                            label: const Text(
-                              'REGISTER NOW',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                                letterSpacing: 0.8,
-                                fontSize: 13,
+                            label: const FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                'REGISTER NOW',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                  letterSpacing: 0.8,
+                                  fontSize: 13,
+                                ),
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
@@ -333,9 +337,12 @@ class EventDetailScreen extends StatelessWidget {
                           child: OutlinedButton.icon(
                             onPressed: () => _showRulebookDialog(context, primaryColor),
                             icon: const Icon(Icons.picture_as_pdf, size: 16),
-                            label: const Text(
-                              'RULES',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            label: const FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                'RULES',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
                             ),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -581,13 +588,16 @@ class EventDetailScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'EVENT REGISTRATION',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: primaryColor,
-                          letterSpacing: 1,
+                      Expanded(
+                        child: Text(
+                          'EVENT REGISTRATION',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                            letterSpacing: 1,
+                          ),
                         ),
                       ),
                       IconButton(
@@ -627,13 +637,16 @@ class EventDetailScreen extends StatelessWidget {
                           _launchExternalUrl(context, event.registrationUrl);
                         },
                         icon: const Icon(Icons.open_in_new, color: Colors.black, size: 18),
-                        label: const Text(
-                          'OPEN OFFICIAL GOOGLE FORM',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 13,
-                            letterSpacing: 0.5,
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'OPEN OFFICIAL GOOGLE FORM',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 13,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
@@ -737,11 +750,7 @@ class EventDetailScreen extends StatelessWidget {
                             'status': 'CONFIRMED',
                           };
                           
-                          try {
-                            await FirebaseFirestore.instance.collection('registrations').add(regData);
-                          } catch (e) {
-                            debugPrint('Firestore registration notice: $e');
-                          }
+                          await FirestoreService().saveRegistration(regData);
                           
                           if (sheetContext.mounted) {
                             Navigator.pop(sheetContext);

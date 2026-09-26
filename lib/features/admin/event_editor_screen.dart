@@ -425,12 +425,18 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Flagship?',
-                          style: GoogleFonts.rajdhani(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: _isFlagship ? AppTheme.neonOrange : AppTheme.metallicMuted,
+                        Expanded(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Flagship?',
+                              style: GoogleFonts.rajdhani(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: _isFlagship ? AppTheme.neonOrange : AppTheme.metallicMuted,
+                              ),
+                            ),
                           ),
                         ),
                         Switch(

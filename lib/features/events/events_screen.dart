@@ -199,13 +199,16 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                           children: [
                             Row(
                               children: [
-                                Text(
-                                  'PRE-FESTIVAL SPECIALS',
-                                  style: GoogleFonts.orbitron(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 1.0,
+                                Flexible(
+                                  child: Text(
+                                    'PRE-FESTIVAL SPECIALS',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.orbitron(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.0,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 6),
@@ -516,7 +519,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
         maxCrossAxisExtent: 260,
         mainAxisSpacing: 14,
         crossAxisSpacing: 12,
-        childAspectRatio: 0.72,
+        childAspectRatio: 0.68,
       ),
       itemCount: filteredEvents.length,
       itemBuilder: (context, index) {

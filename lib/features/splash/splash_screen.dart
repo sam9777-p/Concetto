@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -12,6 +13,7 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   late final AnimationController _pulseController;
+  Timer? _navTimer;
   bool _navigated = false;
 
   @override
@@ -23,7 +25,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     )..repeat(reverse: true);
 
     // Auto navigate after 2.4 seconds
-    Future.delayed(const Duration(milliseconds: 2400), () {
+    _navTimer = Timer(const Duration(milliseconds: 2400), () {
       _navigateToHome();
     });
   }
@@ -37,6 +39,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   void dispose() {
+    _navTimer?.cancel();
     _pulseController.dispose();
     super.dispose();
   }
