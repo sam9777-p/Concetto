@@ -10,7 +10,8 @@ void main() {
         child: MyApp(),
       ),
     );
-    await tester.pump();
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pump(const Duration(milliseconds: 500));
 
     // Tap the splash screen to navigate immediately to home
     await tester.tap(find.byType(GestureDetector).first);

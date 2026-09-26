@@ -1,24 +1,37 @@
-/// Configuration for Cloudinary image uploads.
-///
-/// HOW TO SET UP CLOUDINARY IN 2 MINUTES:
-/// 1. Sign up for a free account at https://cloudinary.com
-/// 2. In your Dashboard, copy your "Cloud name".
-/// 3. Go to Settings (gear icon) -> Upload -> Upload presets -> Add upload preset.
-/// 4. Set "Signing Mode" to "Unsigned" and give it a name (e.g., 'concetto_preset').
-/// 5. Paste the cloud name and upload preset name below!
+/// Configuration for Cloudinary image and document uploads.
+/// Uses signed uploads with API Key and API Secret for maximum security and ease of use.
 class CloudinaryConfig {
-  // Replace these with your Cloudinary credentials when ready:
-  static const String cloudName = 'demo'; // Replace with your cloud name
-  static const String uploadPreset = 'concetto_unsigned'; // Replace with unsigned preset name
-  static const String folder = 'concetto_events';
+  static const String apiKey = '571655651469164';
+  static const String apiSecret = 'hbL-NcjtC87u98k9SWx3C0X9OvQ';
 
-  /// Returns true if the user has configured their own cloud credentials.
-  static bool get isConfigured => cloudName.isNotEmpty && cloudName != 'demo';
+  static const String folderPosters = 'concetto_posters';
+  static const String folderRulebooks = 'concetto_rulebooks';
+  static const String defaultFolder = 'concetto_events';
 
-  /// Cloudinary direct upload endpoint
-  static String get uploadUrl => 'https://api.cloudinary.com/v1_1/$cloudName/image/upload';
+  static const String cloudName = 'dcfjykkek';
 
-  /// High-quality fest poster presets for quick selection
+  /// Returns true since credentials are permanently configured.
+  static bool get isConfigured => true;
+
+  /// No-op init retained for compatibility
+  static Future<void> init() async {}
+
+  /// Endpoint for image uploads (JPEG, PNG, WebP)
+  static String get imageUploadUrl => 'https://api.cloudinary.com/v1_1/$cloudName/image/upload';
+
+  /// Endpoint for automatic media / document uploads (PDF rulebooks, docs)
+  static String get autoUploadUrl => 'https://api.cloudinary.com/v1_1/$cloudName/auto/upload';
+
+  /// Endpoint for raw document uploads
+  static String get rawUploadUrl => 'https://api.cloudinary.com/v1_1/$cloudName/raw/upload';
+
+  /// Backward-compatible general upload URL
+  static String get uploadUrl => imageUploadUrl;
+
+  /// Folder name alias for backward compatibility
+  static String get folder => defaultFolder;
+
+  /// Curated fest poster presets for quick selection
   static const List<Map<String, String>> posterPresets = [
     {
       'title': 'Cyber Robotics',

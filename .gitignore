@@ -67,3 +67,11 @@ lib/firebase_options.dart
 **/google-services.json
 **/GoogleService-Info.plist
 
+# Passwords, Secrets, and Security Registries
+docs/*password*
+docs/*credential*
+*passwords*
+*.csv
+docs/*.txt
+
+

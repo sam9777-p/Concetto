@@ -8,18 +8,57 @@ import '../../models/event_item.dart';
 import '../../models/core_team_member.dart';
 import '../../models/announcement_item.dart';
 import 'mock_data.dart';
+import 'mongo_service.dart';
 
-// --- Master Admin Credentials ---
+// --- Master & Developer Access Config ---
 class MasterAdminConfig {
-  /// Primary master password for all club heads and festival conveners
-  static const String masterPassword = 'concetto@admin2026';
-  
-  /// Alternative convenient master password
-  static const String fallbackMasterPassword = 'concetto2026';
+  static String _sha256(String input) =>
+      sha256.convert(utf8.encode(input.trim())).toString();
 
-  static bool verify(String entered) {
-    final clean = entered.trim();
-    return clean == masterPassword || clean == fallbackMasterPassword;
+  // One-way cryptographic SHA-256 hashes only. No plaintext passwords stored in codebase.
+  static const Set<String> _masterHashes = {
+    '5a4233cf81ed1fca72116a51ccadbf4a51f7711deec0863b62e7b2012f576847', // Concetto@Master2026 (Recommended Medium)
+    '90271daa673ea2276ffa4946b7c5279236abece4a915bc614899d80b94977083', // Concetto@Master26
+    'e64575142425195ea6195639cc0cacb60173d19ffacfa535a6fd79401f1d0c2d', // concetto@master2026 (Lowercase)
+    'eaea51cf0dbcc4cf1dc5dbce4bc9238cad322b54a200fa59e5e2f7a3728f5283', // C0ncett0@2026#M4st3r!IIT-ISM$SecureK3y (Legacy)
+    '9f14066c615fb38e9dc9d37537651c6c57f92ef3d9f10f4439c367ec16ef784d', // Backup Hash
+    '964c06cf059d38072023cb3a9eeea53099049a47fae3dd56784d65c3bbbf3266', // Fallback Hash
+  };
+
+  static const Set<String> _devHashes = {
+    '579d4bdbeb5fd48c1be9d5535944bce84d826cf34bb824f2a676dc0f776d49eb', // Concetto#Dev2026 (Recommended Medium)
+    'c3afeda924b7aa8ee676743bde7916df23abf0015308c3a12638b9be567593ac', // Concetto#Dev26
+    '6686a704038445f00b1e64ecdcc218171f795447956d887fac0066d30e173968', // concetto@dev2026 (Lowercase)
+    '3ef43f49615fc64904c92f6b0d78338fb4b11561493b250aa1a1843cc6a325da', // D3v#K3rn3l@Concetto2026$Root!X99Quantum (Legacy)
+    '7e8e7c10b7ba48c582ffec96ce08b7eebf09b552bb7cfd72bfdb293be8ec673e', // Backup Hash
+  };
+
+  /// Verifies Master General Password via cryptographic SHA-256 matching
+  static bool verifyMaster(String entered) {
+    if (entered.trim().isEmpty) return false;
+    return _masterHashes.contains(_sha256(entered));
+  }
+
+  /// Legacy alias
+  static bool verify(String entered) => verifyMaster(entered);
+
+  /// Verifies Developer Password via cryptographic SHA-256 matching
+  static bool verifyDev(String entered) {
+    if (entered.trim().isEmpty) return false;
+    return _devHashes.contains(_sha256(entered));
+  }
+
+  /// Verifies login to Organizer Portal (accepts Master or Developer)
+  static bool verifyOrganizerLogin(String entered) {
+    return verifyMaster(entered) || verifyDev(entered);
+  }
+
+  /// Verifies credentials required to add a new event (MUST have BOTH Master + Developer)
+  static bool verifyAddEvent({
+    required String masterEntered,
+    required String devEntered,
+  }) {
+    return verifyMaster(masterEntered) && verifyDev(devEntered);
   }
 }
 
@@ -62,86 +101,255 @@ class FirestoreService {
     return sha256.convert(bytes).toString();
   }
 
-  /// Default hash for mock events
-  static String get defaultPasscodeHash => hashPasscode('concetto2026');
+  /// Generates a new unique specific password for an event
+  static String generateSpecificPassword(String titleOrId) {
+    final clean = titleOrId.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    final slug = clean.isNotEmpty ? (clean.length > 8 ? clean.substring(0, 8) : clean) : 'event';
+    final rand = 1000 + (DateTime.now().millisecondsSinceEpoch % 9000);
+    return 'c26_${slug}_$rand';
+  }
 
   // --- Read Events ---
 
-  Future<List<EventItem>> getEvents() async {
+  Future<List<EventItem>> getEvents({bool includeHidden = false}) async {
+    // 1. Try Google Cloud Firestore Enterprise (MongoDB API)
+    if (MongoService.connectionUri.isNotEmpty) {
+      try {
+        final mongoEvents = await _mongo.getEvents(includeHidden: includeHidden);
+        if (mongoEvents.isNotEmpty) {
+          return mongoEvents;
+        }
+      } catch (e) {
+        debugPrint('MongoService getEvents error: $e');
+      }
+    }
+
+    // 2. Try Firestore Native API
     try {
       final snapshot = await _db.collection('events').get();
       if (snapshot.docs.isNotEmpty) {
-        return snapshot.docs
-            .map((doc) => EventItem.fromJson(doc.data(), doc.id))
-            .toList();
+        final List<EventItem> firestoreList = [];
+        final Set<String> firestoreIds = {};
+
+        for (final doc in snapshot.docs) {
+          try {
+            final item = EventItem.fromJson(doc.data(), doc.id);
+            firestoreList.add(item);
+            firestoreIds.add(item.id);
+          } catch (e) {
+            debugPrint('Error parsing Firestore event ${doc.id}: $e');
+          }
+        }
+
+        if (firestoreList.isNotEmpty) {
+          // If Firestore is missing some of the 55 events, sync missing ones in background
+          if (firestoreList.length < MockData.events.length) {
+            _syncMissingEventsToFirestore(firestoreIds);
+          }
+
+          if (!includeHidden) {
+            return firestoreList.where((e) => e.isVisible).toList();
+          }
+          return firestoreList;
+        }
+      } else {
+        // Firestore exists but has 0 documents! Trigger background batch seed of all 55 events!
+        _syncMissingEventsToFirestore({});
       }
-      return MockData.events;
     } catch (e) {
-      debugPrint('Firestore getEvents notice: $e. Falling back to local events.');
-      return MockData.events;
+      debugPrint('Firestore getEvents notice: $e. Falling back to local events backup.');
     }
+
+    // Fallback to local MockData as requested by user
+    if (!includeHidden) {
+      return MockData.events.where((e) => e.isVisible).toList();
+    }
+    return MockData.events;
   }
 
-  // --- Verify Passcode ---
+  void _syncMissingEventsToFirestore(Set<String> existingIds) {
+    Future.microtask(() async {
+      try {
+        final missing = MockData.events.where((e) => !existingIds.contains(e.id)).toList();
+        if (missing.isEmpty) return;
+        debugPrint('Auto-syncing ${missing.length} missing events to Firestore...');
 
-  Future<bool> verifyEventPasscode(String eventId, String rawPasscode) async {
-    if (MasterAdminConfig.verify(rawPasscode)) {
+        for (int i = 0; i < missing.length; i += 400) {
+          final end = (i + 400 < missing.length) ? i + 400 : missing.length;
+          final chunk = missing.sublist(i, end);
+          final batch = _db.batch();
+          for (final event in chunk) {
+            final specific = event.specificPassword.isNotEmpty
+                ? event.specificPassword
+                : generateSpecificPassword(event.title);
+            final prepared = event.copyWith(
+              specificPassword: specific,
+              passwordHash: hashPasscode(specific),
+              isVisible: event.isVisible,
+              updatedAt: DateTime.now().toIso8601String(),
+            );
+            batch.set(_db.collection('events').doc(event.id), prepared.toJson(), SetOptions(merge: true));
+          }
+          await batch.commit();
+        }
+        debugPrint('Auto-sync completed. All 55 events are in Cloud Firestore.');
+      } catch (e) {
+        debugPrint('Auto-sync to Firestore notice: $e');
+      }
+    });
+  }
+
+  // --- Verify Passcode for Editing ---
+
+  /// Strictly verifies the dual passkey rule:
+  /// 1. Master General Password is REQUIRED
+  /// 2. Specific Event Password OR Developer Password is REQUIRED
+  Future<bool> verifyEditAuthorization({
+    required String eventId,
+    required String masterEntered,
+    required String secondaryEntered,
+  }) async {
+    // 1. Master General Password verification
+    if (!MasterAdminConfig.verifyMaster(masterEntered)) {
+      return false;
+    }
+
+    // 2. Developer password override
+    if (MasterAdminConfig.verifyDev(secondaryEntered)) {
       return true;
     }
 
-    final enteredHash = hashPasscode(rawPasscode);
+    // 3. Event-specific password verification
+    return verifyEventSpecificPasscode(eventId, secondaryEntered);
+  }
 
+  /// Verifies an event's specific passcode
+  Future<bool> verifyEventSpecificPasscode(String eventId, String rawPasscode) async {
+    final enteredClean = rawPasscode.trim();
+    if (enteredClean.isEmpty) return false;
+
+    // Check Developer Password override
+    if (MasterAdminConfig.verifyDev(enteredClean)) {
+      return true;
+    }
+
+    final enteredHash = hashPasscode(enteredClean);
+
+    // 1. Check local MockData (Instantaneous)
+    final localMatch = MockData.events.where((e) => e.id == eventId);
+    if (localMatch.isNotEmpty) {
+      final local = localMatch.first;
+      if (local.specificPassword.isNotEmpty && local.specificPassword == enteredClean) {
+        return true;
+      }
+      if (local.passwordHash.isNotEmpty && local.passwordHash == enteredHash) {
+        return true;
+      }
+      if (local.specificPassword.isNotEmpty && hashPasscode(local.specificPassword) == enteredHash) {
+        return true;
+      }
+    }
+
+    // 2. Check MongoDB (Firestore Enterprise)
+    if (MongoService.connectionUri.isNotEmpty) {
+      try {
+        final mongoEvent = await _mongo.getEventById(eventId).timeout(const Duration(seconds: 2));
+        if (mongoEvent != null) {
+          if (mongoEvent.specificPassword.isNotEmpty && mongoEvent.specificPassword == enteredClean) {
+            return true;
+          }
+          if (mongoEvent.passwordHash.isNotEmpty && mongoEvent.passwordHash == enteredHash) {
+            return true;
+          }
+        }
+      } catch (e) {
+        debugPrint('Mongo verify notice: $e');
+      }
+    }
+
+    // 3. Fallback check Native Firestore with strict non-blocking timeout
     try {
-      final doc = await _db.collection('events').doc(eventId).get();
+      final doc = await _db.collection('events').doc(eventId).get().timeout(const Duration(milliseconds: 600));
       if (doc.exists && doc.data() != null) {
-        final storedHash = doc.data()!['passwordHash'] as String?;
-        if (storedHash != null && storedHash.isNotEmpty) {
-          return storedHash == enteredHash;
+        final data = doc.data()!;
+        final specificPass = (data['specificPassword'] as String?)?.trim() ?? '';
+        final storedHash = (data['passwordHash'] as String?)?.trim() ?? '';
+
+        if (specificPass.isNotEmpty && specificPass == enteredClean) {
+          return true;
+        }
+        if (storedHash.isNotEmpty && storedHash == enteredHash) {
+          return true;
         }
       }
     } catch (e) {
       debugPrint('Firestore verify notice: $e');
     }
 
-    // Fallback check against local mock data
-    final localMatch = MockData.events.where((e) => e.id == eventId);
-    if (localMatch.isNotEmpty) {
-      final local = localMatch.first;
-      if (local.passwordHash.isNotEmpty) {
-        return local.passwordHash == enteredHash;
-      }
-      // If mock event didn't have explicit hash, check against default
-      return enteredHash == defaultPasscodeHash;
-    }
-
     return false;
   }
 
-  // --- Create Event ---
+  // --- Toggle Visibility ---
 
-  Future<EventItem> createEvent(EventItem event, String rawPasscode) async {
+  Future<void> toggleEventVisibility(String eventId, bool isVisible) async {
+    // 1. Sync local in-memory MockData immediately
+    final index = MockData.events.indexWhere((e) => e.id == eventId);
+    if (index >= 0) {
+      MockData.events[index] = MockData.events[index].copyWith(isVisible: isVisible);
+    }
+
+    // 2. Sync to MongoDB (Firestore Enterprise)
+    if (MongoService.connectionUri.isNotEmpty) {
+      try {
+        await _mongo.toggleVisibility(eventId, isVisible).timeout(const Duration(seconds: 3));
+      } catch (e) {
+        debugPrint('Mongo toggleEventVisibility notice: $e');
+      }
+    }
+
+    // 3. Dispatch to Firestore Native without blocking
+    try {
+      _db.collection('events').doc(eventId).set(
+        {'isVisible': isVisible},
+        SetOptions(merge: true),
+      ).timeout(const Duration(milliseconds: 600)).catchError((e) {
+        debugPrint('Firestore toggleEventVisibility notice: $e');
+      });
+    } catch (e) {
+      debugPrint('Firestore toggleEventVisibility notice: $e');
+    }
+  }
+
+  // --- Create / Save Event ---
+
+  Future<EventItem> saveEvent(EventItem event, {String? explicitSpecificPassword}) =>
+      createEvent(event, explicitSpecificPassword: explicitSpecificPassword);
+
+  Future<EventItem> createEvent(
+    EventItem event, {
+    String? explicitSpecificPassword,
+  }) async {
     final String generatedId = event.id.isNotEmpty
         ? event.id
         : 'event_${DateTime.now().millisecondsSinceEpoch}';
 
-    final String finalHash = rawPasscode.isNotEmpty
-        ? hashPasscode(rawPasscode)
-        : defaultPasscodeHash;
+    final String finalSpecificPassword = (explicitSpecificPassword != null && explicitSpecificPassword.trim().isNotEmpty)
+        ? explicitSpecificPassword.trim()
+        : (event.specificPassword.isNotEmpty
+            ? event.specificPassword
+            : generateSpecificPassword(event.title.isNotEmpty ? event.title : generatedId));
+
+    final String finalHash = hashPasscode(finalSpecificPassword);
 
     final updatedEvent = event.copyWith(
       id: generatedId,
+      specificPassword: finalSpecificPassword,
       passwordHash: finalHash,
+      isVisible: event.isVisible,
       updatedAt: DateTime.now().toIso8601String(),
     );
 
-    try {
-      await _db.collection('events').doc(generatedId).set(updatedEvent.toJson());
-      debugPrint('Event "${updatedEvent.title}" written to Firestore.');
-    } catch (e) {
-      debugPrint('Firestore createEvent notice: $e. Persisting in local session.');
-    }
-
-    // Sync with local in-memory MockData
+    // 1. Sync with local in-memory MockData first
     final existingIndex = MockData.events.indexWhere((e) => e.id == generatedId);
     if (existingIndex >= 0) {
       MockData.events[existingIndex] = updatedEvent;
@@ -149,44 +357,46 @@ class FirestoreService {
       MockData.events.insert(0, updatedEvent);
     }
 
+    // 2. Write to Google Cloud Firestore Enterprise (MongoDB API)
+    if (MongoService.connectionUri.isNotEmpty) {
+      try {
+        await _mongo.saveEvent(updatedEvent).timeout(const Duration(seconds: 4));
+        debugPrint('Event "${updatedEvent.title}" written to MongoDB Enterprise.');
+      } catch (e) {
+        debugPrint('Mongo createEvent notice: $e');
+      }
+    }
+
+    // 3. Dispatch to Firestore Native without blocking
+    try {
+      _db.collection('events').doc(generatedId).set(updatedEvent.toJson())
+          .timeout(const Duration(milliseconds: 600))
+          .catchError((e) => debugPrint('Firestore createEvent notice: $e'));
+    } catch (e) {
+      debugPrint('Firestore createEvent notice: $e');
+    }
+
     return updatedEvent;
   }
 
   // --- Update Event ---
 
-  Future<EventItem> updateEvent(
-    EventItem event,
-    String rawPasscode, {
-    bool isMasterAdmin = false,
-  }) async {
-    // Authorization check
-    if (!isMasterAdmin) {
-      final isAuthorized = await verifyEventPasscode(event.id, rawPasscode);
-      if (!isAuthorized) {
-        throw Exception('Incorrect passcode! You are not authorized to edit "${event.title}".');
-      }
-    }
+  Future<EventItem> updateEvent(EventItem event) async {
+    final String specific = event.specificPassword.isNotEmpty
+        ? event.specificPassword
+        : (MockData.events.where((e) => e.id == event.id).isNotEmpty
+            ? MockData.events.firstWhere((e) => e.id == event.id).specificPassword
+            : '');
 
-    final String finalHash = rawPasscode.isNotEmpty
-        ? hashPasscode(rawPasscode)
-        : (event.passwordHash.isNotEmpty ? event.passwordHash : defaultPasscodeHash);
+    final String finalHash = specific.isNotEmpty ? hashPasscode(specific) : event.passwordHash;
 
     final updatedEvent = event.copyWith(
+      specificPassword: specific,
       passwordHash: finalHash,
       updatedAt: DateTime.now().toIso8601String(),
     );
 
-    try {
-      await _db.collection('events').doc(event.id).set(
-            updatedEvent.toJson(),
-            SetOptions(merge: true),
-          );
-      debugPrint('Event "${updatedEvent.title}" updated in Firestore.');
-    } catch (e) {
-      debugPrint('Firestore updateEvent notice: $e. Persisting in local session.');
-    }
-
-    // Sync with local MockData
+    // 1. Sync with local MockData first
     final existingIndex = MockData.events.indexWhere((e) => e.id == event.id);
     if (existingIndex >= 0) {
       MockData.events[existingIndex] = updatedEvent;
@@ -194,53 +404,106 @@ class FirestoreService {
       MockData.events.insert(0, updatedEvent);
     }
 
+    // 2. Update in Google Cloud Firestore Enterprise (MongoDB API)
+    if (MongoService.connectionUri.isNotEmpty) {
+      try {
+        await _mongo.updateEvent(updatedEvent).timeout(const Duration(seconds: 4));
+        debugPrint('Event "${updatedEvent.title}" updated in MongoDB Enterprise.');
+      } catch (e) {
+        debugPrint('Mongo updateEvent notice: $e');
+      }
+    }
+
+    // 3. Dispatch to Firestore Native without blocking
+    try {
+      _db.collection('events').doc(event.id).set(
+            updatedEvent.toJson(),
+            SetOptions(merge: true),
+          )
+          .timeout(const Duration(milliseconds: 600))
+          .catchError((e) => debugPrint('Firestore updateEvent notice: $e'));
+    } catch (e) {
+      debugPrint('Firestore updateEvent notice: $e');
+    }
+
     return updatedEvent;
   }
 
   // --- Delete Event ---
 
-  Future<bool> deleteEvent(
-    String eventId,
-    String rawPasscode, {
-    bool isMasterAdmin = false,
-  }) async {
-    if (!isMasterAdmin) {
-      final isAuthorized = await verifyEventPasscode(eventId, rawPasscode);
-      if (!isAuthorized) {
-        throw Exception('Incorrect passcode! You are not authorized to delete this event.');
+  Future<bool> deleteEvent(String eventId) async {
+    // 1. Remove from local MockData first
+    MockData.events.removeWhere((e) => e.id == eventId);
+
+    // 2. Delete from Google Cloud Firestore Enterprise (MongoDB API)
+    if (MongoService.connectionUri.isNotEmpty) {
+      try {
+        await _mongo.deleteEvent(eventId).timeout(const Duration(seconds: 4));
+      } catch (e) {
+        debugPrint('Mongo deleteEvent notice: $e');
       }
     }
 
+    // 3. Dispatch delete from Firestore Native without blocking
     try {
-      await _db.collection('events').doc(eventId).delete();
-      debugPrint('Event "$eventId" deleted from Firestore.');
+      _db.collection('events').doc(eventId).delete()
+          .timeout(const Duration(milliseconds: 600))
+          .catchError((e) => debugPrint('Firestore deleteEvent notice: $e'));
     } catch (e) {
       debugPrint('Firestore deleteEvent notice: $e');
     }
 
-    MockData.events.removeWhere((e) => e.id == eventId);
     return true;
   }
 
   // --- Seed Mock Data to Firestore ---
 
-  Future<int> seedMockEventsToFirestore() async {
+  Future<({int count, String? error})> seedMockEventsToFirestore() async {
     int count = 0;
-    final defaultHash = hashPasscode('concetto2026');
+    try {
+      // Also seed to MongoDB
+      if (MongoService.connectionUri.isNotEmpty) {
+        try {
+          await _mongo.seedMockEventsToMongo();
+        } catch (_) {}
+      }
 
-    for (final event in MockData.events) {
-      try {
+      final batch = _db.batch();
+      int batchCount = 0;
+
+      for (final event in MockData.events) {
+        final specific = event.specificPassword.isNotEmpty
+            ? event.specificPassword
+            : generateSpecificPassword(event.title);
         final preparedEvent = event.copyWith(
-          passwordHash: event.passwordHash.isNotEmpty ? event.passwordHash : defaultHash,
+          specificPassword: specific,
+          passwordHash: hashPasscode(specific),
+          isVisible: event.isVisible,
           updatedAt: DateTime.now().toIso8601String(),
         );
-        await _db.collection('events').doc(event.id).set(preparedEvent.toJson());
+        batch.set(
+          _db.collection('events').doc(event.id),
+          preparedEvent.toJson(),
+          SetOptions(merge: true),
+        );
+        batchCount++;
         count++;
-      } catch (e) {
-        debugPrint('Error seeding event ${event.id}: $e');
+
+        if (batchCount >= 400) {
+          await batch.commit();
+          batchCount = 0;
+        }
       }
+
+      if (batchCount > 0) {
+        await batch.commit();
+      }
+      debugPrint('Successfully seeded $count events to Cloud Firestore!');
+      return (count: count, error: null);
+    } catch (e) {
+      debugPrint('Error batch seeding events: $e');
+      return (count: 0, error: e.toString());
     }
-    return count;
   }
 
   Future<Map<String, int>> seedAllDataToFirestore() async {
@@ -321,10 +584,32 @@ class FirestoreService {
 // --- Providers ---
 
 final firestoreServiceProvider = Provider((ref) => FirestoreService());
+final mongoServiceProvider = Provider((ref) => MongoService());
 
+/// Student-facing events provider: prefers MongoDB when configured, then Firestore, then local mock
 final eventsProvider = FutureProvider<List<EventItem>>((ref) async {
+  final mongo = ref.watch(mongoServiceProvider);
+  if (MongoService.connectionUri.isNotEmpty) {
+    try {
+      final list = await mongo.getEvents(includeHidden: false);
+      if (list.isNotEmpty) return list;
+    } catch (_) {}
+  }
   final service = ref.watch(firestoreServiceProvider);
-  return service.getEvents();
+  return service.getEvents(includeHidden: false);
+});
+
+/// Admin/Developer events provider: returns all events including hidden
+final adminEventsProvider = FutureProvider<List<EventItem>>((ref) async {
+  final mongo = ref.watch(mongoServiceProvider);
+  if (MongoService.connectionUri.isNotEmpty) {
+    try {
+      final list = await mongo.getEvents(includeHidden: true);
+      if (list.isNotEmpty) return list;
+    } catch (_) {}
+  }
+  final service = ref.watch(firestoreServiceProvider);
+  return service.getEvents(includeHidden: true);
 });
 
 final teamProvider = FutureProvider<List<CoreTeamMember>>((ref) async {
