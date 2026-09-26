@@ -7,6 +7,7 @@ import '../../core/network/mock_data.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/event_item.dart';
 import 'widgets/event_passcode_prompt.dart';
+import 'widgets/pass_scanner_screen.dart';
 import 'event_editor_screen.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
@@ -572,6 +573,15 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             ),
 
           IconButton(
+            tooltip: 'Pass Scanner',
+            icon: const Icon(Icons.qr_code_scanner_rounded, color: Color(0xFF00E676)),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const PassScannerScreen()),
+              );
+            },
+          ),
+          IconButton(
             tooltip: 'Sync 55 Events',
             icon: _isSeeding
                 ? const SizedBox(
@@ -618,6 +628,75 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 children: [
+                  // Quick Gate & Pass Scanner Banner
+                  InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => const PassScannerScreen()),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF1E0A06), Color(0xFF100403)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFF00E676).withValues(alpha: 0.5), width: 1.1),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF00E676).withValues(alpha: 0.08),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00E676).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.qr_code_scanner_rounded, color: Color(0xFF00E676), size: 24),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'GATE PASS SCANNER',
+                                  style: GoogleFonts.orbitron(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Scan QR passes or search Pass ID to verify admission and log entries.',
+                                  style: GoogleFonts.rajdhani(
+                                    fontSize: 11.5,
+                                    color: AppTheme.metallicMuted,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF00E676)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
                   _buildMetricsBanner(
                     total: totalCount,
                     visible: visibleCount,

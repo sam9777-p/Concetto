@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/network/auth_provider.dart';
 import '../../core/network/repositories.dart';
 import '../../core/theme/app_theme.dart';
@@ -96,13 +97,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
             const SizedBox(height: 20),
 
-            // 2. Auth Action Button
-            if (user.isGuest)
+            // 2. Auth Action Button: Sign In / Register when logged out, Sign Out when logged in
+            if (!user.isLoggedIn)
               _buildAuthActionButton(context, primaryColor)
                   .animate()
                   .fadeIn(duration: 400.ms, delay: 100.ms)
             else
-              _buildUserStatusBanner(user, primaryColor)
+              _buildSignOutActionButton(context, user, primaryColor)
                   .animate()
                   .fadeIn(duration: 400.ms, delay: 100.ms),
 
@@ -155,6 +156,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   // --- 1. Digital Fest Pass ---
   Widget _buildDigitalFestPass(AttendeeProfile user, Color primaryColor) {
+    if (!user.isLoggedIn) {
+      return _buildLockedFestPass(primaryColor);
+    }
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
@@ -224,12 +229,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: user.isGuest
-                      ? Colors.amber.withValues(alpha: 0.15)
-                      : const Color(0xFF00E676).withValues(alpha: 0.15),
+                  color: _getPassBadgeColor(user.passType, user.isGuest).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
-                    color: user.isGuest ? Colors.amber : const Color(0xFF00E676),
+                    color: _getPassBadgeColor(user.passType, user.isGuest),
                     width: 0.8,
                   ),
                 ),
@@ -240,7 +243,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       width: 6,
                       height: 6,
                       decoration: BoxDecoration(
-                        color: user.isGuest ? Colors.amber : const Color(0xFF00E676),
+                        color: _getPassBadgeColor(user.passType, user.isGuest),
                         shape: BoxShape.circle,
                       ),
                     )
@@ -248,11 +251,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         .fade(begin: 0.4, end: 1.0, duration: 800.ms),
                     const SizedBox(width: 6),
                     Text(
-                      user.isGuest ? 'GUEST PASS' : 'VERIFIED PASS',
+                      user.isGuest ? 'GUEST PASS' : user.passCategoryTitle,
                       style: GoogleFonts.rajdhani(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: user.isGuest ? Colors.amber : const Color(0xFF00E676),
+                        color: _getPassBadgeColor(user.passType, user.isGuest),
                         letterSpacing: 0.8,
                       ),
                     ),
@@ -292,7 +295,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 12),
+                    if (user.phone.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Icon(Icons.phone_android, size: 11, color: AppTheme.metallicMuted.withValues(alpha: 0.7)),
+                          const SizedBox(width: 4),
+                          Text(
+                            user.phone,
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 11,
+                              color: AppTheme.metallicMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 10),
                     Text(
                       'PASS IDENTIFIER (TAP TO COPY)',
                       style: GoogleFonts.rajdhani(
@@ -353,23 +372,40 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
               const SizedBox(width: 12),
 
-              // Visual QR Badge with Framed Corner Brackets
-              Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: primaryColor.withValues(alpha: 0.7), width: 1.2),
-                ),
+              // Genuine QR Code Badge with Tap to Enlarge
+              GestureDetector(
+                onTap: () => _showEnlargedPassModal(context, user, primaryColor),
                 child: Container(
-                  width: 84,
-                  height: 84,
-                  padding: const EdgeInsets.all(6),
+                  padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(9),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _getPassBadgeColor(user.passType, user.isGuest).withValues(alpha: 0.7),
+                      width: 1.2,
+                    ),
                   ),
-                  child: CustomPaint(
-                    painter: MockQRPainter(primaryColor: primaryColor),
+                  child: Container(
+                    width: 84,
+                    height: 84,
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: QrImageView(
+                      data: user.qrPayload,
+                      version: QrVersions.auto,
+                      size: 76,
+                      backgroundColor: Colors.white,
+                      eyeStyle: const QrEyeStyle(
+                        eyeShape: QrEyeShape.square,
+                        color: Colors.black,
+                      ),
+                      dataModuleStyle: const QrDataModuleStyle(
+                        dataModuleShape: QrDataModuleShape.square,
+                        color: Colors.black,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -405,7 +441,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerRight,
                   child: Text(
-                    'IIT (ISM) DHANBAD',
+                    user.isIitIsm ? 'IIT (ISM) DHANBAD' : user.college.toUpperCase(),
                     style: GoogleFonts.rajdhani(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -418,6 +454,293 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Color _getPassBadgeColor(int passType, bool isGuest) {
+    if (isGuest) return const Color(0xFFFFB300);
+    switch (passType) {
+      case 0:
+        return const Color(0xFF00E676); // Emerald Green (Student Pass)
+      case 1:
+        return const Color(0xFFFFB300); // Amber (Guest Pass)
+      case 2:
+        return const Color(0xFFCFD8DC); // Silver Pass (Store page)
+      case 3:
+        return const Color(0xFFFFB300); // Gold Pass (Store page)
+      case 4:
+        return const Color(0xFF00E5FF); // Diamond Pass (Store page)
+      case 5:
+        return const Color(0xFFFF4081); // Diamond+ Merch Pass (Store page)
+      default:
+        return const Color(0xFF00E676);
+    }
+  }
+
+  Widget _buildLockedFestPass(Color primaryColor) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF1E0805),
+            Color(0xFF0F0403),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.45), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: primaryColor.withValues(alpha: 0.12),
+            blurRadius: 18,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Virtual Lanyard Slot
+          Center(
+            child: Container(
+              width: 44,
+              height: 5,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(3),
+                border: Border.all(color: Colors.white24, width: 0.8),
+              ),
+            ),
+          ),
+
+          // Header Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset('assets/images/logo_transparent.png', height: 28),
+                  const SizedBox(width: 8),
+                  Text(
+                    "CONCETTO '26 PASS",
+                    style: GoogleFonts.orbitron(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                      color: primaryColor,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.white24, width: 0.8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.lock_outline, size: 12, color: Colors.white60),
+                    const SizedBox(width: 4),
+                    Text(
+                      'LOCKED',
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white60,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 22),
+
+          // Lock Icon & "LOG IN TO GET YOUR EVENT PASS"
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: primaryColor.withValues(alpha: 0.1),
+              border: Border.all(color: primaryColor.withValues(alpha: 0.35), width: 1.2),
+            ),
+            child: Icon(Icons.lock_person_outlined, size: 36, color: primaryColor)
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .scale(begin: const Offset(0.96, 0.96), end: const Offset(1.04, 1.04), duration: 1200.ms),
+          ),
+          const SizedBox(height: 14),
+
+          Text(
+            'LOG IN TO GET YOUR EVENT PASS',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.orbitron(
+              fontSize: 13.5,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.1,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Please sign in or register to issue your verified digital pass, category access, and gate entry QR code.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.rajdhani(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w500,
+              color: AppTheme.metallicMuted,
+              height: 1.3,
+            ),
+          ),
+
+          const SizedBox(height: 20),
+          const Divider(color: Colors.white12),
+          const SizedBox(height: 8),
+
+          // Footer
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'VALID: OCT 10 - 12, 2026',
+                style: GoogleFonts.rajdhani(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white38,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              Text(
+                'IIT (ISM) DHANBAD',
+                style: GoogleFonts.rajdhani(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor.withValues(alpha: 0.8),
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEnlargedPassModal(BuildContext context, AttendeeProfile user, Color primaryColor) {
+    final badgeColor = _getPassBadgeColor(user.passType, user.isGuest);
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: const Color(0xFF140604),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: badgeColor, width: 1.5),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: badgeColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: badgeColor),
+                    ),
+                    child: Text(
+                      user.isGuest ? 'GUEST PASS' : user.passCategoryTitle,
+                      style: GoogleFonts.orbitron(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: badgeColor,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white70, size: 20),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: badgeColor.withValues(alpha: 0.25),
+                      blurRadius: 16,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: QrImageView(
+                  data: user.qrPayload,
+                  version: QrVersions.auto,
+                  size: 210,
+                  backgroundColor: Colors.white,
+                  eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: Colors.black),
+                  dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: Colors.black),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                user.name,
+                style: GoogleFonts.rajdhani(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                user.college,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.rajdhani(fontSize: 13, color: AppTheme.metallicMuted),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Text(
+                  'ID: ${user.passId}',
+                  style: GoogleFonts.orbitron(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: primaryColor,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Show this QR code at checkpoints for fast validation.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.rajdhani(fontSize: 11, color: Colors.white38),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -444,13 +767,49 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  Widget _buildSignOutActionButton(BuildContext context, AttendeeProfile user, Color primaryColor) {
+    return Column(
+      children: [
+        _buildUserStatusBanner(user, primaryColor),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: OutlinedButton.icon(
+            onPressed: () {
+              ref.read(authProvider.notifier).signOut();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Signed out of festival account.')),
+              );
+            },
+            icon: const Icon(Icons.logout, color: Colors.redAccent, size: 20),
+            label: const Text(
+              'SIGN OUT',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+                color: Colors.redAccent,
+                fontSize: 14,
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: Colors.redAccent.withValues(alpha: 0.6)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildUserStatusBanner(AttendeeProfile user, Color primaryColor) {
+    final badgeColor = _getPassBadgeColor(user.passType, user.isGuest);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: primaryColor.withValues(alpha: 0.1),
+        color: badgeColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+        border: Border.all(color: badgeColor.withValues(alpha: 0.35)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -458,26 +817,42 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Expanded(
             child: Row(
               children: [
-                Icon(Icons.verified_user, color: primaryColor, size: 18),
-                const SizedBox(width: 8),
+                Icon(Icons.verified_user, color: badgeColor, size: 20),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: Text(
-                    'Signed in as ${user.email}',
-                    style: const TextStyle(fontSize: 12, color: Colors.white),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user.name.isNotEmpty ? user.name : 'Verified Attendee',
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        '${user.passCategoryTitle} • ${user.email}',
+                        style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.7)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 8),
-          TextButton(
-            onPressed: () => ref.read(authProvider.notifier).signOut(),
-            child: Text(
-              'LOGOUT',
-              style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 11),
-            ),
+          IconButton(
+            tooltip: 'Refresh Pass',
+            icon: Icon(Icons.refresh, color: badgeColor, size: 18),
+            onPressed: () async {
+              await ref.read(authProvider.notifier).refreshProfile();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Pass data refreshed from Concetto cloud.')),
+                );
+              }
+            },
           ),
         ],
       ),
@@ -1366,19 +1741,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final emailController = TextEditingController();
     final passController = TextEditingController();
     final nameController = TextEditingController();
-    final collegeController = TextEditingController();
+    final phoneController = TextEditingController();
+    final otherCollegeController = TextEditingController();
+
+    const String iitIsmOption = 'Indian Institute of Technology (ISM) Dhanbad';
+    const String othersOption = 'Others';
+
+    String selectedCollegeOption = iitIsmOption;
     bool isSignUp = false;
+    bool isLoading = false;
+    bool obscurePassword = true;
+    String? localError;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: const Color(0xFF100605),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            final isIitSelected = selectedCollegeOption == iitIsmOption;
+
             return Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 20,
@@ -1391,122 +1777,527 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Modal Header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          isSignUp ? 'CREATE FEST ACCOUNT' : 'ATTENDEE SIGN IN',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: primaryColor,
-                            letterSpacing: 1,
-                          ),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: primaryColor.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                isSignUp ? Icons.badge_outlined : Icons.lock_open_rounded,
+                                color: primaryColor,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              isSignUp ? 'REGISTER FEST PASS' : 'ATTENDEE SIGN IN',
+                              style: GoogleFonts.orbitron(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: 1.1,
+                              ),
+                            ),
+                          ],
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, size: 20),
+                          icon: const Icon(Icons.close, size: 20, color: Colors.white54),
                           onPressed: () => Navigator.pop(sheetContext),
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
 
+                    // Validation or Error Banner
+                    if (localError != null) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        margin: const EdgeInsets.only(bottom: 14),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.error_outline, color: Colors.redAccent, size: 16),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                localError!,
+                                style: GoogleFonts.rajdhani(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
                     if (isSignUp) ...[
+                      // Full Name
                       TextField(
                         controller: nameController,
-                        style: const TextStyle(color: Colors.white),
+                        style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
                         decoration: InputDecoration(
-                          labelText: 'Full Name',
-                          prefixIcon: Icon(Icons.person, color: primaryColor),
+                          labelText: 'Full Name *',
+                          labelStyle: GoogleFonts.rajdhani(color: Colors.white60),
+                          prefixIcon: Icon(Icons.person, color: primaryColor, size: 20),
+                          filled: true,
+                          fillColor: const Color(0xFF180A08),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                       ),
                       const SizedBox(height: 12),
+
+                      // College Dropdown
+                      Text(
+                        'COLLEGE / INSTITUTE *',
+                        style: GoogleFonts.rajdhani(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: primaryColor,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF180A08),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: selectedCollegeOption,
+                            isExpanded: true,
+                            dropdownColor: const Color(0xFF180A08),
+                            icon: Icon(Icons.keyboard_arrow_down, color: primaryColor),
+                            items: const [
+                              DropdownMenuItem(
+                                value: iitIsmOption,
+                                child: Text(
+                                  'Indian Institute of Technology (ISM) Dhanbad',
+                                  style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: othersOption,
+                                child: Text(
+                                  'Others (Specify College Name)',
+                                  style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            ],
+                            onChanged: (val) {
+                              if (val != null) {
+                                setModalState(() {
+                                  selectedCollegeOption = val;
+                                  localError = null;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Conditional text field for "Others"
+                      if (!isIitSelected) ...[
+                        TextField(
+                          controller: otherCollegeController,
+                          style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                          decoration: InputDecoration(
+                            labelText: 'Specify College / Institute Name *',
+                            labelStyle: GoogleFonts.rajdhani(color: Colors.white60),
+                            prefixIcon: Icon(Icons.school, color: primaryColor, size: 20),
+                            filled: true,
+                            fillColor: const Color(0xFF180A08),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+
+                      // Phone Number
                       TextField(
-                        controller: collegeController,
-                        style: const TextStyle(color: Colors.white),
+                        controller: phoneController,
+                        keyboardType: TextInputType.phone,
+                        style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
                         decoration: InputDecoration(
-                          labelText: 'College / Institute',
-                          prefixIcon: Icon(Icons.school, color: primaryColor),
+                          labelText: 'Phone Number *',
+                          hintText: '+91 98765 43210',
+                          hintStyle: GoogleFonts.rajdhani(color: Colors.white24),
+                          labelStyle: GoogleFonts.rajdhani(color: Colors.white60),
+                          prefixIcon: Icon(Icons.phone_android, color: primaryColor, size: 20),
+                          filled: true,
+                          fillColor: const Color(0xFF180A08),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Pass Category Preview Badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: (isIitSelected ? const Color(0xFF00E676) : Colors.amber).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isIitSelected ? const Color(0xFF00E676) : Colors.amber,
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.verified,
+                              size: 14,
+                              color: isIitSelected ? const Color(0xFF00E676) : Colors.amber,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                isIitSelected
+                                    ? 'Assigned Category: STUDENT PASS (Type 0)'
+                                    : 'Assigned Category: GUEST PASS (Type 1)',
+                                style: GoogleFonts.rajdhani(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: isIitSelected ? const Color(0xFF00E676) : Colors.amber,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 12),
                     ],
 
+                    // Email Address
                     TextField(
                       controller: emailController,
-                      style: const TextStyle(color: Colors.white),
+                      keyboardType: TextInputType.emailAddress,
+                      style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
                       decoration: InputDecoration(
-                        labelText: 'Email Address',
-                        prefixIcon: Icon(Icons.email, color: primaryColor),
+                        labelText: isSignUp && isIitSelected
+                            ? 'Institute Email (@iitism.ac.in) *'
+                            : 'Email Address *',
+                        labelStyle: GoogleFonts.rajdhani(color: Colors.white60),
+                        prefixIcon: Icon(Icons.email, color: primaryColor, size: 20),
+                        helperText: isSignUp && isIitSelected
+                            ? 'Must end with @iitism.ac.in for Student Pass'
+                            : (isSignUp ? 'Confirmation link will be sent to this email' : null),
+                        helperStyle: GoogleFonts.rajdhani(
+                          color: isSignUp && isIitSelected ? const Color(0xFF00E676) : Colors.white38,
+                          fontSize: 11,
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFF180A08),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       ),
                     ),
                     const SizedBox(height: 12),
+
+                    // Password
                     TextField(
                       controller: passController,
-                      obscureText: true,
-                      style: const TextStyle(color: Colors.white),
+                      obscureText: obscurePassword,
+                      style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
                       decoration: InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: Icon(Icons.lock, color: primaryColor),
+                        labelText: 'Password *',
+                        labelStyle: GoogleFonts.rajdhani(color: Colors.white60),
+                        prefixIcon: Icon(Icons.lock, color: primaryColor, size: 20),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            obscurePassword ? Icons.visibility_off : Icons.visibility,
+                            color: Colors.white38,
+                            size: 18,
+                          ),
+                          onPressed: () => setModalState(() => obscurePassword = !obscurePassword),
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFF180A08),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       ),
                     ),
                     const SizedBox(height: 20),
 
+                    // Submit Button
                     SizedBox(
                       width: double.infinity,
-                      height: 48,
+                      height: 50,
                       child: ElevatedButton(
-                        onPressed: () async {
-                          if (emailController.text.trim().isEmpty) return;
+                        onPressed: isLoading
+                            ? null
+                            : () async {
+                                final email = emailController.text.trim();
+                                final password = passController.text;
 
-                          Navigator.pop(sheetContext);
-                          if (isSignUp) {
-                            await ref.read(authProvider.notifier).signUpWithEmail(
-                                  name: nameController.text.trim().isNotEmpty
-                                      ? nameController.text.trim()
-                                      : 'Attendee',
-                                  email: emailController.text.trim(),
-                                  password: passController.text,
-                                  college: collegeController.text.trim().isNotEmpty
-                                      ? collegeController.text.trim()
-                                      : 'College Participant',
-                                  phone: '+91 85030 86164',
-                                );
-                          } else {
-                            await ref.read(authProvider.notifier).signInWithEmail(
-                                  emailController.text.trim(),
-                                  passController.text,
-                                );
-                          }
-                        },
+                                if (email.isEmpty) {
+                                  setModalState(() => localError = 'Please enter your email address.');
+                                  return;
+                                }
+
+                                if (password.length < 6) {
+                                  setModalState(() => localError = 'Password must be at least 6 characters.');
+                                  return;
+                                }
+
+                                if (isSignUp) {
+                                  final name = nameController.text.trim();
+                                  final phone = phoneController.text.trim();
+                                  final college = isIitSelected
+                                      ? iitIsmOption
+                                      : otherCollegeController.text.trim();
+
+                                  if (name.isEmpty) {
+                                    setModalState(() => localError = 'Please enter your full name.');
+                                    return;
+                                  }
+
+                                  if (!isIitSelected && college.isEmpty) {
+                                    setModalState(() => localError = 'Please enter your college name.');
+                                    return;
+                                  }
+
+                                  if (phone.isEmpty) {
+                                    setModalState(() => localError = 'Please enter your phone number.');
+                                    return;
+                                  }
+
+                                  // Strict check for IIT ISM
+                                  if (isIitSelected && !email.toLowerCase().endsWith('@iitism.ac.in')) {
+                                    setModalState(() => localError =
+                                        'IIT (ISM) students must provide an email ending with @iitism.ac.in');
+                                    return;
+                                  }
+
+                                  setModalState(() {
+                                    isLoading = true;
+                                    localError = null;
+                                  });
+
+                                  try {
+                                    await ref.read(authProvider.notifier).signUpWithEmail(
+                                          name: name,
+                                          email: email,
+                                          password: password,
+                                          college: college,
+                                          phone: phone,
+                                        );
+
+                                    if (sheetContext.mounted) {
+                                      Navigator.pop(sheetContext);
+                                    }
+
+                                    // Display Email Confirmation Instructions Dialog
+                                    if (context.mounted) {
+                                      showDialog(
+                                        context: context,
+                                        builder: (ctx) => AlertDialog(
+                                          backgroundColor: const Color(0xFF140604),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(16),
+                                            side: const BorderSide(color: Color(0xFF00E676), width: 1.2),
+                                          ),
+                                          title: Row(
+                                            children: [
+                                              const Icon(Icons.mark_email_read_rounded, color: Color(0xFF00E676), size: 26),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  'VERIFICATION LINK SENT',
+                                                  style: GoogleFonts.orbitron(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          content: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'We sent a confirmation email to:\n$email\n\nYou MUST click the verification link in your inbox before logging in. Unverified accounts cannot log in.',
+                                                style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 14, height: 1.4),
+                                              ),
+                                              const SizedBox(height: 12),
+                                              Container(
+                                                padding: const EdgeInsets.all(8),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white.withValues(alpha: 0.05),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: Text(
+                                                  'Once verified, simply sign in here to load your digital festival pass.',
+                                                  style: GoogleFonts.rajdhani(color: AppTheme.metallicMuted, fontSize: 12),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          actions: [
+                                            ElevatedButton(
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color(0xFF00E676),
+                                                foregroundColor: Colors.black,
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                              ),
+                                              onPressed: () => Navigator.pop(ctx),
+                                              child: const Text('OK, UNDERSTOOD', style: TextStyle(fontWeight: FontWeight.bold)),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    setModalState(() {
+                                      isLoading = false;
+                                      localError = e.toString().replaceAll('Exception: ', '');
+                                    });
+                                  }
+                                } else {
+                                  // Sign in flow
+                                  setModalState(() {
+                                    isLoading = true;
+                                    localError = null;
+                                  });
+
+                                  try {
+                                    await ref.read(authProvider.notifier).signInWithEmail(email, password);
+                                    if (sheetContext.mounted) {
+                                      Navigator.pop(sheetContext);
+                                    }
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Row(
+                                            children: [
+                                              const Icon(Icons.check_circle, color: Color(0xFF00E676), size: 18),
+                                              const SizedBox(width: 8),
+                                              const Text('Pass loaded successfully!'),
+                                            ],
+                                          ),
+                                          backgroundColor: const Color(0xFF140604),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    final errStr = e.toString();
+                                    final isNotVerified = errStr.contains('not verified');
+
+                                    setModalState(() {
+                                      isLoading = false;
+                                      localError = errStr.replaceAll('Exception: ', '');
+                                    });
+
+                                    if (isNotVerified && sheetContext.mounted) {
+                                      // Offer resend button dialog
+                                      showDialog(
+                                        context: context,
+                                        builder: (ctx) => AlertDialog(
+                                          backgroundColor: const Color(0xFF140604),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(16),
+                                            side: const BorderSide(color: Colors.amber, width: 1.2),
+                                          ),
+                                          title: Row(
+                                            children: [
+                                              const Icon(Icons.mail_lock_rounded, color: Colors.amber, size: 24),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                'EMAIL NOT VERIFIED',
+                                                style: GoogleFonts.orbitron(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+                                              ),
+                                            ],
+                                          ),
+                                          content: Text(
+                                            'Your email address has not been confirmed yet. Please verify it via the link sent to your inbox to log in.\n\nNeed another verification link?',
+                                            style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 14),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(ctx),
+                                              child: const Text('CANCEL', style: TextStyle(color: Colors.white54)),
+                                            ),
+                                            ElevatedButton(
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: primaryColor,
+                                                foregroundColor: Colors.black,
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                              ),
+                                              onPressed: () async {
+                                                Navigator.pop(ctx);
+                                                try {
+                                                  await ref.read(authProvider.notifier).resendVerificationEmail(email, password);
+                                                  if (context.mounted) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text('Verification link sent again to $email.'),
+                                                        backgroundColor: const Color(0xFF140604),
+                                                      ),
+                                                    );
+                                                  }
+                                                } catch (resendErr) {
+                                                  if (context.mounted) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(content: Text('Could not resend: $resendErr')),
+                                                    );
+                                                  }
+                                                }
+                                              },
+                                              child: const Text('RESEND LINK', style: TextStyle(fontWeight: FontWeight.bold)),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }
+                                  }
+                                }
+                              },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryColor,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text(
-                          isSignUp ? 'SIGN UP' : 'SIGN IN',
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
-                          ),
-                        ),
+                        child: isLoading
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2),
+                              )
+                            : Text(
+                                isSignUp ? 'CREATE ACCOUNT & ISSUE PASS' : 'SIGN IN',
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1,
+                                ),
+                              ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
 
+                    // Toggle between Sign In and Sign Up
                     Center(
                       child: TextButton(
                         onPressed: () {
                           setModalState(() {
                             isSignUp = !isSignUp;
+                            localError = null;
                           });
                         },
                         child: Text(
                           isSignUp
                               ? 'Already have an account? Sign In'
-                              : "Don't have an account? Create one",
-                          style: TextStyle(color: primaryColor, fontSize: 12),
+                              : "Don't have an account? Register Here",
+                          style: TextStyle(color: primaryColor, fontSize: 13, fontWeight: FontWeight.w600),
                         ),
                       ),
                     ),
