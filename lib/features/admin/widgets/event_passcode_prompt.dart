@@ -128,39 +128,7 @@ class _EventPasscodePromptState extends ConsumerState<EventPasscodePrompt> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-            Row(
-              children: [
-                Icon(
-                  isDelete ? Icons.delete_forever : Icons.key_rounded,
-                  color: isDelete ? Colors.redAccent : AppTheme.neonOrange,
-                  size: 24,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    widget.actionTitle.toUpperCase(),
-                    style: GoogleFonts.orbitron(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.1,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Event Info Pill
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF160907),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.white12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
                 children: [
                   Icon(
                     isDelete ? Icons.delete_forever : Icons.verified_user_outlined,
@@ -352,7 +320,6 @@ class _EventPasscodePromptState extends ConsumerState<EventPasscodePrompt> {
           ),
         ),
       ),
-    ),
     );
   }
 }

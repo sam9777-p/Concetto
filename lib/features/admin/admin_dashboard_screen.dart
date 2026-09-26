@@ -294,6 +294,31 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     }
   }
 
+  Future<void> _onAddNewEvent() async {
+    final authorized = await _promptDevUnlock(
+      'Enter Developer Password to authorize adding a new official event to Concetto.',
+    );
+    if (!authorized || !mounted) return;
+
+    final result = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (context) => const EventEditorScreen(
+          isMasterAdmin: true,
+          isDeveloperMode: true,
+        ),
+      ),
+    );
+    if (result != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result),
+          backgroundColor: AppTheme.neonEmerald,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   void _onEditEvent(EventItem event) {
     EventPasscodePrompt.show(
       context,
