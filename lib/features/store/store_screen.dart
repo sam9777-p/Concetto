@@ -134,21 +134,27 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Icon(Icons.local_fire_department, size: 20, color: primaryColor),
-                const SizedBox(width: 8),
-                Text(
-                  'OFFICIAL FESTIVAL T-SHIRT',
-                  style: GoogleFonts.orbitron(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                    color: Colors.white,
+            Expanded(
+              child: Row(
+                children: [
+                  Icon(Icons.local_fire_department, size: 20, color: primaryColor),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      'OFFICIAL FESTIVAL T-SHIRT',
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.orbitron(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
+            const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
@@ -303,12 +309,18 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          '37% OFF • Fest Subsidy',
-                          style: GoogleFonts.rajdhani(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.greenAccent,
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              '37% OFF • Fest Subsidy',
+                              style: GoogleFonts.rajdhani(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.greenAccent,
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -429,13 +441,16 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
           children: [
             Icon(Icons.confirmation_number_outlined, size: 20, color: primaryColor),
             const SizedBox(width: 8),
-            Text(
-              'OUTSIDE COLLEGE PASSES',
-              style: GoogleFonts.orbitron(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
-                color: Colors.white,
+            Flexible(
+              child: Text(
+                'OUTSIDE COLLEGE PASSES',
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.orbitron(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                  color: Colors.white,
+                ),
               ),
             ),
           ],

@@ -78,10 +78,11 @@ class _AdminLoginDialogState extends State<AdminLoginDialog> {
           gradient: AppTheme.darkCardGradient,
           boxShadow: AppTheme.neonGlow(opacity: 0.2, blur: 20),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // Header icon & title
             Row(
               children: [
@@ -226,6 +227,7 @@ class _AdminLoginDialogState extends State<AdminLoginDialog> {
           ],
         ),
       ),
+    ),
     );
   }
 }

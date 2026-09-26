@@ -56,9 +56,10 @@ class PasscodeReceiptDialog extends StatelessWidget {
           gradient: AppTheme.darkCardGradient,
           boxShadow: AppTheme.neonGlow(color: AppTheme.neonEmerald, opacity: 0.25, blur: 24),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
             // Success Badge
             Container(
               padding: const EdgeInsets.all(12),
@@ -225,6 +226,7 @@ class PasscodeReceiptDialog extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

@@ -276,237 +276,44 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     if (confirm != true) return;
 
     setState(() => _isSeeding = true);
-    final result = await ref.read(firestoreServiceProvider).seedMockEventsToFirestore();
-    ref.invalidate(adminEventsProvider);
+    final results = await ref.read(firestoreServiceProvider).seedAllDataToFirestore();
     ref.invalidate(eventsProvider);
+    ref.invalidate(announcementsProvider);
+    ref.invalidate(teamProvider);
     setState(() => _isSeeding = false);
 
     if (mounted) {
-      if (result.error != null) {
-        final isNotFound = result.error!.contains('NOT_FOUND') || result.error!.contains('not exist');
-        final errorMsg = isNotFound
-            ? 'Database not initialized yet. Please check your cloud database connection.'
-            : 'Cloud Sync Notice: ${result.error}';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent),
-                const SizedBox(width: 8),
-                Expanded(child: Text(errorMsg, style: const TextStyle(fontSize: 12.5))),
-              ],
-            ),
-            backgroundColor: const Color(0xFF200A08),
-            duration: const Duration(seconds: 6),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Color(0xFF00E676)),
-                const SizedBox(width: 8),
-                Expanded(child: Text('Successfully synchronized ${result.count} events to the live database!')),
-              ],
-            ),
-            backgroundColor: const Color(0xFF0A180E),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      final total = (results['events'] ?? 0) + (results['announcements'] ?? 0) + (results['team'] ?? 0);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Successfully synced $total items (${results['events']} events, ${results['announcements']} announcements, ${results['team']} team) to database "concetto"!'),
+          backgroundColor: AppTheme.neonEmerald,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
   Future<void> _onAddNewEvent() async {
-    final masterCtrl = TextEditingController();
-    final devCtrl = TextEditingController();
-    bool obscureM = true;
-    bool obscureD = true;
-    String? err;
+    final authorized = await _promptDevUnlock(
+      'Enter Developer Password to authorize adding a new official event to Concetto.',
+    );
+    if (!authorized || !mounted) return;
 
-    final authorized = await showDialog<bool>(
-      context: context,
-      barrierDismissible: true,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDlgState) => Dialog(
-          backgroundColor: AppTheme.scaffoldBg,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: AppTheme.neonOrange, width: 1.2),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: AppTheme.darkCardGradient,
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.neonOrange.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.add_box_outlined, color: AppTheme.neonOrange, size: 22),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'AUTHORIZE NEW EVENT',
-                          style: GoogleFonts.orbitron(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.0,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'SECURITY POLICY: Adding a new event strictly requires BOTH Master General Password AND Developer Password.',
-                    style: GoogleFonts.rajdhani(
-                      color: AppTheme.metallicSilver,
-                      fontSize: 13,
-                      height: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  Text(
-                    '1. MASTER GENERAL PASSWORD *',
-                    style: GoogleFonts.rajdhani(color: AppTheme.neonOrange, fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: masterCtrl,
-                    obscureText: obscureM,
-                    style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: const Color(0xFF140705),
-                      hintText: 'Enter Master Password',
-                      hintStyle: GoogleFonts.rajdhani(color: Colors.white30),
-                      prefixIcon: const Icon(Icons.shield_outlined, color: AppTheme.neonOrange, size: 18),
-                      suffixIcon: IconButton(
-                        icon: Icon(obscureM ? Icons.visibility_off : Icons.visibility, color: Colors.white54, size: 18),
-                        onPressed: () => setDlgState(() => obscureM = !obscureM),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: AppTheme.neonOrange.withValues(alpha: 0.3)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppTheme.neonOrange, width: 1.5),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  Text(
-                    '2. DEVELOPER PASSWORD *',
-                    style: GoogleFonts.rajdhani(color: AppTheme.cyberAmber, fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: devCtrl,
-                    obscureText: obscureD,
-                    style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: const Color(0xFF140705),
-                      hintText: 'Enter Developer Password',
-                      hintStyle: GoogleFonts.rajdhani(color: Colors.white30),
-                      prefixIcon: const Icon(Icons.code, color: AppTheme.cyberAmber, size: 18),
-                      suffixIcon: IconButton(
-                        icon: Icon(obscureD ? Icons.visibility_off : Icons.visibility, color: Colors.white54, size: 18),
-                        onPressed: () => setDlgState(() => obscureD = !obscureD),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: AppTheme.cyberAmber.withValues(alpha: 0.3)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppTheme.cyberAmber, width: 1.5),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    ),
-                  ),
-
-                  if (err != null) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      err!,
-                      style: GoogleFonts.rajdhani(color: Colors.redAccent, fontSize: 12.5, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: Text(
-                            'CANCEL',
-                            style: GoogleFonts.rajdhani(color: AppTheme.metallicMuted, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.neonOrange,
-                            foregroundColor: Colors.black,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          ),
-                          onPressed: () {
-                            final m = masterCtrl.text.trim();
-                            final d = devCtrl.text.trim();
-                            final valid = MasterAdminConfig.verifyAddEvent(masterEntered: m, devEntered: d);
-                            if (valid) {
-                              Navigator.of(context).pop(true);
-                            } else {
-                              setDlgState(() => err = 'Invalid credentials. Both Master & Developer passwords are strictly required.');
-                            }
-                          },
-                          child: Text(
-                            'PROCEED',
-                            style: GoogleFonts.rajdhani(fontWeight: FontWeight.w800, letterSpacing: 1),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
+    final result = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (context) => const EventEditorScreen(
+          isMasterAdmin: true,
+          isDeveloperMode: true,
         ),
       ),
     );
-
-    if (authorized == true && mounted) {
-      setState(() => _isDeveloperMode = true);
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => const EventEditorScreen(
-            isMasterAdmin: true,
-            isDeveloperMode: true,
-          ),
+    if (result != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result),
+          backgroundColor: AppTheme.neonEmerald,
+          behavior: SnackBarBehavior.floating,
         ),
       );
     }
@@ -1230,12 +1037,16 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 if (event.prizePool.isNotEmpty) ...[
                   Icon(Icons.emoji_events_outlined, size: 15, color: AppTheme.neonEmerald),
                   const SizedBox(width: 4),
-                  Text(
-                    event.prizePool,
-                    style: GoogleFonts.rajdhani(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.neonEmerald,
+                  Flexible(
+                    child: Text(
+                      event.prizePool,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.neonEmerald,
+                      ),
                     ),
                   ),
                 ],

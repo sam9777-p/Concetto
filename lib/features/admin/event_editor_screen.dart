@@ -1176,22 +1176,19 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'FLAGSHIP EVENT',
+                        Expanded(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Flagship?',
                               style: GoogleFonts.rajdhani(
-                                fontSize: 12,
+                                fontSize: 13,
                                 fontWeight: FontWeight.bold,
                                 color: _isFlagship ? AppTheme.neonOrange : AppTheme.metallicMuted,
                               ),
                             ),
-                            Text(
-                              _isFlagship ? 'Featured on Home' : 'Standard Event',
-                              style: GoogleFonts.rajdhani(fontSize: 10, color: Colors.white38),
-                            ),
-                          ],
+                          ),
                         ),
                         Switch(
                           value: _isFlagship,

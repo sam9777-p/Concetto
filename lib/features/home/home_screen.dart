@@ -402,30 +402,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             Row(
               children: [
                 Flexible(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFF5722), Color(0xFFFFA000)],
-                      ),
-                      borderRadius: BorderRadius.circular(6),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFF5722).withValues(alpha: 0.4),
-                          blurRadius: 8,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF5722), Color(0xFFFFA000)],
                         ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.star, size: 10, color: Colors.black),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
+                        borderRadius: BorderRadius.circular(6),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFF5722).withValues(alpha: 0.4),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.star, size: 10, color: Colors.black),
+                          const SizedBox(width: 4),
+                          Text(
                             'CENTENARY EDITION • 1926-2026',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.rajdhani(
                               fontSize: 10,
                               fontWeight: FontWeight.w900,
@@ -433,8 +433,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                               letterSpacing: 0.8,
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -619,10 +619,9 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
                   children: [
                     Icon(Icons.radar, size: 16, color: widget.primaryColor),
                     const SizedBox(width: 6),
-                    Expanded(
+                    Flexible(
                       child: Text(
                         'MISSION LAUNCH TELEMETRY',
-                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.rajdhani(
                           fontSize: 13,
@@ -827,10 +826,9 @@ extension _HomeScreenHelpers on _HomeScreenState {
                   children: [
                     Icon(Icons.campaign, size: 18, color: primaryColor),
                     const SizedBox(width: 8),
-                    Expanded(
+                    Flexible(
                       child: Text(
                         'LIVE TRANSMISSIONS & ALERTS',
-                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.rajdhani(
                           fontSize: 13.5,
@@ -934,7 +932,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
               borderRadius: BorderRadius.circular(16),
               side: BorderSide(color: tagColor.withValues(alpha: 0.5)),
             ),
-            child: Padding(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -943,22 +941,27 @@ extension _HomeScreenHelpers on _HomeScreenState {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: tagColor.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: tagColor.withValues(alpha: 0.5)),
-                        ),
-                        child: Text(
-                          ann.tag,
-                          style: GoogleFonts.rajdhani(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: tagColor,
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: tagColor.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: tagColor.withValues(alpha: 0.5)),
+                          ),
+                          child: Text(
+                            ann.tag,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: tagColor,
+                            ),
                           ),
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Text(dateStr, style: const TextStyle(fontSize: 11, color: Colors.white54)),
                     ],
                   ),
@@ -1035,7 +1038,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                     ),
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 Text(
                   dateStr,
                   style: GoogleFonts.rajdhani(fontSize: 10.5, color: Colors.white54),
@@ -1077,10 +1080,9 @@ extension _HomeScreenHelpers on _HomeScreenState {
             children: [
               Icon(Icons.auto_graph_rounded, size: 16, color: primaryColor),
               const SizedBox(width: 6),
-              Expanded(
+              Flexible(
                 child: Text(
                   'WHY CONCETTO? • FESTIVAL IMPACT',
-                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.rajdhani(
                     fontSize: 13,
@@ -1168,10 +1170,9 @@ extension _HomeScreenHelpers on _HomeScreenState {
             children: [
               Icon(Icons.dashboard_customize, size: 16, color: primaryColor),
               const SizedBox(width: 6),
-              Expanded(
+              Flexible(
                 child: Text(
                   'COMMAND DECK • QUICK ACCESS',
-                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.rajdhani(
                     fontSize: 13,
@@ -1278,6 +1279,8 @@ extension _HomeScreenHelpers on _HomeScreenState {
                   children: [
                     Text(
                       title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.rajdhani(
                         fontSize: 13.5,
                         fontWeight: FontWeight.bold,
@@ -1322,10 +1325,9 @@ extension _HomeScreenHelpers on _HomeScreenState {
                   children: [
                     Icon(Icons.stars_rounded, size: 18, color: primaryColor),
                     const SizedBox(width: 8),
-                    Expanded(
+                    Flexible(
                       child: Text(
                         'FLAGSHIP ARENAS & HIGHLIGHTS',
-                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.rajdhani(
                           fontSize: 13.5,
@@ -1371,7 +1373,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
             final displayEvents = flagshipEvents.isNotEmpty ? flagshipEvents : events.take(6).toList();
 
             return SizedBox(
-              height: 285,
+              height: 295,
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 scrollDirection: Axis.horizontal,
@@ -2228,188 +2230,202 @@ extension _HomeScreenHelpers on _HomeScreenState {
   void _showAccommodationSheet(BuildContext context, Color primaryColor) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: const Color(0xFF120504),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        return SafeArea(
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.88,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(Icons.hotel, color: primaryColor, size: 22),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(Icons.hotel, color: primaryColor, size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Campus Stay & Accommodation',
+                              style: GoogleFonts.rajdhani(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              'IIT (ISM) Dhanbad Hostels',
+                              style: GoogleFonts.rajdhani(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: primaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
+                  const SizedBox(height: 16),
+                  Text(
+                    'Enjoy secure hostel accommodation right on the IIT (ISM) Dhanbad campus throughout the festival days (October 08-11, 2026).',
+                    style: GoogleFonts.rajdhani(fontSize: 13, color: Colors.white70, height: 1.4),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.check_circle_rounded, size: 16, color: Color(0xFF00E676)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Dedicated boys and girls hostel wings with security',
+                          style: GoogleFonts.rajdhani(fontSize: 12.5, color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.check_circle_rounded, size: 16, color: Color(0xFF00E676)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Direct walking distance to SAC, Penman Auditorium, and all arenas',
+                          style: GoogleFonts.rajdhani(fontSize: 12.5, color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  // Pass Tiers Mini Grid
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.04),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: primaryColor.withValues(alpha: 0.25)),
+                    ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Campus Stay & Accommodation',
-                          style: GoogleFonts.rajdhani(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('1 Day Stay + Food + Events', style: GoogleFonts.rajdhani(fontSize: 12, color: Colors.white70)),
+                            Text('₹499/-', style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: primaryColor)),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('2 Day Stay + Food + Events', style: GoogleFonts.rajdhani(fontSize: 12, color: Colors.white70)),
+                            Text('₹699/-', style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: primaryColor)),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('3 Day Stay + Food + Events', style: GoogleFonts.rajdhani(fontSize: 12, color: Colors.white70)),
+                            Text('₹999/-', style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: primaryColor)),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('3 Day Stay + Food + Merch', style: GoogleFonts.rajdhani(fontSize: 12, color: Colors.white70)),
+                            Text('₹1,249/-', style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFFFF4081))),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        final formUri = Uri.parse('https://docs.google.com/forms/d/e/1FAIpQLSeCjdcCQyPqFwwD9D_7Mg_nYfUm-U7tLY2RbjJOP33V6a42kg/viewform');
+                        if (await canLaunchUrl(formUri)) {
+                          await launchUrl(formUri, mode: LaunchMode.externalApplication);
+                        }
+                      },
+                      icon: const Icon(Icons.assignment_turned_in, size: 18, color: Colors.black),
+                      label: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'BOOK PASS & STAY (GOOGLE FORM)',
+                          style: GoogleFonts.orbitron(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.8,
                           ),
                         ),
-                        Text(
-                          'IIT (ISM) Dhanbad Hostels',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white70,
+                        side: BorderSide(color: Colors.white24),
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        final telUri = Uri.parse('tel:+918503086164');
+                        if (await canLaunchUrl(telUri)) {
+                          await launchUrl(telUri);
+                        }
+                      },
+                      icon: const Icon(Icons.phone_in_talk, size: 16, color: Colors.white70),
+                      label: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'CALL ACCOMMODATION DESK (+91 85030 86164)',
                           style: GoogleFonts.rajdhani(
                             fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: primaryColor,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.6,
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Enjoy secure hostel accommodation right on the IIT (ISM) Dhanbad campus throughout the festival days (October 08-11, 2026).',
-                style: GoogleFonts.rajdhani(fontSize: 13, color: Colors.white70, height: 1.4),
-              ),
-              const SizedBox(height: 14),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.check_circle_rounded, size: 16, color: Color(0xFF00E676)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Dedicated boys and girls hostel wings with security',
-                      style: GoogleFonts.rajdhani(fontSize: 12.5, color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.check_circle_rounded, size: 16, color: Color(0xFF00E676)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Direct walking distance to SAC, Penman Auditorium, and all arenas',
-                      style: GoogleFonts.rajdhani(fontSize: 12.5, color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              // Pass Tiers Mini Grid
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: primaryColor.withValues(alpha: 0.25)),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('1 Day Stay + Food + Events', style: GoogleFonts.rajdhani(fontSize: 12, color: Colors.white70)),
-                        Text('₹499/-', style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: primaryColor)),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('2 Day Stay + Food + Events', style: GoogleFonts.rajdhani(fontSize: 12, color: Colors.white70)),
-                        Text('₹699/-', style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: primaryColor)),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('3 Day Stay + Food + Events', style: GoogleFonts.rajdhani(fontSize: 12, color: Colors.white70)),
-                        Text('₹999/-', style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: primaryColor)),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('3 Day Stay + Food + Merch', style: GoogleFonts.rajdhani(fontSize: 12, color: Colors.white70)),
-                        Text('₹1,249/-', style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFFFF4081))),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 13),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  onPressed: () async {
-                    Navigator.pop(context);
-                    final formUri = Uri.parse('https://docs.google.com/forms/d/e/1FAIpQLSeCjdcCQyPqFwwD9D_7Mg_nYfUm-U7tLY2RbjJOP33V6a42kg/viewform');
-                    if (await canLaunchUrl(formUri)) {
-                      await launchUrl(formUri, mode: LaunchMode.externalApplication);
-                    }
-                  },
-                  icon: const Icon(Icons.assignment_turned_in, size: 18, color: Colors.black),
-                  label: Text(
-                    'BOOK PASS & ACCOMMODATION',
-                    style: GoogleFonts.orbitron(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white70,
-                    side: BorderSide(color: Colors.white24),
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  onPressed: () async {
-                    Navigator.pop(context);
-                    final telUri = Uri.parse('tel:+918503086164');
-                    if (await canLaunchUrl(telUri)) {
-                      await launchUrl(telUri);
-                    }
-                  },
-                  icon: const Icon(Icons.phone_in_talk, size: 16, color: Colors.white70),
-                  label: Text(
-                    'CALL ACCOMMODATION DESK (+91 85030 86164)',
-                    style: GoogleFonts.rajdhani(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.6,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         );
       },
@@ -2447,10 +2463,9 @@ extension _HomeScreenHelpers on _HomeScreenState {
                   child: Icon(Icons.account_balance, size: 16, color: primaryColor),
                 ),
                 const SizedBox(width: 8),
-                Expanded(
+                Flexible(
                   child: Text(
                     '100 YEARS OF LEGACY • IIT (ISM)',
-                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.rajdhani(
                       fontSize: 13,
@@ -2491,9 +2506,12 @@ extension _HomeScreenHelpers on _HomeScreenState {
               children: [
                 Icon(Icons.email_outlined, size: 16, color: primaryColor),
                 const SizedBox(width: 8),
-                Text(
-                  'concetto@iitism.ac.in',
-                  style: GoogleFonts.rajdhani(fontSize: 12, color: Colors.white70),
+                Expanded(
+                  child: Text(
+                    'concetto@iitism.ac.in',
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.rajdhani(fontSize: 12, color: Colors.white70),
+                  ),
                 ),
               ],
             ),

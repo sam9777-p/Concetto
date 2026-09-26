@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -52,11 +53,38 @@ class MasterAdminConfig {
   }
 }
 
+// --- Firestore Configuration ---
+
+class FirestoreConfig {
+  /// The Firestore database ID to use.
+  /// Set to 'concetto' to connect to the dedicated named database.
+  static String databaseId = 'concetto';
+
+  /// Returns the configured FirebaseFirestore instance safely.
+  static FirebaseFirestore get instance {
+    try {
+      if (databaseId.isNotEmpty && databaseId != '(default)' && Firebase.apps.isNotEmpty) {
+        return FirebaseFirestore.instanceFor(
+          app: Firebase.app(),
+          databaseId: databaseId,
+        );
+      }
+    } catch (e) {
+      debugPrint('FirestoreConfig notice for "$databaseId": $e. Falling back to default instance.');
+    }
+    return FirebaseFirestore.instance;
+  }
+}
+
 // --- Service ---
 
 class FirestoreService {
-  FirebaseFirestore get _db => FirebaseFirestore.instance;
+  final FirebaseFirestore? _customDb;
   final MongoService _mongo = MongoService();
+
+  FirestoreService({FirebaseFirestore? db}) : _customDb = db;
+
+  FirebaseFirestore get _db => _customDb ?? FirestoreConfig.instance;
 
   /// Hashes raw passcodes with SHA-256 for secure comparison
   static String hashPasscode(String rawPasscode) {
@@ -470,6 +498,38 @@ class FirestoreService {
     }
   }
 
+  Future<Map<String, int>> seedAllDataToFirestore() async {
+    final eventsRes = await seedMockEventsToFirestore();
+    final eventsCount = eventsRes.count;
+    int announcementsCount = 0;
+    int teamCount = 0;
+
+    for (final ann in MockData.announcements) {
+      try {
+        await _db.collection('announcements').doc(ann.id).set(ann.toJson());
+        announcementsCount++;
+      } catch (e) {
+        debugPrint('Error seeding announcement ${ann.id}: $e');
+      }
+    }
+
+    for (final member in MockData.team) {
+      try {
+        final docId = 'team_${member.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_')}';
+        await _db.collection('team').doc(docId).set(member.toJson());
+        teamCount++;
+      } catch (e) {
+        debugPrint('Error seeding team member ${member.name}: $e');
+      }
+    }
+
+    return {
+      'events': eventsCount,
+      'announcements': announcementsCount,
+      'team': teamCount,
+    };
+  }
+
   // --- Team & Announcements ---
 
   Future<List<CoreTeamMember>> getTeam() async {
@@ -499,6 +559,17 @@ class FirestoreService {
     } catch (e) {
       debugPrint('Firestore getAnnouncements notice: $e. Falling back to mock data.');
       return MockData.announcements;
+    }
+  }
+
+  // --- Registrations ---
+
+  Future<void> saveRegistration(Map<String, dynamic> regData) async {
+    try {
+      await _db.collection('registrations').add(regData);
+      debugPrint('Registration for "${regData['eventTitle']}" saved to Firestore.');
+    } catch (e) {
+      debugPrint('Firestore registration notice: $e');
     }
   }
 }

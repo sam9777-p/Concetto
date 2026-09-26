@@ -384,22 +384,35 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'VALID: OCT 10 - 12, 2026',
-                style: GoogleFonts.rajdhani(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white54,
-                  letterSpacing: 0.8,
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'VALID: OCT 10 - 12, 2026',
+                    style: GoogleFonts.rajdhani(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white54,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
                 ),
               ),
-              Text(
-                'IIT (ISM) DHANBAD',
-                style: GoogleFonts.rajdhani(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: primaryColor,
-                  letterSpacing: 0.8,
+              const SizedBox(width: 8),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    'IIT (ISM) DHANBAD',
+                    style: GoogleFonts.rajdhani(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: primaryColor,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -442,16 +455,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Icon(Icons.verified_user, color: primaryColor, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                'Signed in as ${user.email}',
-                style: const TextStyle(fontSize: 12, color: Colors.white),
-              ),
-            ],
+          Expanded(
+            child: Row(
+              children: [
+                Icon(Icons.verified_user, color: primaryColor, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Signed in as ${user.email}',
+                    style: const TextStyle(fontSize: 12, color: Colors.white),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ),
+          const SizedBox(width: 8),
           TextButton(
             onPressed: () => ref.read(authProvider.notifier).signOut(),
             child: Text(
@@ -1181,7 +1201,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             crossAxisCount: 2,
             mainAxisSpacing: 10,
             crossAxisSpacing: 10,
-            childAspectRatio: 1.6,
+            childAspectRatio: 1.45,
           ),
           itemCount: sponsors.length,
           itemBuilder: (context, index) {
@@ -1309,9 +1329,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 children: [
                   Icon(Icons.phone, size: 14, color: primaryColor),
                   const SizedBox(width: 8),
-                  const Text(
-                    '+91 85030 86164 / +91 326 223 5400',
-                    style: TextStyle(fontSize: 11, color: Colors.white),
+                  const Expanded(
+                    child: Text(
+                      '+91 85030 86164 / +91 326 223 5400',
+                      style: TextStyle(fontSize: 11, color: Colors.white),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
@@ -1327,9 +1351,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 children: [
                   Icon(Icons.email, size: 14, color: primaryColor),
                   const SizedBox(width: 8),
-                  const Text(
-                    'concetto@iitism.ac.in',
-                    style: TextStyle(fontSize: 11, color: Colors.white),
+                  const Expanded(
+                    child: Text(
+                      'concetto@iitism.ac.in',
+                      style: TextStyle(fontSize: 11, color: Colors.white),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
@@ -1345,9 +1373,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 children: [
                   Icon(Icons.public, size: 14, color: primaryColor),
                   const SizedBox(width: 8),
-                  const Text(
-                    'https://concetto.in',
-                    style: TextStyle(fontSize: 11, color: Colors.white),
+                  const Expanded(
+                    child: Text(
+                      'https://concetto.in',
+                      style: TextStyle(fontSize: 11, color: Colors.white),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
