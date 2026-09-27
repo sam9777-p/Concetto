@@ -1,20 +1,111 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/network/auth_provider.dart';
+import '../../core/network/repositories.dart';
 import '../../models/event_item.dart';
 import '../admin/widgets/event_passcode_prompt.dart';
 import '../admin/event_editor_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'rulebook_pdf_viewer_screen.dart';
+import 'team_registration_screen.dart';
+import 'team_details_screen.dart';
 
-class EventDetailScreen extends StatelessWidget {
+class EventDetailScreen extends ConsumerStatefulWidget {
   final EventItem event;
 
   const EventDetailScreen({super.key, required this.event});
+
+  @override
+  ConsumerState<EventDetailScreen> createState() => _EventDetailScreenState();
+}
+
+class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
+  /// Cached result of checking if the current user is already registered
+  Map<String, dynamic>? _existingTeamData;
+  String? _existingTeamDocId;
+  bool _isCheckingRegistration = false;
+
+  EventItem get event => widget.event;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkExistingRegistration();
+  }
+
+  /// Checks Firestore for an existing registration where the logged-in user
+  /// is either the leader or a member
+  Future<void> _checkExistingRegistration() async {
+    final profile = ref.read(authProvider);
+    if (profile.isGuest || profile.email.isEmpty) {
+      return;
+    }
+
+    setState(() => _isCheckingRegistration = true);
+
+    try {
+      final db = FirestoreConfig.instance;
+      final userEmail = profile.email.toLowerCase().trim();
+
+      // Query where leaderEmail matches (fast indexed query)
+      final leaderQuery = await db
+          .collection('events')
+          .doc(event.id)
+          .collection('registrations')
+          .where('leaderEmail', isEqualTo: userEmail)
+          .limit(1)
+          .get()
+          .timeout(const Duration(seconds: 4));
+
+      if (leaderQuery.docs.isNotEmpty) {
+        if (mounted) {
+          setState(() {
+            _existingTeamData = leaderQuery.docs.first.data();
+            _existingTeamDocId = leaderQuery.docs.first.id;
+            _isCheckingRegistration = false;
+          });
+        }
+        return;
+      }
+
+      // Fallback: scan all registrations to check if user is a non-leader member
+      final allRegs = await db
+          .collection('events')
+          .doc(event.id)
+          .collection('registrations')
+          .get()
+          .timeout(const Duration(seconds: 5));
+
+      for (final doc in allRegs.docs) {
+        final members = doc.data()['members'] as List<dynamic>? ?? [];
+        for (final m in members) {
+          if (m is Map &&
+              m['email']?.toString().toLowerCase().trim() == userEmail) {
+            if (mounted) {
+              setState(() {
+                _existingTeamData = doc.data();
+                _existingTeamDocId = doc.id;
+                _isCheckingRegistration = false;
+              });
+            }
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Registration check notice: $e');
+    }
+
+    if (mounted) {
+      setState(() {
+        _isCheckingRegistration = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -349,73 +440,173 @@ class EventDetailScreen extends StatelessWidget {
                         ],
                       ],
                     ),
-                  ] else ...[
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: ElevatedButton.icon(
-                            onPressed: () => _showRegistrationSheet(context, primaryColor),
-                            icon: const Icon(
-                              Icons.how_to_reg,
-                              color: Colors.black,
-                              size: 18,
+                  ] else ...[ 
+                    // Dynamic In-App Registration
+                    if (_isCheckingRegistration)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: primaryColor,
                             ),
-                            label: const Text(
-                              'REGISTER NOW',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      )
+                    else if (_existingTeamData != null)
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                final result = await Navigator.push<bool>(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => TeamDetailsScreen(
+                                      event: event,
+                                      teamData: _existingTeamData!,
+                                      teamDocId: _existingTeamDocId!,
+                                    ),
+                                  ),
+                                );
+                                if (result == true) {
+                                  setState(() {
+                                    _existingTeamData = null;
+                                    _existingTeamDocId = null;
+                                  });
+                                  _checkExistingRegistration();
+                                }
+                              },
+                              icon: const Icon(
+                                Icons.group,
                                 color: Colors.black,
-                                letterSpacing: 0.8,
-                                fontSize: 13,
+                                size: 18,
                               ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryColor,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                              label: Text(
+                                event.maxTeamSize <= 1 ? 'VIEW REGISTRATION' : 'CHECK TEAM DETAILS',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                  letterSpacing: 0.8,
+                                  fontSize: 12,
+                                ),
                               ),
-                              elevation: 4,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.greenAccent,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 4,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          flex: 2,
-                          child: OutlinedButton.icon(
-                            onPressed: () => _showRulebookDialog(context, primaryColor),
-                            icon: const Icon(Icons.picture_as_pdf, size: 16),
-                            label: const Text(
-                              'RULES',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
-                            ),
-                          ),
-                        ),
-                        if (event.registrationUrl.isNotEmpty) ...[
                           const SizedBox(width: 8),
-                          IconButton.outlined(
-                            onPressed: () => _launchExternalUrl(context, event.registrationUrl),
-                            icon: const Icon(Icons.open_in_browser, size: 18),
-                            tooltip: 'Official Google Form (External)',
-                            style: IconButton.styleFrom(
-                              padding: const EdgeInsets.all(12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                          Expanded(
+                            flex: 2,
+                            child: OutlinedButton.icon(
+                              onPressed: () => _showRulebookDialog(context, primaryColor),
+                              icon: const Icon(Icons.picture_as_pdf, size: 16),
+                              label: const Text(
+                                'RULES',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
                               ),
                             ),
                           ),
                         ],
-                      ],
-                    ),
+                      )
+                    else
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                final profile = ref.read(authProvider);
+                                if (profile.isGuest || !profile.isLoggedIn) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Please log in to register for this event.'),
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                  return;
+                                }
+                                // If there's an external Google Form URL, let user choose
+                                if (event.registrationUrl.isNotEmpty) {
+                                  _showRegistrationChoiceSheet(context, primaryColor);
+                                } else {
+                                  // No external form — go directly to in-app registration
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => TeamRegistrationScreen(event: event),
+                                    ),
+                                  ).then((_) {
+                                    setState(() {
+                                      _existingTeamData = null;
+                                      _existingTeamDocId = null;
+                                    });
+                                    _checkExistingRegistration();
+                                  });
+                                }
+                              },
+                              icon: const Icon(
+                                Icons.how_to_reg,
+                                color: Colors.black,
+                                size: 18,
+                              ),
+                              label: const Text(
+                                'REGISTER NOW',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                  letterSpacing: 0.8,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryColor,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 4,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            flex: 2,
+                            child: OutlinedButton.icon(
+                              onPressed: () => _showRulebookDialog(context, primaryColor),
+                              icon: const Icon(Icons.picture_as_pdf, size: 16),
+                              label: const Text(
+                                'RULES',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                   ],
 
                   // Schedule Breakdown & Timeline
@@ -680,372 +871,114 @@ class EventDetailScreen extends StatelessWidget {
     );
   }
 
-  // --- Registration Bottom Sheet ---
-  void _showRegistrationSheet(BuildContext context, Color primaryColor) {
-    final nameController = TextEditingController();
-    final emailController = TextEditingController();
-    final phoneController = TextEditingController();
-    final collegeController = TextEditingController();
-    final teamNameController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
+  // --- Registration Choice Bottom Sheet ---
+  void _showRegistrationChoiceSheet(BuildContext context, Color primaryColor) {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF0F0403),
+      backgroundColor: const Color(0xFF1A0A06),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (sheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 20,
-            left: 20,
-            right: 20,
-            top: 24,
-          ),
-          child: Form(
-            key: formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'EVENT REGISTRATION',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: primaryColor,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close, size: 20),
-                        onPressed: () => Navigator.pop(sheetContext),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    event.title,
-                    style: const TextStyle(fontSize: 14, color: Colors.white70),
-                  ),
-                  const SizedBox(height: 16),
-
-                  if (event.registrationUrl.isNotEmpty) ...[
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            const Color(0xFFE85002),
-                            const Color(0xFFFF6F00),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFE85002).withValues(alpha: 0.35),
-                            blurRadius: 10,
-                            spreadRadius: 1,
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(sheetContext);
-                          _launchExternalUrl(context, event.registrationUrl);
-                        },
-                        icon: const Icon(Icons.open_in_new, color: Colors.black, size: 18),
-                        label: const Text(
-                          'OPEN OFFICIAL GOOGLE FORM',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 13,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        const Expanded(child: Divider(color: Colors.white24)),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          child: Text(
-                            'OR GENERATE IN-APP PASS',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white38,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ),
-                        const Expanded(child: Divider(color: Colors.white24)),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                  ],
-
-                  _buildFormField(
-                    controller: nameController,
-                    label: 'Full Name',
-                    icon: Icons.person,
-                    primaryColor: primaryColor,
-                    validator: (v) => v == null || v.isEmpty ? 'Please enter your name' : null,
-                  ),
-                  const SizedBox(height: 12),
-
-                  _buildFormField(
-                    controller: emailController,
-                    label: 'Email Address',
-                    icon: Icons.email,
-                    primaryColor: primaryColor,
-                    validator: (v) => v == null || !v.contains('@') ? 'Enter a valid email' : null,
-                  ),
-                  const SizedBox(height: 12),
-
-                  _buildFormField(
-                    controller: phoneController,
-                    label: 'Mobile Number',
-                    icon: Icons.phone,
-                    primaryColor: primaryColor,
-                    validator: (v) => v == null || v.length < 10 ? 'Enter a valid phone number' : null,
-                  ),
-                  const SizedBox(height: 12),
-
-                  _buildFormField(
-                    controller: collegeController,
-                    label: 'College / Institute Name',
-                    icon: Icons.school,
-                    primaryColor: primaryColor,
-                    validator: (v) => v == null || v.isEmpty ? 'Enter your college' : null,
-                  ),
-                  const SizedBox(height: 12),
-
-                  if (event.teamSize.contains('-') || event.teamSize.contains('Members'))
-                    _buildFormField(
-                      controller: teamNameController,
-                      label: 'Team Name (Optional)',
-                      icon: Icons.group,
-                      primaryColor: primaryColor,
-                    ),
-
-                  const SizedBox(height: 24),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        if (formKey.currentState!.validate()) {
-                          final cleanId = event.id.toUpperCase().replaceAll('_', '').replaceAll('-', '');
-                          final prefix = cleanId.substring(0, cleanId.length.clamp(3, 6));
-                          final passId = 'CON26-$prefix-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
-                          
-                          final regData = {
-                            'passId': passId,
-                            'eventId': event.id,
-                            'eventTitle': event.title,
-                            'name': nameController.text.trim(),
-                            'email': emailController.text.trim(),
-                            'phone': phoneController.text.trim(),
-                            'college': collegeController.text.trim(),
-                            'teamName': teamNameController.text.trim(),
-                            'registeredAt': FieldValue.serverTimestamp(),
-                            'status': 'CONFIRMED',
-                          };
-                          
-                          try {
-                            await FirebaseFirestore.instance.collection('registrations').add(regData);
-                          } catch (e) {
-                            debugPrint('Firestore registration notice: $e');
-                          }
-                          
-                          if (sheetContext.mounted) {
-                            Navigator.pop(sheetContext);
-                          }
-                          if (context.mounted) {
-                            _showConfirmationDialog(context, primaryColor, nameController.text.trim(), passId);
-                          }
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text(
-                        'CONFIRM REGISTRATION',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildFormField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    required Color primaryColor,
-    String? Function(String?)? validator,
-  }) {
-    return TextFormField(
-      controller: controller,
-      validator: validator,
-      style: const TextStyle(fontSize: 13, color: Colors.white),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(fontSize: 12, color: Colors.white60),
-        prefixIcon: Icon(icon, size: 18, color: primaryColor),
-        filled: true,
-        fillColor: const Color(0xFF140605),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: primaryColor.withValues(alpha: 0.3)),
+            Text(
+              'CHOOSE REGISTRATION METHOD',
+              style: GoogleFonts.orbitron(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 20),
+            // In-App Registration
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TeamRegistrationScreen(event: event),
+                    ),
+                  ).then((_) {
+                    setState(() {
+                      _existingTeamData = null;
+                      _existingTeamDocId = null;
+                    });
+                    _checkExistingRegistration();
+                  });
+                },
+                icon: const Icon(Icons.app_registration, color: Colors.black, size: 20),
+                label: const Text(
+                  'REGISTER IN-APP',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                    letterSpacing: 0.8,
+                    fontSize: 13,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 4,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Official Google Form
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _launchExternalUrl(context, event.registrationUrl);
+                },
+                icon: Icon(Icons.open_in_browser, color: primaryColor, size: 20),
+                label: Text(
+                  'OPEN OFFICIAL GOOGLE FORM',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: primaryColor,
+                    letterSpacing: 0.8,
+                    fontSize: 13,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  side: BorderSide(color: primaryColor.withValues(alpha: 0.6)),
+                ),
+              ),
+            ),
+          ],
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: primaryColor.withValues(alpha: 0.3)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: primaryColor),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
     );
   }
 
-  void _showConfirmationDialog(BuildContext context, Color primaryColor, String registrantName, String passId) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF120504),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: primaryColor.withValues(alpha: 0.4)),
-          ),
-          title: Row(
-            children: [
-              const Icon(Icons.check_circle, color: Colors.greenAccent, size: 26),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text(
-                  'Registration Confirmed!',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  'Welcome aboard, $registrantName!',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  event.title,
-                  style: TextStyle(color: primaryColor, fontSize: 12, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: primaryColor.withValues(alpha: 0.25),
-                        blurRadius: 12,
-                      ),
-                    ],
-                  ),
-                  child: QrImageView(
-                    data: passId,
-                    version: QrVersions.auto,
-                    size: 140.0,
-                    eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: Colors.black),
-                    dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: Colors.black),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: primaryColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        'DIGITAL ENTRY PASS ID',
-                        style: TextStyle(color: primaryColor, fontSize: 10, letterSpacing: 1.2, fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 2),
-                      SelectableText(
-                        passId,
-                        style: const TextStyle(
-                          fontFamily: 'monospace',
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Venue: ${event.venue}\nOfficial Pass Registered. Present this QR at the venue entrance.',
-                  style: const TextStyle(color: Colors.white60, fontSize: 10.5),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text('DONE', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        );
-      },
-    );
-  }
+
+
+
 
   static const _availableRulebookIds = {
     'aethera',

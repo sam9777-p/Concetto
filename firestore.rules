@@ -1,0 +1,51 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ==========================================
+    // PUBLIC FESTIVAL CONTENT & SUBCOLLECTIONS
+    // ==========================================
+    // Using {document=**} ensures rules apply to both /events/{eventId} 
+    // AND all subcollections such as /events/{eventId}/registrations/{registrationId}
+    match /events/{document=**} {
+      allow read, write: if true;
+    }
+
+    match /announcements/{announcementId} {
+      allow read, write: if true;
+    }
+
+    match /team/{memberId} {
+      allow read, write: if true;
+    }
+
+
+    // ==========================================
+    // REGISTRATIONS (Top-Level & Fallback)
+    // ==========================================
+    match /registrations/{registrationId} {
+      allow read, write: if true;
+    }
+
+
+    // ==========================================
+    // USERS / ATTENDEE PROFILES
+    // ==========================================
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+
+
+    // ==========================================
+    // PASSES & SCAN LOGS (Admins & Volunteers)
+    // ==========================================
+    match /passes/{passId} {
+      allow read, write: if true;
+    }
+
+    match /scan_logs/{logId} {
+      allow read, write: if true;
+    }
+  }
+}

@@ -87,7 +87,7 @@
 		<string>http</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
-	<string>Concetto '26 requires camera access to capture or update your attendee badge photo.</string>
+	<string>Concetto '26 requires camera access to scan attendee pass QR codes and update badge photos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Concetto '26 requires photo library access to upload badge photos.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

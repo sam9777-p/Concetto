@@ -10,6 +10,7 @@ import '../../core/network/cloudinary_service.dart';
 import '../../core/network/repositories.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/event_item.dart';
+import '../../services/registration_exporter.dart';
 
 class EventEditorScreen extends ConsumerStatefulWidget {
   final EventItem? initialEvent;
@@ -1000,6 +1001,36 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
           ),
         ),
         actions: [
+          if (_isEditing)
+            IconButton(
+              icon: const Icon(Icons.download_rounded, color: Colors.greenAccent, size: 22),
+              tooltip: 'Download Registrations (Excel/CSV)',
+              onPressed: () async {
+                try {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Exporting registrations...'),
+                      behavior: SnackBarBehavior.floating,
+                      duration: Duration(seconds: 1),
+                    ),
+                  );
+                  await RegistrationExporter.shareExport(
+                    eventId: widget.initialEvent!.id,
+                    eventTitle: widget.initialEvent!.title,
+                  );
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Export failed: $e'),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: Colors.redAccent,
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
           TextButton.icon(
             icon: _isSaving
                 ? const SizedBox(

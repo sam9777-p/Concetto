@@ -19,14 +19,17 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
-  bool _isDevUnlocked = false;
+  bool _isEventUnlocked = false;
   bool _isSecurityUnlocked = false;
   bool _isHospitalityUnlocked = false;
 
   @override
   void initState() {
     super.initState();
-    _isDevUnlocked = widget.initialIsDeveloper;
+    // Strictly all modules start locked by default upon entering Organizer Hub
+    _isEventUnlocked = false;
+    _isSecurityUnlocked = false;
+    _isHospitalityUnlocked = false;
   }
 
   Future<void> _promptRolePassword({
@@ -106,7 +109,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const SizedBox(height: 18),
 
                   Text(
-                    'Enter the dedicated passkey to unlock this organizer module:',
+                    'Enter $roleName or Developer Override Password:',
                     style: GoogleFonts.rajdhani(
                       fontSize: 13.5,
                       color: AppTheme.metallicSilver,
@@ -167,6 +170,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       setDlgState(() => isVerifying = true);
                       if (validator(entered)) {
                         Navigator.of(context).pop();
+                        if (MasterAdminConfig.verifyDev(entered)) {
+                          setState(() {
+                            _isEventUnlocked = true;
+                            _isSecurityUnlocked = true;
+                            _isHospitalityUnlocked = true;
+                          });
+                        }
                         onAuthorized();
                       } else {
                         setDlgState(() {
@@ -211,6 +221,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 setDlgState(() => isVerifying = true);
                                 if (validator(entered)) {
                                   Navigator.of(context).pop();
+                                  if (MasterAdminConfig.verifyDev(entered)) {
+                                    setState(() {
+                                      _isEventUnlocked = true;
+                                      _isSecurityUnlocked = true;
+                                      _isHospitalityUnlocked = true;
+                                    });
+                                  }
                                   onAuthorized();
                                 } else {
                                   setDlgState(() {
@@ -246,7 +263,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   void _onSelectEditEvents() {
-    if (_isDevUnlocked) {
+    if (_isEventUnlocked) {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (context) => const EventOperationsScreen()),
       );
@@ -254,13 +271,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
 
     _promptRolePassword(
-      roleName: 'Developer Password',
+      roleName: 'Event Password',
       roleSubtitle: 'Event Operations & Cloud Sync',
-      icon: Icons.code_rounded,
+      icon: Icons.edit_calendar_rounded,
       accentColor: AppTheme.neonOrange,
-      validator: MasterAdminConfig.verifyDev,
+      validator: MasterAdminConfig.verifyEvent,
       onAuthorized: () {
-        setState(() => _isDevUnlocked = true);
+        setState(() => _isEventUnlocked = true);
         Navigator.of(context).push(
           MaterialPageRoute(builder: (context) => const EventOperationsScreen()),
         );
@@ -391,26 +408,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               const SizedBox(height: 20),
 
               // ==========================================
-              // BOX 1: EDIT EVENTS (DEVELOPER PASSWORD)
+              // BOX 1: EDIT EVENTS (EVENT PASSWORD OR DEV)
               // ==========================================
               _buildBoxyModuleCard(
                 title: 'EDIT EVENTS',
                 subtitle: 'Manage 55 events, rules, clubs, toggle visibility, sync cloud database, or add new competitions.',
-                roleBadge: 'REQUIRES DEV PASSWORD',
+                roleBadge: 'REQUIRES EVENT PASS (OR DEV)',
                 accentColor: AppTheme.neonOrange,
                 icon: Icons.edit_calendar_rounded,
-                isUnlocked: _isDevUnlocked,
+                isUnlocked: _isEventUnlocked,
                 onTap: _onSelectEditEvents,
               ),
               const SizedBox(height: 18),
 
               // ==========================================
-              // BOX 2: SCAN GATE PASS (SECURITY PASSWORD)
+              // BOX 2: SCAN GATE PASS (SECURITY PASSWORD OR DEV)
               // ==========================================
               _buildBoxyModuleCard(
                 title: 'SCAN GATE PASS',
                 subtitle: 'Security gate pass scanner, camera QR code reader, manual ID search & real-time entry logs.',
-                roleBadge: 'REQUIRES SECURITY PASSWORD',
+                roleBadge: 'REQUIRES SECURITY PASS (OR DEV)',
                 accentColor: const Color(0xFF00E676),
                 icon: Icons.qr_code_scanner_rounded,
                 isUnlocked: _isSecurityUnlocked,
@@ -419,12 +436,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               const SizedBox(height: 18),
 
               // ==========================================
-              // BOX 3: EDIT PASSES / GUEST MANAGEMENT (HOSPITALITY PASSWORD)
+              // BOX 3: EDIT PASSES / GUEST MANAGEMENT (HOSPITALITY PASSWORD OR DEV)
               // ==========================================
               _buildBoxyModuleCard(
                 title: 'EDIT PASSES & GUESTS',
                 subtitle: 'Non-IIT ISM attendee dashboard (Pass categories 1, 2, 3, 4, 5). Search any attendee detail and edit pass types in real-time.',
-                roleBadge: 'REQUIRES HOSPITALITY PASSWORD',
+                roleBadge: 'REQUIRES HOSP PASS (OR DEV)',
                 accentColor: AppTheme.cyberAmber,
                 icon: Icons.badge_outlined,
                 isUnlocked: _isHospitalityUnlocked,

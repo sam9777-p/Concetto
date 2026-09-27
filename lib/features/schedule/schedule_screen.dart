@@ -15,16 +15,35 @@ class ScheduleScreen extends ConsumerStatefulWidget {
   ConsumerState<ScheduleScreen> createState() => _ScheduleScreenState();
 }
 
-class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
+class _ScheduleScreenState extends ConsumerState<ScheduleScreen> with SingleTickerProviderStateMixin {
   int _selectedDayIndex = 0;
   int _slideDirection = 1; // 1 = forward, -1 = backward
   bool _isTransitioning = false;
   double _pullExtent = 0.0;
   int _pullDirection = 0; // 1 = pulled up at bottom for next day, -1 = pulled down at top for prev day
   bool _hapticFired = false;
-  static const double _pullThreshold = 125.0;
-  static const double _pullDisplayThreshold = 60.0;
+  bool _isUserTouching = false;
+  static const double _deadzone = 28.0;
+  static const double _pullThreshold = 110.0;
   DateTime _lastTransitionTime = DateTime.now();
+
+  late final AnimationController _pullDismissController;
+  Animation<double>? _pullDismissAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _pullDismissController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pullDismissController.dispose();
+    super.dispose();
+  }
 
   final List<Map<String, String>> _festivalDays = [
     {'day': 'DAY 0', 'date': 'Oct 8', 'label': 'Wednesday'},
@@ -50,25 +69,64 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     return 999999;
   }
 
+  void _resetPullWithAnimation() {
+    if (_pullExtent <= 0.0) return;
+    _pullDismissController.stop();
+    final start = _pullExtent;
+    _pullDismissAnimation = Tween<double>(begin: start, end: 0.0).animate(
+      CurvedAnimation(parent: _pullDismissController, curve: Curves.easeOutCubic),
+    )..addListener(() {
+        if (mounted) {
+          setState(() {
+            _pullExtent = _pullDismissAnimation!.value;
+          });
+        }
+      })..addStatusListener((status) {
+        if (status == AnimationStatus.completed && mounted) {
+          setState(() {
+            _pullExtent = 0.0;
+            _pullDirection = 0;
+            _hapticFired = false;
+          });
+        }
+      });
+    _pullDismissController.forward(from: 0.0);
+  }
+
+  void _updatePull(double extent, int direction) {
+    if ((extent - _pullExtent).abs() < 1.0 && direction == _pullDirection) return;
+
+    if (extent >= _pullThreshold && !_hapticFired) {
+      HapticFeedback.lightImpact();
+      _hapticFired = true;
+    } else if (extent < _pullThreshold && _hapticFired) {
+      _hapticFired = false;
+    }
+
+    setState(() {
+      _pullExtent = extent;
+      _pullDirection = direction;
+    });
+  }
+
   void _changeDay(int newIndex, {required int direction}) {
     if (newIndex < 0 || newIndex >= _festivalDays.length || _isTransitioning) return;
     final now = DateTime.now();
     if (now.difference(_lastTransitionTime).inMilliseconds < 500) return;
 
     _lastTransitionTime = now;
+    _isTransitioning = true;
+    _pullDismissController.stop();
     setState(() {
       _slideDirection = direction;
       _selectedDayIndex = newIndex;
-      _isTransitioning = true;
       _pullExtent = 0.0;
       _pullDirection = 0;
       _hapticFired = false;
     });
     Future.delayed(const Duration(milliseconds: 450), () {
       if (mounted) {
-        setState(() {
-          _isTransitioning = false;
-        });
+        _isTransitioning = false;
       }
     });
   }
@@ -200,20 +258,32 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           // Dynamic Vertical Timeline with Telegram-Style Hard Pull Day Transition
           Expanded(
             child: Listener(
+              onPointerDown: (_) {
+                _isUserTouching = true;
+                if (_pullDismissController.isAnimating) {
+                  _pullDismissController.stop();
+                }
+              },
               onPointerUp: (event) {
+                _isUserTouching = false;
                 if (_isTransitioning) return;
-                if (_pullExtent >= _pullThreshold) {
-                  if (_pullDirection == 1 && _selectedDayIndex < _festivalDays.length - 1) {
-                    _changeDay(_selectedDayIndex + 1, direction: 1);
-                  } else if (_pullDirection == -1 && _selectedDayIndex > 0) {
-                    _changeDay(_selectedDayIndex - 1, direction: -1);
+                if (_pullExtent >= _pullThreshold && _pullDirection != 0) {
+                  final dir = _pullDirection;
+                  final targetIndex = _selectedDayIndex + dir;
+                  if (targetIndex >= 0 && targetIndex < _festivalDays.length) {
+                    HapticFeedback.mediumImpact();
+                    _changeDay(targetIndex, direction: dir);
+                    return;
                   }
-                } else if (_pullExtent > 0) {
-                  setState(() {
-                    _pullExtent = 0.0;
-                    _pullDirection = 0;
-                    _hapticFired = false;
-                  });
+                }
+                if (_pullExtent > 0) {
+                  _resetPullWithAnimation();
+                }
+              },
+              onPointerCancel: (_) {
+                _isUserTouching = false;
+                if (_pullExtent > 0) {
+                  _resetPullWithAnimation();
                 }
               },
               child: GestureDetector(
@@ -237,69 +307,64 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                           return false;
                         }
 
+                        // Ignore all momentum / ballistic scrolls to completely prevent glitches during normal scrolling
+                        if (!_isUserTouching) {
+                          if (_pullExtent > 0 && !_pullDismissController.isAnimating) {
+                            _resetPullWithAnimation();
+                          }
+                          return false;
+                        }
+
                         if (notification is ScrollUpdateNotification) {
+                          if (notification.dragDetails == null) {
+                            if (_pullExtent > 0 && !_pullDismissController.isAnimating) {
+                              _resetPullWithAnimation();
+                            }
+                            return false;
+                          }
                           final m = notification.metrics;
+                          final dy = notification.dragDetails?.delta.dy ?? 0.0;
+
                           // Bottom hard pull (pulling up at bottom of day list)
                           if (m.pixels > m.maxScrollExtent && _selectedDayIndex < _festivalDays.length - 1) {
-                            final extent = m.pixels - m.maxScrollExtent;
-                            if ((extent - _pullExtent).abs() > 1.5) {
-                              if (extent >= _pullThreshold && !_hapticFired) {
-                                HapticFeedback.lightImpact();
-                                _hapticFired = true;
-                              } else if (extent < _pullThreshold) {
-                                _hapticFired = false;
+                            final rawOverscroll = m.pixels - m.maxScrollExtent;
+                            if (rawOverscroll > _deadzone) {
+                              double speedBonus = 0.0;
+                              if (dy < -6.0) {
+                                speedBonus = (-dy - 6.0) * 1.5;
                               }
-                              setState(() {
-                                _pullExtent = extent;
-                                _pullDirection = 1;
-                              });
+                              final extent = (rawOverscroll - _deadzone) * 0.85 + speedBonus;
+                              _updatePull(extent, 1);
+                            } else if (_pullExtent > 0) {
+                              _updatePull(0.0, 0);
                             }
                           }
                           // Top hard pull (pulling down at top of day list)
                           else if (m.pixels < m.minScrollExtent && _selectedDayIndex > 0) {
-                            final extent = m.minScrollExtent - m.pixels;
-                            if ((extent - _pullExtent).abs() > 1.5) {
-                              if (extent >= _pullThreshold && !_hapticFired) {
-                                HapticFeedback.lightImpact();
-                                _hapticFired = true;
-                              } else if (extent < _pullThreshold) {
-                                _hapticFired = false;
+                            final rawOverscroll = m.minScrollExtent - m.pixels;
+                            if (rawOverscroll > _deadzone) {
+                              double speedBonus = 0.0;
+                              if (dy > 6.0) {
+                                speedBonus = (dy - 6.0) * 1.5;
                               }
-                              setState(() {
-                                _pullExtent = extent;
-                                _pullDirection = -1;
-                              });
+                              final extent = (rawOverscroll - _deadzone) * 0.85 + speedBonus;
+                              _updatePull(extent, -1);
+                            } else if (_pullExtent > 0) {
+                              _updatePull(0.0, 0);
                             }
                           }
                           // In-bounds normal scrolling
                           else if (_pullExtent > 0 && m.pixels >= m.minScrollExtent && m.pixels <= m.maxScrollExtent) {
-                            setState(() {
-                              _pullExtent = 0.0;
-                              _pullDirection = 0;
-                              _hapticFired = false;
-                            });
+                            _updatePull(0.0, 0);
                           }
                         } else if (notification is OverscrollNotification) {
+                          if (notification.dragDetails == null) return false;
                           if (notification.overscroll > 0 && _selectedDayIndex < _festivalDays.length - 1) {
-                            final extent = _pullExtent + notification.overscroll;
-                            if (extent >= _pullThreshold && !_hapticFired) {
-                              HapticFeedback.lightImpact();
-                              _hapticFired = true;
-                            }
-                            setState(() {
-                              _pullExtent = extent;
-                              _pullDirection = 1;
-                            });
+                            final raw = _pullExtent + (notification.overscroll * 0.7);
+                            _updatePull(raw, 1);
                           } else if (notification.overscroll < 0 && _selectedDayIndex > 0) {
-                            final extent = _pullExtent - notification.overscroll;
-                            if (extent >= _pullThreshold && !_hapticFired) {
-                              HapticFeedback.lightImpact();
-                              _hapticFired = true;
-                            }
-                            setState(() {
-                              _pullExtent = extent;
-                              _pullDirection = -1;
-                            });
+                            final raw = _pullExtent + (-notification.overscroll * 0.7);
+                            _updatePull(raw, -1);
                           }
                         }
                         return false;
@@ -678,9 +743,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 }
 
   Widget _buildPullIndicator(Color primaryColor) {
-    if (_pullExtent < _pullDisplayThreshold || _pullDirection == 0) return const SizedBox.shrink();
+    if (_pullDirection == 0 && _pullExtent <= 0.01) return const SizedBox.shrink();
 
-    final isTriggered = _pullExtent >= _pullThreshold;
     final isNext = _pullDirection == 1;
     final targetDay = isNext
         ? (_selectedDayIndex < _festivalDays.length - 1 ? _festivalDays[_selectedDayIndex + 1]['day'] : '')
@@ -688,55 +752,82 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
     if (targetDay == null || targetDay.isEmpty) return const SizedBox.shrink();
 
+    final isTriggered = _pullExtent >= _pullThreshold;
+    final isVisible = _pullExtent > _deadzone && _pullDirection != 0;
+    final progress = ((_pullExtent - _deadzone) / (_pullThreshold - _deadzone)).clamp(0.0, 1.0);
+
     return Positioned(
       top: isNext ? null : 16,
       bottom: isNext ? 24 : null,
       left: 0,
       right: 0,
-      child: Center(
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: isTriggered ? primaryColor : const Color(0xFF140604).withValues(alpha: 0.95),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: isTriggered ? Colors.white : primaryColor.withValues(alpha: 0.6),
-              width: isTriggered ? 1.5 : 1.0,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isTriggered ? primaryColor.withValues(alpha: 0.6) : Colors.black54,
-                blurRadius: isTriggered ? 16 : 8,
-                spreadRadius: isTriggered ? 2 : 0,
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedRotation(
-                turns: isTriggered ? 0.5 : 0.0,
+      child: IgnorePointer(
+        child: Center(
+          child: AnimatedOpacity(
+            opacity: isVisible ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
+            child: AnimatedSlide(
+              offset: isVisible ? Offset.zero : Offset(0, isNext ? 0.8 : -0.8),
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutCubic,
+              child: AnimatedScale(
+                scale: isVisible ? (0.88 + 0.12 * progress) : 0.75,
                 duration: const Duration(milliseconds: 200),
-                child: Icon(
-                  isNext ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-                  size: 18,
-                  color: isTriggered ? Colors.black : primaryColor,
+                curve: Curves.easeOutCubic,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+                  decoration: BoxDecoration(
+                    color: isTriggered
+                        ? primaryColor
+                        : const Color(0xFF140604).withValues(alpha: 0.95),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: isTriggered
+                          ? Colors.white
+                          : primaryColor.withValues(alpha: 0.4 + 0.4 * progress),
+                      width: isTriggered ? 1.5 : 1.0,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isTriggered
+                            ? primaryColor.withValues(alpha: 0.6)
+                            : Colors.black54,
+                        blurRadius: isTriggered ? 16 : 8,
+                        spreadRadius: isTriggered ? 2 : 0,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AnimatedRotation(
+                        turns: isTriggered ? 0.5 : 0.0,
+                        duration: const Duration(milliseconds: 220),
+                        curve: Curves.easeOutBack,
+                        child: Icon(
+                          isNext ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                          size: 18,
+                          color: isTriggered ? Colors.black : primaryColor,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        isTriggered
+                            ? 'Release to view $targetDay'
+                            : (isNext ? 'Pull up for $targetDay' : 'Pull down for $targetDay'),
+                        style: GoogleFonts.orbitron(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.8,
+                          color: isTriggered ? Colors.black : Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(width: 8),
-              Text(
-                isTriggered
-                    ? 'Release to view $targetDay'
-                    : (isNext ? 'Pull up for $targetDay' : 'Pull down for $targetDay'),
-                style: GoogleFonts.orbitron(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.8,
-                  color: isTriggered ? Colors.black : Colors.white,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

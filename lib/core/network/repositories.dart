@@ -20,15 +20,19 @@ class MasterAdminConfig {
   static const String _masterHash =
       'e64575142425195ea6195639cc0cacb60173d19ffacfa535a6fd79401f1d0c2d';
 
-  // 2. Developer Password: Edit Events & Operations
+  // 2. Developer Password: Universal Override for all 3 organizer modules
   static const String _devHash =
       '40a0702c53def4d439c9aea8dc0de47a289d5382a51b4e120f1f68ae3fdb48bb';
 
-  // 3. Security Password: Gate Pass Scanner
+  // 3. Event Password: Edit Events & Operations
+  static const String _eventHash =
+      'c22353fcea4323e52464b15510fbb78024e0885ea15356b501a22c776844d337';
+
+  // 4. Security Password: Gate Pass Scanner
   static const String _securityHash =
       'fb536f8c72da0b506f05a8d98136f1825968ca2343fa87171b85cacd079711b1';
 
-  // 4. Hospitality Password: Edit Passes / Non-IIT ISM Guest Management
+  // 5. Hospitality Password: Edit Passes / Non-IIT ISM Guest Management
   static const String _hospitalityHash =
       '7e31792f969f85b3357557ad1a7a8564179b959bca8bd7b3f98c31dcb28b51eb';
 
@@ -47,16 +51,25 @@ class MasterAdminConfig {
     return _sha256(entered) == _devHash;
   }
 
-  /// Verifies Security Password strictly (case-sensitive, exact match)
-  static bool verifySecurity(String entered) {
+  /// Verifies Event Password strictly, with Developer Password override
+  static bool verifyEvent(String entered) {
     if (entered.isEmpty) return false;
-    return _sha256(entered) == _securityHash;
+    final hash = _sha256(entered);
+    return hash == _eventHash || hash == _devHash;
   }
 
-  /// Verifies Hospitality Password strictly (case-sensitive, exact match)
+  /// Verifies Security Password strictly, with Developer Password override
+  static bool verifySecurity(String entered) {
+    if (entered.isEmpty) return false;
+    final hash = _sha256(entered);
+    return hash == _securityHash || hash == _devHash;
+  }
+
+  /// Verifies Hospitality Password strictly, with Developer Password override
   static bool verifyHospitality(String entered) {
     if (entered.isEmpty) return false;
-    return _sha256(entered) == _hospitalityHash;
+    final hash = _sha256(entered);
+    return hash == _hospitalityHash || hash == _devHash;
   }
 
   /// Verifies login to Organizer Portal (strictly Master Password only)
