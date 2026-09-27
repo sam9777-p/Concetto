@@ -39,7 +39,7 @@ class _AdminLoginDialogState extends State<AdminLoginDialog> {
     final password = _passwordController.text.trim();
     if (password.isEmpty) {
       setState(() {
-        _errorMessage = 'Please enter Master or Developer Password.';
+        _errorMessage = 'Please enter Master Password.';
       });
       return;
     }
@@ -49,16 +49,15 @@ class _AdminLoginDialogState extends State<AdminLoginDialog> {
       _errorMessage = null;
     });
 
-    final isDev = MasterAdminConfig.verifyDev(password);
     final isMaster = MasterAdminConfig.verifyMaster(password);
 
-    if (isDev || isMaster) {
+    if (isMaster) {
       Navigator.of(context).pop();
-      widget.onSuccess(isDev);
+      widget.onSuccess(true);
     } else {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Invalid password. Enter Master Password or Developer Password.';
+        _errorMessage = 'Invalid Master Password. Access restricted to authorized festival organizers.';
       });
     }
   }

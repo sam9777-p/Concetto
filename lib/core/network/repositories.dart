@@ -16,11 +16,21 @@ class MasterAdminConfig {
       sha256.convert(utf8.encode(input)).toString();
 
   // One-way cryptographic SHA-256 hashes only. Strictly case-sensitive, no alternatives accepted.
+  // 1. Master Password: Main Organizer Hub entrance
   static const String _masterHash =
       'e64575142425195ea6195639cc0cacb60173d19ffacfa535a6fd79401f1d0c2d';
 
+  // 2. Developer Password: Edit Events & Operations
   static const String _devHash =
       '40a0702c53def4d439c9aea8dc0de47a289d5382a51b4e120f1f68ae3fdb48bb';
+
+  // 3. Security Password: Gate Pass Scanner
+  static const String _securityHash =
+      'fb536f8c72da0b506f05a8d98136f1825968ca2343fa87171b85cacd079711b1';
+
+  // 4. Hospitality Password: Edit Passes / Non-IIT ISM Guest Management
+  static const String _hospitalityHash =
+      '7e31792f969f85b3357557ad1a7a8564179b959bca8bd7b3f98c31dcb28b51eb';
 
   /// Verifies Master General Password strictly (case-sensitive, exact match)
   static bool verifyMaster(String entered) {
@@ -37,9 +47,21 @@ class MasterAdminConfig {
     return _sha256(entered) == _devHash;
   }
 
-  /// Verifies login to Organizer Portal (accepts Master or Developer)
+  /// Verifies Security Password strictly (case-sensitive, exact match)
+  static bool verifySecurity(String entered) {
+    if (entered.isEmpty) return false;
+    return _sha256(entered) == _securityHash;
+  }
+
+  /// Verifies Hospitality Password strictly (case-sensitive, exact match)
+  static bool verifyHospitality(String entered) {
+    if (entered.isEmpty) return false;
+    return _sha256(entered) == _hospitalityHash;
+  }
+
+  /// Verifies login to Organizer Portal (strictly Master Password only)
   static bool verifyOrganizerLogin(String entered) {
-    return verifyMaster(entered) || verifyDev(entered);
+    return verifyMaster(entered);
   }
 
   /// Verifies credentials required to add a new event (MUST have BOTH Master + Developer)

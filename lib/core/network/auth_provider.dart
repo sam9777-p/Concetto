@@ -41,14 +41,24 @@ class AttendeeProfile {
     5: 'DIAMOND+ MERCH PASS',
   };
 
-  String get passCategoryTitle => passCategoryNames[passType] ?? 'ATTENDEE PASS';
+  String get passCategoryTitle {
+    if (isIitIsm && (passType == 0 || passType == 1)) {
+      return 'STUDENT PASS';
+    }
+    return passCategoryNames[passType] ?? 'ATTENDEE PASS';
+  }
 
   bool get isLoggedIn => !isGuest && isEmailVerified;
 
-  bool get isIitIsm =>
-      college.toLowerCase().contains('ism') ||
-      college.toLowerCase().contains('iit (ism)') ||
-      email.toLowerCase().endsWith('@iitism.ac.in');
+  bool get isIitIsm {
+    final c = college.toLowerCase().trim();
+    final e = email.toLowerCase().trim();
+    return c.contains('ism') ||
+        c.contains('iit (ism)') ||
+        c.contains('dhanbad') ||
+        c.contains('indian institute of technology') ||
+        e.endsWith('@iitism.ac.in');
+  }
 
   String get qrPayload => passId;
 
@@ -175,6 +185,19 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
       final cachedJson = prefs.getString('cached_profile_$uid');
       if (cachedJson != null) {
         final map = jsonDecode(cachedJson) as Map<String, dynamic>;
+        final college = (map['college'] as String? ?? '').toLowerCase();
+        final email = (map['email'] as String? ?? '').toLowerCase();
+        final isIit = college.contains('ism') ||
+            college.contains('iit (ism)') ||
+            college.contains('dhanbad') ||
+            college.contains('indian institute of technology') ||
+            email.endsWith('@iitism.ac.in');
+
+        int pType = map['passType'] is int ? map['passType'] as int : (isIit ? 0 : 1);
+        if (isIit && (pType == 1 || pType == 0)) {
+          pType = 0;
+        }
+
         state = AttendeeProfile(
           uid: uid,
           name: map['name'] ?? '',
@@ -182,7 +205,7 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
           college: map['college'] ?? '',
           phone: map['phone'] ?? '',
           passId: map['passId'] ?? '',
-          passType: map['passType'] is int ? map['passType'] : 1,
+          passType: pType,
           isGuest: false,
           isEmailVerified: true,
           registeredEventIds: state.registeredEventIds,
@@ -218,11 +241,28 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
       final data = await _readUserFromFirestore(user.uid);
       if (data != null) {
         final passTypeRaw = data['passType'];
-        int parsedPassType = 1;
+        final passCatRaw = (data['passCategory'] as String? ?? '').toUpperCase();
+        final collegeRaw = (data['college'] as String? ?? '').trim();
+        final emailRaw = (user.email ?? data['email'] as String? ?? '').trim();
+
+        final isIit = (data['isIitIsm'] == true) ||
+            collegeRaw.toLowerCase().contains('ism') ||
+            collegeRaw.toLowerCase().contains('iit (ism)') ||
+            collegeRaw.toLowerCase().contains('dhanbad') ||
+            collegeRaw.toLowerCase().contains('indian institute of technology') ||
+            emailRaw.toLowerCase().endsWith('@iitism.ac.in') ||
+            passCatRaw.contains('STUDENT');
+
+        int parsedPassType = isIit ? 0 : 1;
         if (passTypeRaw is int) {
           parsedPassType = passTypeRaw;
         } else if (passTypeRaw != null) {
-          parsedPassType = int.tryParse(passTypeRaw.toString()) ?? 1;
+          parsedPassType = int.tryParse(passTypeRaw.toString()) ?? (isIit ? 0 : 1);
+        }
+
+        // Auto-heal: If user is from IIT ISM and passType is 1, heal to 0 (STUDENT PASS)
+        if (isIit && (parsedPassType == 1 || parsedPassType == 0)) {
+          parsedPassType = 0;
         }
 
         final existingPhone = (data['phone'] as String?)?.trim() ?? '';
@@ -236,7 +276,7 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
               ? data['name'] as String
               : (user.displayName ?? user.email!.split('@').first),
           email: user.email!,
-          college: data['college'] as String? ?? 'IIT (ISM) Dhanbad',
+          college: collegeRaw.isNotEmpty ? collegeRaw : (isIit ? 'IIT (ISM) Dhanbad' : 'Visiting Participant'),
           phone: resolvedPhone,
           passId: data['passId'] as String? ?? 'CON-26-${user.uid.substring(0, 6).toUpperCase()}',
           passType: parsedPassType,
@@ -246,6 +286,19 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
         );
         state = profile;
         await _saveProfileToLocalCache(profile);
+
+        // Auto-heal Firestore document if passType or isIitIsm was misconfigured
+        if (passTypeRaw != parsedPassType || data['isIitIsm'] != isIit) {
+          _persistUserToFirestore(
+            uid: user.uid,
+            passId: profile.passId,
+            userData: {
+              'passType': parsedPassType,
+              'passCategory': AttendeeProfile.passCategoryNames[parsedPassType] ?? 'STUDENT PASS',
+              'isIitIsm': isIit,
+            },
+          );
+        }
         return;
       }
     } catch (e) {
@@ -253,7 +306,10 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
     }
 
     // Fallback if firestore document not found yet: generate and repair Firestore instantly!
-    final isIit = user.email!.toLowerCase().endsWith('@iitism.ac.in');
+    final isIit = user.email!.toLowerCase().endsWith('@iitism.ac.in') ||
+        state.college.toLowerCase().contains('ism') ||
+        state.college.toLowerCase().contains('dhanbad') ||
+        state.isIitIsm;
     final uniqueSuffix = user.uid.length >= 6
         ? user.uid.substring(0, 6).toUpperCase()
         : DateTime.now().millisecondsSinceEpoch.toString().substring(7);

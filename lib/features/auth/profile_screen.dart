@@ -229,10 +229,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: _getPassBadgeColor(user.passType, user.isGuest).withValues(alpha: 0.15),
+                  color: _getPassBadgeColor(user.passType, user.isGuest, user.isIitIsm).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
-                    color: _getPassBadgeColor(user.passType, user.isGuest),
+                    color: _getPassBadgeColor(user.passType, user.isGuest, user.isIitIsm),
                     width: 0.8,
                   ),
                 ),
@@ -243,7 +243,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       width: 6,
                       height: 6,
                       decoration: BoxDecoration(
-                        color: _getPassBadgeColor(user.passType, user.isGuest),
+                        color: _getPassBadgeColor(user.passType, user.isGuest, user.isIitIsm),
                         shape: BoxShape.circle,
                       ),
                     )
@@ -255,7 +255,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       style: GoogleFonts.rajdhani(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: _getPassBadgeColor(user.passType, user.isGuest),
+                        color: _getPassBadgeColor(user.passType, user.isGuest, user.isIitIsm),
                         letterSpacing: 0.8,
                       ),
                     ),
@@ -380,7 +380,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: _getPassBadgeColor(user.passType, user.isGuest).withValues(alpha: 0.7),
+                      color: _getPassBadgeColor(user.passType, user.isGuest, user.isIitIsm).withValues(alpha: 0.7),
                       width: 1.2,
                     ),
                   ),
@@ -459,21 +459,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Color _getPassBadgeColor(int passType, bool isGuest) {
+  Color _getPassBadgeColor(int passType, bool isGuest, [bool isIitIsm = false]) {
     if (isGuest) return const Color(0xFFFFB300);
+    if (isIitIsm && (passType == 0 || passType == 1)) {
+      return const Color(0xFF00E676); // Emerald Green (Student Pass)
+    }
     switch (passType) {
       case 0:
         return const Color(0xFF00E676); // Emerald Green (Student Pass)
       case 1:
         return const Color(0xFFFFB300); // Amber (Guest Pass)
       case 2:
-        return const Color(0xFFCFD8DC); // Silver Pass (Store page)
+        return const Color(0xFFCFD8DC); // Silver Pass
       case 3:
-        return const Color(0xFFFFB300); // Gold Pass (Store page)
+        return const Color(0xFFFFB300); // Gold Pass
       case 4:
-        return const Color(0xFF00E5FF); // Diamond Pass (Store page)
+        return const Color(0xFF00E5FF); // Diamond Pass
       case 5:
-        return const Color(0xFFFF4081); // Diamond+ Merch Pass (Store page)
+        return const Color(0xFFFF4081); // Diamond+ Merch Pass
       default:
         return const Color(0xFF00E676);
     }
@@ -637,7 +640,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _showEnlargedPassModal(BuildContext context, AttendeeProfile user, Color primaryColor) {
-    final badgeColor = _getPassBadgeColor(user.passType, user.isGuest);
+    final badgeColor = _getPassBadgeColor(user.passType, user.isGuest, user.isIitIsm);
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
@@ -804,7 +807,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildUserStatusBanner(AttendeeProfile user, Color primaryColor) {
-    final badgeColor = _getPassBadgeColor(user.passType, user.isGuest);
+    final badgeColor = _getPassBadgeColor(user.passType, user.isGuest, user.isIitIsm);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
