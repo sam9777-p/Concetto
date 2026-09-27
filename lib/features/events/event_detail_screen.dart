@@ -1131,14 +1131,15 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
 
   // --- Deep Link Share via Share Plus ---
   Future<void> _shareEvent(BuildContext context) async {
-    final webUrl = 'https://sam9777-p.github.io/Concetto/events?id=${event.id}';
-    final shareText = "🚀 *${event.title}* — Concetto'26 Centenary Edition\n"
-        "IIT (ISM) Dhanbad\n\n"
-        "📅 Date: ${event.date}\n"
-        "📍 Venue: ${event.venue}\n"
-        "${event.prizePool.isNotEmpty ? '🏆 Prize Pool: ${event.prizePool}\n' : ''}"
-        "👥 Team: ${event.teamSize}\n\n"
-        "Open in Concetto'26 App:\n$webUrl";
+  final webUrl = 'https://concetto.in/redirect.html?id=${event.id}';
+  final shareText =
+      "🚀 *${event.title}* — Concetto'26 Centenary Edition\n"
+      "IIT (ISM) Dhanbad\n\n"
+      "📅 Date: ${event.date}\n"
+      "📍 Venue: ${event.venue}\n"
+      "${event.prizePool.isNotEmpty ? '🏆 Prize Pool: ${event.prizePool}\n' : ''}"
+      "👥 Team: ${event.teamSize}\n\n"
+      "Open in Concetto'26 App:\n$webUrl";
 
     Rect? sharePositionOrigin;
     try {
