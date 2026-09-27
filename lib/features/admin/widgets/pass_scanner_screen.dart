@@ -66,6 +66,25 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
     });
   }
 
+  String _extractPhone(Map<String, dynamic> data) {
+    for (final key in [
+      'phone',
+      'phoneNumber',
+      'phone_number',
+      'mobile',
+      'contact',
+      'contactNumber',
+      'mobileNumber',
+      'userPhone',
+    ]) {
+      final val = data[key]?.toString().trim();
+      if (val != null && val.isNotEmpty && val != 'null' && val != 'N/A') {
+        return val;
+      }
+    }
+    return '';
+  }
+
   Color _getBadgeColor(int passType) {
     switch (passType) {
       case 0:
@@ -138,19 +157,9 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
 
     for (final db in databases) {
       try {
-        // Step 0: If an accidental stub document was previously created at users/$passIdToSearch, purge it
-        try {
-          final stubDoc = await db.collection('users').doc(passIdToSearch).get().timeout(const Duration(seconds: 3));
-          if (stubDoc.exists) {
-            final sData = stubDoc.data();
-            if (sData != null && (sData['email'] == null || sData['email'].toString().isEmpty)) {
-              await db.collection('users').doc(passIdToSearch).delete();
-              debugPrint('Purged accidental stub: users/$passIdToSearch');
-            }
-          }
-        } catch (_) {}
+        DocumentSnapshot<Map<String, dynamic>>? primaryUserDoc;
 
-        // Step 1: Query 'users' by passId field (documents are keyed by unique Auth UID)
+        // Step 1: Query 'users' collection by passId field
         final userQuery = await db
             .collection('users')
             .where('passId', isEqualTo: passIdToSearch)
@@ -158,31 +167,28 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
             .timeout(const Duration(seconds: 4));
 
         for (final doc in userQuery.docs) {
-          final d = doc.data();
-          if (d.containsKey('email') && d['email'] != null && d['email'].toString().isNotEmpty) {
-            passData = d;
-            resolvedUserId = d['uid']?.toString() ?? doc.id;
-            resolvedPassId = d['passId']?.toString() ?? passIdToSearch;
-            break;
+          // If this doc was accidentally created with passId as document ID, purge it immediately
+          if (doc.id.startsWith('CON-')) {
+            final possibleUid = doc.data()['uid']?.toString();
+            if (possibleUid != null && !possibleUid.startsWith('CON-') && possibleUid.length >= 20) {
+              resolvedUserId = possibleUid;
+            }
+            try {
+              await db.collection('users').doc(doc.id).delete();
+              debugPrint('Purged accidental passId doc: users/${doc.id}');
+            } catch (_) {}
+            continue;
           }
+
+          // Real user document found (keyed by unique Auth UID)!
+          primaryUserDoc = doc;
+          resolvedUserId = doc.id;
+          break;
         }
 
-        if (passData != null) break;
-
-        // Step 2: Fallback check formatted ID (e.g. CON-26-...) in 'users'
-        if (!passIdToSearch.startsWith('CON-')) {
+        // Step 2: Fallback query formatted ID (e.g. CON-26-...) in 'users'
+        if (primaryUserDoc == null && !passIdToSearch.startsWith('CON-')) {
           final formatted = 'CON-26-${passIdToSearch.toUpperCase()}';
-          try {
-            final stubFormatted = await db.collection('users').doc(formatted).get().timeout(const Duration(seconds: 3));
-            if (stubFormatted.exists) {
-              final sData = stubFormatted.data();
-              if (sData != null && (sData['email'] == null || sData['email'].toString().isEmpty)) {
-                await db.collection('users').doc(formatted).delete();
-                debugPrint('Purged accidental stub: users/$formatted');
-              }
-            }
-          } catch (_) {}
-
           final pQuery = await db
               .collection('users')
               .where('passId', isEqualTo: formatted)
@@ -190,30 +196,50 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
               .timeout(const Duration(seconds: 4));
 
           for (final doc in pQuery.docs) {
-            final d = doc.data();
-            if (d.containsKey('email') && d['email'] != null && d['email'].toString().isNotEmpty) {
-              passData = d;
-              resolvedUserId = d['uid']?.toString() ?? doc.id;
-              resolvedPassId = formatted;
-              break;
+            if (doc.id.startsWith('CON-')) {
+              final possibleUid = doc.data()['uid']?.toString();
+              if (possibleUid != null && !possibleUid.startsWith('CON-') && possibleUid.length >= 20) {
+                resolvedUserId = possibleUid;
+              }
+              try {
+                await db.collection('users').doc(doc.id).delete();
+              } catch (_) {}
+              continue;
             }
+
+            primaryUserDoc = doc;
+            resolvedUserId = doc.id;
+            resolvedPassId = formatted;
+            break;
           }
         }
 
-        if (passData != null) break;
+        // Step 3: If primaryUserDoc was not yet found, check direct UID lookup if available
+        final targetUid = (resolvedUserId.isNotEmpty && !resolvedUserId.startsWith('CON-'))
+            ? resolvedUserId
+            : (userIdHint != null && userIdHint.isNotEmpty ? userIdHint : '');
 
-        // Step 3: If userIdHint was provided, check 'users' by UID (unique big ID)
-        if (userIdHint != null && userIdHint.isNotEmpty) {
-          final uDoc = await db.collection('users').doc(userIdHint).get().timeout(const Duration(seconds: 4));
+        if (primaryUserDoc == null && targetUid.isNotEmpty) {
+          final uDoc = await db.collection('users').doc(targetUid).get().timeout(const Duration(seconds: 4));
           if (uDoc.exists && uDoc.data() != null) {
-            final d = uDoc.data()!;
-            if (d.containsKey('email') && d['email'] != null && d['email'].toString().isNotEmpty) {
-              passData = d;
-              resolvedUserId = uDoc.id;
-              resolvedPassId = d['passId']?.toString() ?? passIdToSearch;
-              break;
-            }
+            primaryUserDoc = uDoc;
+            resolvedUserId = uDoc.id;
           }
+        }
+
+        // Clean up any accidental stub created at doc(passIdToSearch)
+        try {
+          final stubDoc = await db.collection('users').doc(passIdToSearch).get().timeout(const Duration(seconds: 2));
+          if (stubDoc.exists) {
+            await db.collection('users').doc(passIdToSearch).delete();
+          }
+        } catch (_) {}
+
+        if (primaryUserDoc != null && primaryUserDoc.data() != null) {
+          passData = primaryUserDoc.data()!;
+          resolvedUserId = primaryUserDoc.id; // GUARANTEED UNIQUE BIG UID!
+          resolvedPassId = passData['passId']?.toString() ?? passIdToSearch;
+          break;
         }
       } catch (e) {
         debugPrint('Error searching user in ${db.databaseId}: $e');
@@ -228,7 +254,7 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
     if (passData != null) {
       final name = passData['name']?.toString() ?? 'Attendee';
       final email = passData['email']?.toString() ?? 'N/A';
-      final phone = passData['phone']?.toString() ?? 'N/A';
+      final phone = _extractPhone(passData);
       final college = passData['college']?.toString() ?? 'N/A';
       final passTypeRaw = passData['passType'];
       int passType = 1;
@@ -405,12 +431,13 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
                         : () async {
                             setDlgState(() => isSubmitting = true);
                             try {
+                              final effectivePhone = phone.isNotEmpty && phone != 'N/A' ? phone : 'Not Provided';
                               final logData = {
                                 'userId': userId,
                                 'passId': passId,
                                 'name': name,
                                 'email': email,
-                                'phone': phone,
+                                'phone': effectivePhone,
                                 'college': college,
                                 'passCategory': passCategory,
                                 'scanNumber': scanCount + 1,
@@ -429,16 +456,24 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
 
                               for (final db in _getDatabases()) {
                                 try {
-                                  // 1. Continuous log of every scan in scan_logs collection
-                                  await db.collection('scan_logs').add(logData).timeout(const Duration(seconds: 4));
+                                  // Perform BOTH writes simultaneously:
+                                  // 1. Continuous audit log of every scan in scan_logs collection
+                                  // 2. Increment scanCount on the user's primary document (unique big UID) in users
+                                  final futures = <Future>[
+                                    db.collection('scan_logs').add(logData),
+                                  ];
 
-                                  // 2. Increment scanCount ONLY on the user's primary document (unique big UID)
-                                  if (userId.isNotEmpty && !userId.startsWith('CON-')) {
-                                    await db.collection('users').doc(userId).set(
-                                          userUpdateData,
-                                          SetOptions(merge: true),
-                                        ).timeout(const Duration(seconds: 4));
+                                  if (userId.isNotEmpty) {
+                                    futures.add(
+                                      db.collection('users').doc(userId).set(
+                                            userUpdateData,
+                                            SetOptions(merge: true),
+                                          ),
+                                    );
                                   }
+
+                                  await Future.wait(futures).timeout(const Duration(seconds: 4));
+                                  debugPrint('Simultaneous write completed for scan_logs and users/$userId in ${db.databaseId}');
                                 } catch (e) {
                                   debugPrint('Notice logging scan in ${db.databaseId}: $e');
                                 }

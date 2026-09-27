@@ -126,10 +126,8 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
   }) async {
     for (final db in _getFirestoreInstances()) {
       try {
-        await Future.wait([
-          db.collection('users').doc(uid).set(userData, SetOptions(merge: true)),
-          db.collection('users').doc(passId).set(userData, SetOptions(merge: true)),
-        ]).timeout(const Duration(seconds: 4));
+        // ONLY persist user profile under their unique Auth UID
+        await db.collection('users').doc(uid).set(userData, SetOptions(merge: true)).timeout(const Duration(seconds: 4));
         debugPrint('Successfully persisted user to Firestore database ${db.databaseId}');
       } catch (e) {
         debugPrint('Notice persisting to Firestore (${db.databaseId}): $e');
@@ -227,6 +225,11 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
           parsedPassType = int.tryParse(passTypeRaw.toString()) ?? 1;
         }
 
+        final existingPhone = (data['phone'] as String?)?.trim() ?? '';
+        final resolvedPhone = existingPhone.isNotEmpty
+            ? existingPhone
+            : (state.phone.isNotEmpty ? state.phone : (user.phoneNumber ?? ''));
+
         final profile = AttendeeProfile(
           uid: user.uid,
           name: (data['name'] as String?)?.isNotEmpty == true
@@ -234,7 +237,7 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
               : (user.displayName ?? user.email!.split('@').first),
           email: user.email!,
           college: data['college'] as String? ?? 'IIT (ISM) Dhanbad',
-          phone: data['phone'] as String? ?? user.phoneNumber ?? '',
+          phone: resolvedPhone,
           passId: data['passId'] as String? ?? 'CON-26-${user.uid.substring(0, 6).toUpperCase()}',
           passType: parsedPassType,
           isGuest: false,
@@ -258,13 +261,14 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
     final passType = isIit ? 0 : 1;
     final college = isIit ? 'Indian Institute of Technology (ISM) Dhanbad' : 'Visiting Participant';
     final name = user.displayName?.isNotEmpty == true ? user.displayName! : user.email!.split('@').first;
+    final fallbackPhone = state.phone.isNotEmpty ? state.phone : (user.phoneNumber ?? '');
 
     final profile = AttendeeProfile(
       uid: user.uid,
       name: name,
       email: user.email!,
       college: college,
-      phone: user.phoneNumber ?? '',
+      phone: fallbackPhone,
       passId: passId,
       passType: passType,
       isGuest: false,
@@ -282,7 +286,7 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
         'uid': user.uid,
         'name': name,
         'email': user.email!,
-        'phone': user.phoneNumber ?? '',
+        'phone': fallbackPhone,
         'college': college,
         'isIitIsm': isIit,
         'passId': passId,
