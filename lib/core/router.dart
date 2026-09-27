@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'theme/app_theme.dart';
 import '../features/home/home_screen.dart';
 import '../features/events/events_screen.dart';
 import '../features/events/event_detail_screen.dart';
@@ -12,55 +15,161 @@ import '../features/admin/event_editor_screen.dart';
 import '../features/splash/splash_screen.dart';
 import '../features/store/store_screen.dart';
 
-class MainWrapper extends StatelessWidget {
+class MainWrapper extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
 
   const MainWrapper({super.key, required this.navigationShell});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF0B0403),
-          border: Border(
-            top: BorderSide(
-              color: Color(0x33FF4500),
-              width: 0.8,
-            ),
+  State<MainWrapper> createState() => _MainWrapperState();
+}
+
+class _MainWrapperState extends State<MainWrapper> {
+  final List<int> _tabHistory = [0];
+  DateTime? _lastBackPressTime;
+
+  @override
+  void didUpdateWidget(covariant MainWrapper oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final current = widget.navigationShell.currentIndex;
+    if (_tabHistory.isEmpty || _tabHistory.last != current) {
+      _tabHistory.remove(current);
+      _tabHistory.add(current);
+    }
+  }
+
+  void _onDestinationSelected(int index) {
+    if (index == widget.navigationShell.currentIndex) {
+      widget.navigationShell.goBranch(
+        index,
+        initialLocation: true,
+      );
+      return;
+    }
+
+    setState(() {
+      _tabHistory.remove(index);
+      _tabHistory.add(index);
+    });
+
+    widget.navigationShell.goBranch(
+      index,
+      initialLocation: false,
+    );
+  }
+
+  void _handleBackPress() {
+    // 1. If history has more than 1 tab, step backwards in tab history
+    if (_tabHistory.length > 1) {
+      setState(() {
+        _tabHistory.removeLast(); // pop current tab
+        final previousIndex = _tabHistory.last;
+        widget.navigationShell.goBranch(previousIndex);
+      });
+      return;
+    }
+
+    // 2. If somehow not on Home (index 0) and history is empty/single, go to Home
+    if (widget.navigationShell.currentIndex != 0) {
+      setState(() {
+        _tabHistory.clear();
+        _tabHistory.add(0);
+        widget.navigationShell.goBranch(0);
+      });
+      return;
+    }
+
+    // 3. User is on Home (index 0) -> Double-tap to exit Concetto
+    final now = DateTime.now();
+    if (_lastBackPressTime == null ||
+        now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+      _lastBackPressTime = now;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.info_outline, color: AppTheme.neonOrange, size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Press back again to exit Concetto',
+                  style: GoogleFonts.rajdhani(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFF1B0704),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: const BorderSide(color: Color(0x66FF4500), width: 1),
           ),
         ),
-        child: NavigationBar(
-          selectedIndex: navigationShell.currentIndex,
-          onDestinationSelected: (index) => navigationShell.goBranch(index),
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'Home',
+      );
+    } else {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      SystemNavigator.pop();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _handleBackPress();
+      },
+      child: Scaffold(
+        body: widget.navigationShell,
+        bottomNavigationBar: Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF0B0403),
+            border: Border(
+              top: BorderSide(
+                color: Color(0x33FF4500),
+                width: 0.8,
+              ),
             ),
-            NavigationDestination(
-              icon: Icon(Icons.bolt_outlined),
-              selectedIcon: Icon(Icons.bolt),
-              label: 'Events',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.calendar_month_outlined),
-              selectedIcon: Icon(Icons.calendar_month),
-              label: 'Schedule',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.shopping_bag_outlined),
-              selectedIcon: Icon(Icons.shopping_bag),
-              label: 'Store',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.info_outline),
-              selectedIcon: Icon(Icons.info),
-              label: 'About',
-            ),
-          ],
+          ),
+          child: NavigationBar(
+            selectedIndex: widget.navigationShell.currentIndex,
+            onDestinationSelected: _onDestinationSelected,
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home),
+                label: 'Home',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.bolt_outlined),
+                selectedIcon: Icon(Icons.bolt),
+                label: 'Events',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.calendar_month_outlined),
+                selectedIcon: Icon(Icons.calendar_month),
+                label: 'Schedule',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.shopping_bag_outlined),
+                selectedIcon: Icon(Icons.shopping_bag),
+                label: 'Store',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.info_outline),
+                selectedIcon: Icon(Icons.info),
+                label: 'About',
+              ),
+            ],
+          ),
         ),
       ),
     );

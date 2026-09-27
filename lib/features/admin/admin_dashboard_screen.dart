@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/network/repositories.dart';
 import '../../core/theme/app_theme.dart';
@@ -361,52 +362,68 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.scaffoldBg,
-      appBar: AppBar(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        } else {
+          context.go('/');
+        }
+      },
+      child: Scaffold(
         backgroundColor: AppTheme.scaffoldBg,
-        title: Text(
-          'ORGANIZER COMMAND HUB',
-          style: GoogleFonts.orbitron(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-            color: Colors.white,
-          ),
-        ),
-        actions: [
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppTheme.cyberAmber.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppTheme.cyberAmber, width: 0.8),
+        appBar: AppBar(
+          backgroundColor: AppTheme.scaffoldBg,
+          title: Text(
+            'ORGANIZER COMMAND HUB',
+            style: GoogleFonts.orbitron(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+              color: Colors.white,
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.shield, color: AppTheme.cyberAmber, size: 13),
-                const SizedBox(width: 4),
-                Text(
-                  'MASTER AUTH',
-                  style: GoogleFonts.rajdhani(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.cyberAmber,
-                    letterSpacing: 0.5,
+          ),
+          actions: [
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppTheme.cyberAmber.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: AppTheme.cyberAmber, width: 0.8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.shield, color: AppTheme.cyberAmber, size: 13),
+                  const SizedBox(width: 4),
+                  Text(
+                    'MASTER AUTH',
+                    style: GoogleFonts.rajdhani(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.cyberAmber,
+                      letterSpacing: 0.5,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          IconButton(
-            tooltip: 'Exit Organizer Portal',
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ],
-      ),
+            IconButton(
+              tooltip: 'Exit Organizer Portal',
+              icon: const Icon(Icons.close),
+              onPressed: () {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                } else {
+                  context.go('/');
+                }
+              },
+            ),
+          ],
+        ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -514,8 +531,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildBoxyModuleCard({
     required String title,

@@ -1744,6 +1744,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   void _showAuthModal(BuildContext context, Color primaryColor) {
     final emailController = TextEditingController();
     final passController = TextEditingController();
+    final confirmPassController = TextEditingController();
     final nameController = TextEditingController();
     final phoneController = TextEditingController();
     final otherCollegeController = TextEditingController();
@@ -1755,6 +1756,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     bool isSignUp = false;
     bool isLoading = false;
     bool obscurePassword = true;
+    bool obscureConfirmPassword = true;
     String? localError;
 
     showModalBottomSheet(
@@ -2033,6 +2035,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       ),
                     ),
+                    if (isSignUp) ...[
+                      const SizedBox(height: 12),
+                      // Confirm Password
+                      TextField(
+                        controller: confirmPassController,
+                        obscureText: obscureConfirmPassword,
+                        style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                        decoration: InputDecoration(
+                          labelText: 'Confirm Password *',
+                          labelStyle: GoogleFonts.rajdhani(color: Colors.white60),
+                          prefixIcon: Icon(Icons.lock_outline, color: primaryColor, size: 20),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                              color: Colors.white38,
+                              size: 18,
+                            ),
+                            onPressed: () => setModalState(() => obscureConfirmPassword = !obscureConfirmPassword),
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFF180A08),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ],
                     if (!isSignUp) ...[
                       const SizedBox(height: 4),
                       Align(
@@ -2080,6 +2107,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 }
 
                                 if (isSignUp) {
+                                  final confirmPassword = confirmPassController.text;
+                                  if (confirmPassword.isEmpty) {
+                                    setModalState(() => localError = 'Please confirm your password.');
+                                    return;
+                                  }
+
+                                  if (password != confirmPassword) {
+                                    setModalState(() => localError = 'Passwords do not match. Please re-enter.');
+                                    return;
+                                  }
+
                                   final name = nameController.text.trim();
                                   final phone = phoneController.text.trim();
                                   final college = isIitSelected

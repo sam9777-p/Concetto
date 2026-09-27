@@ -1046,7 +1046,12 @@ extension _HomeScreenHelpers on _HomeScreenState {
                           ),
                           onPressed: () {
                             Navigator.pop(ctx);
-                            context.go(ann.route!.trim());
+                            final targetRoute = ann.route!.trim();
+                            if (targetRoute.startsWith('/events/')) {
+                              context.push(targetRoute);
+                            } else {
+                              context.go(targetRoute);
+                            }
                           },
                           icon: const Icon(Icons.arrow_forward, size: 14),
                           label: Text(
