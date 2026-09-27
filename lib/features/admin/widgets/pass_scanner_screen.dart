@@ -18,7 +18,7 @@ class PassScannerScreen extends StatefulWidget {
 
 class _PassScannerScreenState extends State<PassScannerScreen> {
   final MobileScannerController _scannerController = MobileScannerController(
-    detectionSpeed: DetectionSpeed.noDuplicates,
+    detectionSpeed: DetectionSpeed.normal,
     facing: CameraFacing.back,
     torchEnabled: false,
   );
@@ -28,6 +28,8 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
   bool _isTorchOn = false;
   String? _statusMessage;
   bool _isError = false;
+  String? _lastScannedCode;
+  DateTime? _lastScannedTime;
 
   static List<FirebaseFirestore> _getDatabases() {
     final list = <FirebaseFirestore>[];
@@ -54,6 +56,16 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
     super.dispose();
   }
 
+  void _resetScannerForNextPass() {
+    if (!mounted) return;
+    setState(() {
+      _isProcessing = false;
+      _statusMessage = null;
+      _isError = false;
+      _manualIdController.clear();
+    });
+  }
+
   Color _getBadgeColor(int passType) {
     switch (passType) {
       case 0:
@@ -75,6 +87,16 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
 
   Future<void> _handleBarcodeScanned(String rawValue) async {
     if (_isProcessing) return;
+
+    final now = DateTime.now();
+    if (_lastScannedCode == rawValue && _lastScannedTime != null) {
+      if (now.difference(_lastScannedTime!).inMilliseconds < 2500) {
+        return;
+      }
+    }
+
+    _lastScannedCode = rawValue;
+    _lastScannedTime = now;
     HapticFeedback.mediumImpact();
     await _lookupAndVerifyPass(rawValue);
   }
@@ -116,62 +138,81 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
 
     for (final db in databases) {
       try {
-        // 1. Fetch directly from 'users' collection by document ID (passId)
-        final passDoc = await db.collection('users').doc(passIdToSearch).get().timeout(const Duration(seconds: 4));
-        if (passDoc.exists && passDoc.data() != null) {
-          passData = passDoc.data()!;
-          resolvedPassId = passData['passId']?.toString() ?? passIdToSearch;
-          resolvedUserId = passData['uid']?.toString() ?? passDoc.id;
-          break;
-        }
+        // Step 0: If an accidental stub document was previously created at users/$passIdToSearch, purge it
+        try {
+          final stubDoc = await db.collection('users').doc(passIdToSearch).get().timeout(const Duration(seconds: 3));
+          if (stubDoc.exists) {
+            final sData = stubDoc.data();
+            if (sData != null && (sData['email'] == null || sData['email'].toString().isEmpty)) {
+              await db.collection('users').doc(passIdToSearch).delete();
+              debugPrint('Purged accidental stub: users/$passIdToSearch');
+            }
+          }
+        } catch (_) {}
 
-        // 2. Query 'users' collection where passId == passIdToSearch
+        // Step 1: Query 'users' by passId field (documents are keyed by unique Auth UID)
         final userQuery = await db
             .collection('users')
             .where('passId', isEqualTo: passIdToSearch)
-            .limit(1)
             .get()
             .timeout(const Duration(seconds: 4));
-        if (userQuery.docs.isNotEmpty) {
-          passData = userQuery.docs.first.data();
-          resolvedPassId = passData['passId']?.toString() ?? passIdToSearch;
-          resolvedUserId = passData['uid']?.toString() ?? userQuery.docs.first.id;
-          break;
-        }
 
-        // 3. If userIdHint was provided, check 'users' by UID
-        if (userIdHint != null && userIdHint.isNotEmpty) {
-          final uDoc = await db.collection('users').doc(userIdHint).get().timeout(const Duration(seconds: 4));
-          if (uDoc.exists && uDoc.data() != null) {
-            passData = uDoc.data()!;
-            resolvedPassId = passData['passId']?.toString() ?? passIdToSearch;
-            resolvedUserId = uDoc.id;
+        for (final doc in userQuery.docs) {
+          final d = doc.data();
+          if (d.containsKey('email') && d['email'] != null && d['email'].toString().isNotEmpty) {
+            passData = d;
+            resolvedUserId = d['uid']?.toString() ?? doc.id;
+            resolvedPassId = d['passId']?.toString() ?? passIdToSearch;
             break;
           }
         }
 
-        // 4. Fallback check formatted ID (e.g. CON-26-...) in 'users'
+        if (passData != null) break;
+
+        // Step 2: Fallback check formatted ID (e.g. CON-26-...) in 'users'
         if (!passIdToSearch.startsWith('CON-')) {
           final formatted = 'CON-26-${passIdToSearch.toUpperCase()}';
-          final fDoc = await db.collection('users').doc(formatted).get().timeout(const Duration(seconds: 4));
-          if (fDoc.exists && fDoc.data() != null) {
-            passData = fDoc.data()!;
-            resolvedPassId = formatted;
-            resolvedUserId = passData['uid']?.toString() ?? fDoc.id;
-            break;
-          }
+          try {
+            final stubFormatted = await db.collection('users').doc(formatted).get().timeout(const Duration(seconds: 3));
+            if (stubFormatted.exists) {
+              final sData = stubFormatted.data();
+              if (sData != null && (sData['email'] == null || sData['email'].toString().isEmpty)) {
+                await db.collection('users').doc(formatted).delete();
+                debugPrint('Purged accidental stub: users/$formatted');
+              }
+            }
+          } catch (_) {}
 
           final pQuery = await db
               .collection('users')
               .where('passId', isEqualTo: formatted)
-              .limit(1)
               .get()
               .timeout(const Duration(seconds: 4));
-          if (pQuery.docs.isNotEmpty) {
-            passData = pQuery.docs.first.data();
-            resolvedPassId = formatted;
-            resolvedUserId = passData['uid']?.toString() ?? pQuery.docs.first.id;
-            break;
+
+          for (final doc in pQuery.docs) {
+            final d = doc.data();
+            if (d.containsKey('email') && d['email'] != null && d['email'].toString().isNotEmpty) {
+              passData = d;
+              resolvedUserId = d['uid']?.toString() ?? doc.id;
+              resolvedPassId = formatted;
+              break;
+            }
+          }
+        }
+
+        if (passData != null) break;
+
+        // Step 3: If userIdHint was provided, check 'users' by UID (unique big ID)
+        if (userIdHint != null && userIdHint.isNotEmpty) {
+          final uDoc = await db.collection('users').doc(userIdHint).get().timeout(const Duration(seconds: 4));
+          if (uDoc.exists && uDoc.data() != null) {
+            final d = uDoc.data()!;
+            if (d.containsKey('email') && d['email'] != null && d['email'].toString().isNotEmpty) {
+              passData = d;
+              resolvedUserId = uDoc.id;
+              resolvedPassId = d['passId']?.toString() ?? passIdToSearch;
+              break;
+            }
           }
         }
       } catch (e) {
@@ -198,14 +239,23 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
       }
       final passCategoryTitle = AttendeeProfile.passCategoryNames[passType] ?? 'ATTENDEE PASS';
 
+      // Scan Count tracking from users collection
+      final scanCountRaw = passData['scanCount'] ?? passData['scannedCount'] ?? passData['timesScanned'];
+      int scanCount = 0;
+      if (scanCountRaw is int) {
+        scanCount = scanCountRaw;
+      } else if (scanCountRaw != null) {
+        scanCount = int.tryParse(scanCountRaw.toString()) ?? 0;
+      }
+
       setState(() {
-        _isProcessing = false;
         _statusMessage = null;
       });
 
-      _showAdmissionDialog(
+      await _showAdmissionDialog(
         userId: resolvedUserId,
         passId: resolvedPassId,
+        scanCount: scanCount,
         name: name,
         email: email,
         phone: phone,
@@ -213,6 +263,8 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
         passType: passType,
         passCategory: passCategoryTitle,
       );
+
+      _resetScannerForNextPass();
     } else {
       setState(() {
         _isProcessing = false;
@@ -225,23 +277,24 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
     }
   }
 
-  void _showAdmissionDialog({
+  Future<void> _showAdmissionDialog({
     required String userId,
     required String passId,
+    required int scanCount,
     required String name,
     required String email,
     required String phone,
     required String college,
     required int passType,
     required String passCategory,
-  }) {
+  }) async {
     final messenger = ScaffoldMessenger.of(context);
     final badgeColor = _getBadgeColor(passType);
     bool isSubmitting = false;
 
-    showDialog(
+    await showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (dlgContext) => StatefulBuilder(
         builder: (context, setDlgState) => Dialog(
           backgroundColor: const Color(0xFF140604),
@@ -255,7 +308,7 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header with badge
+                // Header with badge (No TYPE text)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -272,7 +325,7 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
                           Icon(Icons.verified, size: 14, color: badgeColor),
                           const SizedBox(width: 6),
                           Text(
-                            '$passCategory [TYPE $passType]',
+                            passCategory.toUpperCase(),
                             style: GoogleFonts.orbitron(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
@@ -302,7 +355,7 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Details Card
+                // Details Card: Phone Number, Pass Category, Pass ID, Scanned Earlier, Email, College
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
@@ -312,13 +365,25 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
                   ),
                   child: Column(
                     children: [
-                      _buildDetailRow(Icons.school, 'College', college),
-                      const Divider(color: Colors.white10, height: 16),
-                      _buildDetailRow(Icons.email, 'Email', email),
-                      const Divider(color: Colors.white10, height: 16),
-                      _buildDetailRow(Icons.phone, 'Phone', phone),
-                      const Divider(color: Colors.white10, height: 16),
+                      _buildDetailRow(Icons.verified_outlined, 'Category', passCategory, highlight: true, color: badgeColor),
+                      const Divider(color: Colors.white10, height: 14),
                       _buildDetailRow(Icons.qr_code, 'Pass ID', passId, highlight: true, color: badgeColor),
+                      const Divider(color: Colors.white10, height: 14),
+                      _buildDetailRow(
+                        Icons.history,
+                        'Scanned',
+                        scanCount == 0
+                            ? '0 times (First Entry)'
+                            : '$scanCount ${scanCount == 1 ? "time" : "times"} earlier',
+                        highlight: scanCount > 0,
+                        color: scanCount > 0 ? Colors.amber : const Color(0xFF00E676),
+                      ),
+                      const Divider(color: Colors.white10, height: 14),
+                      _buildDetailRow(Icons.phone_android, 'Phone', phone.isNotEmpty && phone != 'N/A' ? phone : 'Not Provided'),
+                      const Divider(color: Colors.white10, height: 14),
+                      _buildDetailRow(Icons.email_outlined, 'Email', email.isNotEmpty && email != 'N/A' ? email : 'Not Provided'),
+                      const Divider(color: Colors.white10, height: 14),
+                      _buildDetailRow(Icons.school_outlined, 'College', college.isNotEmpty && college != 'N/A' ? college : 'Not Provided'),
                     ],
                   ),
                 ),
@@ -347,16 +412,33 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
                                 'email': email,
                                 'phone': phone,
                                 'college': college,
-                                'passType': passType,
                                 'passCategory': passCategory,
+                                'scanNumber': scanCount + 1,
+                                'scannedEarlier': scanCount,
                                 'logTime': FieldValue.serverTimestamp(),
                                 'logTimeIso': DateTime.now().toIso8601String(),
                                 'scannedBy': 'Organizer Command Hub',
                               };
 
+                              final userUpdateData = {
+                                'scanCount': FieldValue.increment(1),
+                                'lastScannedAt': FieldValue.serverTimestamp(),
+                                'lastScannedAtIso': DateTime.now().toIso8601String(),
+                                'lastScannedBy': 'Organizer Command Hub',
+                              };
+
                               for (final db in _getDatabases()) {
                                 try {
+                                  // 1. Continuous log of every scan in scan_logs collection
                                   await db.collection('scan_logs').add(logData).timeout(const Duration(seconds: 4));
+
+                                  // 2. Increment scanCount ONLY on the user's primary document (unique big UID)
+                                  if (userId.isNotEmpty && !userId.startsWith('CON-')) {
+                                    await db.collection('users').doc(userId).set(
+                                          userUpdateData,
+                                          SetOptions(merge: true),
+                                        ).timeout(const Duration(seconds: 4));
+                                  }
                                 } catch (e) {
                                   debugPrint('Notice logging scan in ${db.databaseId}: $e');
                                 }
@@ -430,7 +512,7 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
         Icon(icon, size: 15, color: highlight ? (color ?? AppTheme.neonOrange) : Colors.white38),
         const SizedBox(width: 8),
         SizedBox(
-          width: 60,
+          width: 70,
           child: Text(
             label,
             style: GoogleFonts.rajdhani(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.bold),
@@ -469,6 +551,11 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
         centerTitle: false,
         backgroundColor: const Color(0xFF140604),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white70),
+            tooltip: 'Reset Scanner',
+            onPressed: _resetScannerForNextPass,
+          ),
           IconButton(
             icon: Icon(
               _isTorchOn ? Icons.flash_on : Icons.flash_off,

@@ -503,74 +503,108 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                                                   crossAxisAlignment: CrossAxisAlignment.start,
                                                   children: [
                                                     Row(
-                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                      crossAxisAlignment: CrossAxisAlignment.center,
                                                       children: [
-                                                        Row(
-                                                          mainAxisSize: MainAxisSize.min,
-                                                          children: [
-                                                            Container(
-                                                              padding: const EdgeInsets.symmetric(
-                                                                horizontal: 7,
-                                                                vertical: 2.5,
-                                                              ),
-                                                              decoration: BoxDecoration(
-                                                                color: primaryColor.withValues(alpha: 0.15),
-                                                                borderRadius: BorderRadius.circular(6),
-                                                                border: Border.all(
-                                                                  color: primaryColor.withValues(alpha: 0.4),
-                                                                ),
-                                                              ),
-                                                              child: Text(
-                                                                event.category.toUpperCase(),
-                                                                style: GoogleFonts.rajdhani(
-                                                                  fontSize: 9.5,
-                                                                  fontWeight: FontWeight.w800,
-                                                                  color: primaryColor,
-                                                                  letterSpacing: 0.8,
-                                                                ),
-                                                              ),
-                                                            ),
-                                                            if (event.isWatchableOnly) ...[
-                                                              const SizedBox(width: 5),
-                                                              Container(
-                                                                padding: const EdgeInsets.symmetric(
-                                                                  horizontal: 5,
-                                                                  vertical: 2,
-                                                                ),
-                                                                decoration: BoxDecoration(
-                                                                  color: Colors.amber.withValues(alpha: 0.15),
-                                                                  borderRadius: BorderRadius.circular(4),
-                                                                  border: Border.all(
-                                                                    color: Colors.amber.withValues(alpha: 0.5),
-                                                                    width: 0.7,
+                                                        // Category Badge & optional Open Tag
+                                                        Flexible(
+                                                          flex: 3,
+                                                          child: Row(
+                                                            mainAxisSize: MainAxisSize.min,
+                                                            children: [
+                                                              Flexible(
+                                                                child: Container(
+                                                                  padding: const EdgeInsets.symmetric(
+                                                                    horizontal: 6,
+                                                                    vertical: 2.5,
                                                                   ),
-                                                                ),
-                                                                child: Text(
-                                                                  'OPEN',
-                                                                  style: GoogleFonts.rajdhani(
-                                                                    fontSize: 8.5,
-                                                                    fontWeight: FontWeight.w800,
-                                                                    color: Colors.amber,
-                                                                    letterSpacing: 0.5,
+                                                                  decoration: BoxDecoration(
+                                                                    color: primaryColor.withValues(alpha: 0.15),
+                                                                    borderRadius: BorderRadius.circular(6),
+                                                                    border: Border.all(
+                                                                      color: primaryColor.withValues(alpha: 0.4),
+                                                                      width: 0.8,
+                                                                    ),
+                                                                  ),
+                                                                  child: Text(
+                                                                    event.category.toUpperCase(),
+                                                                    maxLines: 1,
+                                                                    overflow: TextOverflow.ellipsis,
+                                                                    style: GoogleFonts.rajdhani(
+                                                                      fontSize: 9.5,
+                                                                      fontWeight: FontWeight.w800,
+                                                                      color: primaryColor,
+                                                                      letterSpacing: 0.6,
+                                                                    ),
                                                                   ),
                                                                 ),
                                                               ),
+                                                              if (event.isWatchableOnly) ...[
+                                                                const SizedBox(width: 4),
+                                                                Container(
+                                                                  padding: const EdgeInsets.symmetric(
+                                                                    horizontal: 5,
+                                                                    vertical: 2,
+                                                                  ),
+                                                                  decoration: BoxDecoration(
+                                                                    color: Colors.amber.withValues(alpha: 0.15),
+                                                                    borderRadius: BorderRadius.circular(4),
+                                                                    border: Border.all(
+                                                                      color: Colors.amber.withValues(alpha: 0.5),
+                                                                      width: 0.7,
+                                                                    ),
+                                                                  ),
+                                                                  child: Text(
+                                                                    'OPEN',
+                                                                    style: GoogleFonts.rajdhani(
+                                                                      fontSize: 8.5,
+                                                                      fontWeight: FontWeight.w800,
+                                                                      color: Colors.amber,
+                                                                      letterSpacing: 0.5,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
                                                             ],
-                                                          ],
+                                                          ),
                                                         ),
-                                                        Row(
-                                                          children: [
-                                                            Icon(Icons.access_time, size: 12, color: primaryColor),
-                                                            const SizedBox(width: 4),
-                                                            Text(
-                                                              event.time,
-                                                              style: GoogleFonts.rajdhani(
-                                                                fontSize: 11,
-                                                                fontWeight: FontWeight.w700,
-                                                                color: primaryColor,
+                                                        const SizedBox(width: 6),
+                                                        // Time Badge with FittedBox to prevent any border clipping
+                                                        Flexible(
+                                                          flex: 4,
+                                                          child: Align(
+                                                            alignment: Alignment.centerRight,
+                                                            child: FittedBox(
+                                                              fit: BoxFit.scaleDown,
+                                                              alignment: Alignment.centerRight,
+                                                              child: Container(
+                                                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                                                decoration: BoxDecoration(
+                                                                  color: primaryColor.withValues(alpha: 0.08),
+                                                                  borderRadius: BorderRadius.circular(5),
+                                                                ),
+                                                                child: Row(
+                                                                  mainAxisSize: MainAxisSize.min,
+                                                                  children: [
+                                                                    Icon(Icons.access_time, size: 11, color: primaryColor),
+                                                                    const SizedBox(width: 3.5),
+                                                                    Text(
+                                                                      () {
+                                                                        final stageForDay = event.stages.where((s) => s.date.contains(selectedDateFilter)).firstOrNull;
+                                                                        return (stageForDay != null && stageForDay.time.isNotEmpty)
+                                                                            ? stageForDay.time
+                                                                            : event.time;
+                                                                      }(),
+                                                                      style: GoogleFonts.rajdhani(
+                                                                        fontSize: 10.5,
+                                                                        fontWeight: FontWeight.w700,
+                                                                        color: primaryColor,
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
                                                               ),
                                                             ),
-                                                          ],
+                                                          ),
                                                         ),
                                                       ],
                                                     ),
