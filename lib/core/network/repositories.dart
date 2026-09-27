@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -93,6 +94,27 @@ class FirestoreConfig {
   /// Set to 'concetto' to connect to the dedicated named database.
   static String databaseId = 'concetto';
 
+  /// Returns candidate Firestore instances: default and named 'concetto'
+  static List<FirebaseFirestore> get allInstances {
+    final list = <FirebaseFirestore>[];
+    // Dedicated 'concetto' database must be FIRST
+    try {
+      if (databaseId.isNotEmpty && databaseId != '(default)' && Firebase.apps.isNotEmpty) {
+        list.add(FirebaseFirestore.instanceFor(
+          app: Firebase.app(),
+          databaseId: databaseId,
+        ));
+      }
+    } catch (e) {
+      debugPrint('FirestoreConfig notice for "$databaseId": $e.');
+    }
+    // Fallback default instance
+    try {
+      list.add(FirebaseFirestore.instance);
+    } catch (_) {}
+    return list;
+  }
+
   /// Returns the configured FirebaseFirestore instance safely.
   static FirebaseFirestore get instance {
     try {
@@ -114,10 +136,35 @@ class FirestoreConfig {
 class FirestoreService {
   final FirebaseFirestore? _customDb;
   final MongoService _mongo = MongoService();
+  static FirebaseFirestore? _activeInstance;
 
   FirestoreService({FirebaseFirestore? db}) : _customDb = db;
 
   FirebaseFirestore get _db => _customDb ?? FirestoreConfig.instance;
+
+  static List<FirebaseFirestore> get _firestoreInstances {
+    return FirestoreConfig.allInstances;
+  }
+
+  /// Automatically detects and caches which Firestore instance holds active event data
+  Future<FirebaseFirestore> getActiveFirestore() async {
+    if (_customDb != null) return _customDb;
+    if (_activeInstance != null) return _activeInstance!;
+    for (final db in _firestoreInstances) {
+      try {
+        final snap = await db.collection('events').limit(1).get(const GetOptions(source: Source.serverAndCache)).timeout(const Duration(seconds: 4));
+        if (snap.docs.isNotEmpty) {
+          _activeInstance = db;
+          debugPrint('Active Firestore database detected: ${db.databaseId}');
+          return db;
+        }
+      } catch (e) {
+        debugPrint('Candidate database check for ${db.databaseId}: $e');
+      }
+    }
+    _activeInstance = FirestoreConfig.instance;
+    return _activeInstance!;
+  }
 
   /// Hashes raw passcodes with SHA-256 for secure comparison
   static String hashPasscode(String rawPasscode) {
@@ -149,79 +196,77 @@ class FirestoreService {
       }
     }
 
-    // 2. Try Firestore Native API
-    try {
-      final snapshot = await _db.collection('events').get();
-      if (snapshot.docs.isNotEmpty) {
-        final List<EventItem> firestoreList = [];
-        final Set<String> firestoreIds = {};
+    // 2. Try candidate Firestore databases with cache-first and server refresh
+    for (final db in _firestoreInstances) {
+      try {
+        final snapshot = await db.collection('events').get(const GetOptions(source: Source.serverAndCache)).timeout(const Duration(seconds: 4));
+        if (snapshot.docs.isNotEmpty) {
+          final List<EventItem> firestoreList = [];
+          for (final doc in snapshot.docs) {
+            try {
+              final item = EventItem.fromJson(doc.data(), doc.id);
+              firestoreList.add(item);
+            } catch (e) {
+              debugPrint('Error parsing Firestore event ${doc.id}: $e');
+            }
+          }
 
-        for (final doc in snapshot.docs) {
-          try {
-            final item = EventItem.fromJson(doc.data(), doc.id);
-            firestoreList.add(item);
-            firestoreIds.add(item.id);
-          } catch (e) {
-            debugPrint('Error parsing Firestore event ${doc.id}: $e');
+          if (firestoreList.isNotEmpty) {
+            _activeInstance = db;
+            if (!includeHidden) {
+              return firestoreList.where((e) => e.isVisible).toList();
+            }
+            return firestoreList;
           }
         }
-
-        if (firestoreList.isNotEmpty) {
-          // If Firestore is missing some of the 55 events, sync missing ones in background
-          if (firestoreList.length < MockData.events.length) {
-            _syncMissingEventsToFirestore(firestoreIds);
-          }
-
-          if (!includeHidden) {
-            return firestoreList.where((e) => e.isVisible).toList();
-          }
-          return firestoreList;
-        }
-      } else {
-        // Firestore exists but has 0 documents! Trigger background batch seed of all 55 events!
-        _syncMissingEventsToFirestore({});
+      } catch (e) {
+        debugPrint('Firestore (${db.databaseId}) getEvents notice: $e');
       }
-    } catch (e) {
-      debugPrint('Firestore getEvents notice: $e. Falling back to local events backup.');
     }
 
-    // Fallback to local MockData as requested by user
-    if (!includeHidden) {
-      return MockData.events.where((e) => e.isVisible).toList();
-    }
-    return MockData.events;
+    return const [];
   }
 
-  void _syncMissingEventsToFirestore(Set<String> existingIds) {
-    Future.microtask(() async {
-      try {
-        final missing = MockData.events.where((e) => !existingIds.contains(e.id)).toList();
-        if (missing.isEmpty) return;
-        debugPrint('Auto-syncing ${missing.length} missing events to Firestore...');
+  /// Real-time stream of events using Firestore live snapshots
+  Stream<List<EventItem>> getEventsStream({bool includeHidden = false}) async* {
 
-        for (int i = 0; i < missing.length; i += 400) {
-          final end = (i + 400 < missing.length) ? i + 400 : missing.length;
-          final chunk = missing.sublist(i, end);
-          final batch = _db.batch();
-          for (final event in chunk) {
-            final specific = event.specificPassword.isNotEmpty
-                ? event.specificPassword
-                : generateSpecificPassword(event.title);
-            final prepared = event.copyWith(
-              specificPassword: specific,
-              passwordHash: hashPasscode(specific),
-              isVisible: event.isVisible,
-              updatedAt: DateTime.now().toIso8601String(),
-            );
-            batch.set(_db.collection('events').doc(event.id), prepared.toJson(), SetOptions(merge: true));
-          }
-          await batch.commit();
+    // Initial emission
+    final initial = await getEvents(includeHidden: includeHidden);
+    if (initial.isNotEmpty) {
+      yield initial;
+    }
+
+    // Listen to real-time snapshots from active database
+    final db = await getActiveFirestore();
+    yield* db.collection('events').snapshots().map((snapshot) {
+      final List<EventItem> list = [];
+      for (final doc in snapshot.docs) {
+        try {
+          list.add(EventItem.fromJson(doc.data(), doc.id));
+        } catch (e) {
+          debugPrint('Error parsing snapshot event ${doc.id}: $e');
         }
-        debugPrint('Auto-sync completed. All 55 events are in Cloud Firestore.');
-      } catch (e) {
-        debugPrint('Auto-sync to Firestore notice: $e');
       }
+      if (!includeHidden) {
+        return list.where((e) => e.isVisible).toList();
+      }
+      return list;
     });
+  }
+
+  /// Fetches a single event directly from Cloud Firestore by ID (checks all databases)
+  Future<EventItem?> getEventById(String eventId) async {
+    for (final db in _firestoreInstances) {
+      try {
+        final doc = await db.collection('events').doc(eventId).get().timeout(const Duration(seconds: 4));
+        if (doc.exists && doc.data() != null) {
+          return EventItem.fromJson(doc.data()!, doc.id);
+        }
+      } catch (e) {
+        debugPrint('Error getting event by ID $eventId from Firestore (${db.databaseId}): $e');
+      }
+    }
+    return null;
   }
 
   // --- Verify Passcode for Editing ---
@@ -260,22 +305,7 @@ class FirestoreService {
 
     final enteredHash = hashPasscode(enteredClean);
 
-    // 1. Check local MockData (Instantaneous)
-    final localMatch = MockData.events.where((e) => e.id == eventId);
-    if (localMatch.isNotEmpty) {
-      final local = localMatch.first;
-      if (local.specificPassword.isNotEmpty && local.specificPassword == enteredClean) {
-        return true;
-      }
-      if (local.passwordHash.isNotEmpty && local.passwordHash == enteredHash) {
-        return true;
-      }
-      if (local.specificPassword.isNotEmpty && hashPasscode(local.specificPassword) == enteredHash) {
-        return true;
-      }
-    }
-
-    // 2. Check MongoDB (Firestore Enterprise)
+    // 1. Check MongoDB (Firestore Enterprise) if configured
     if (MongoService.connectionUri.isNotEmpty) {
       try {
         final mongoEvent = await _mongo.getEventById(eventId).timeout(const Duration(seconds: 2));
@@ -292,23 +322,28 @@ class FirestoreService {
       }
     }
 
-    // 3. Fallback check Native Firestore with strict non-blocking timeout
-    try {
-      final doc = await _db.collection('events').doc(eventId).get().timeout(const Duration(milliseconds: 600));
-      if (doc.exists && doc.data() != null) {
-        final data = doc.data()!;
-        final specificPass = (data['specificPassword'] as String?)?.trim() ?? '';
-        final storedHash = (data['passwordHash'] as String?)?.trim() ?? '';
+    // 2. Check Candidate Firestore Databases
+    for (final db in _firestoreInstances) {
+      try {
+        final doc = await db.collection('events').doc(eventId).get();
+        if (doc.exists && doc.data() != null) {
+          final data = doc.data()!;
+          final specificPass = (data['specificPassword'] as String?)?.trim() ?? '';
+          final storedHash = (data['passwordHash'] as String?)?.trim() ?? '';
 
-        if (specificPass.isNotEmpty && specificPass == enteredClean) {
-          return true;
+          if (specificPass.isNotEmpty && specificPass == enteredClean) {
+            return true;
+          }
+          if (storedHash.isNotEmpty && storedHash == enteredHash) {
+            return true;
+          }
+          if (specificPass.isNotEmpty && hashPasscode(specificPass) == enteredHash) {
+            return true;
+          }
         }
-        if (storedHash.isNotEmpty && storedHash == enteredHash) {
-          return true;
-        }
+      } catch (e) {
+        debugPrint('Firestore verify notice for ${db.databaseId}: $e');
       }
-    } catch (e) {
-      debugPrint('Firestore verify notice: $e');
     }
 
     return false;
@@ -317,32 +352,28 @@ class FirestoreService {
   // --- Toggle Visibility ---
 
   Future<void> toggleEventVisibility(String eventId, bool isVisible) async {
-    // 1. Sync local in-memory MockData immediately
-    final index = MockData.events.indexWhere((e) => e.id == eventId);
-    if (index >= 0) {
-      MockData.events[index] = MockData.events[index].copyWith(isVisible: isVisible);
-    }
-
-    // 2. Sync to MongoDB (Firestore Enterprise)
+    // 1. Sync to MongoDB (Firestore Enterprise)
     if (MongoService.connectionUri.isNotEmpty) {
       try {
-        await _mongo.toggleVisibility(eventId, isVisible).timeout(const Duration(seconds: 3));
+        await _mongo.toggleVisibility(eventId, isVisible).timeout(const Duration(seconds: 4));
       } catch (e) {
         debugPrint('Mongo toggleEventVisibility notice: $e');
       }
     }
 
-    // 3. Dispatch to Firestore Native without blocking
-    try {
-      _db.collection('events').doc(eventId).set(
-        {'isVisible': isVisible},
-        SetOptions(merge: true),
-      ).timeout(const Duration(milliseconds: 600)).catchError((e) {
-        debugPrint('Firestore toggleEventVisibility notice: $e');
-      });
-    } catch (e) {
-      debugPrint('Firestore toggleEventVisibility notice: $e');
-    }
+    // 2. Write to all Firestore candidate databases in parallel with timeout
+    final futures = _firestoreInstances.map((db) async {
+      try {
+        await db.collection('events').doc(eventId).set(
+          {'isVisible': isVisible},
+          SetOptions(merge: true),
+        ).timeout(const Duration(seconds: 4));
+        debugPrint('Firestore (${db.databaseId}) toggleEventVisibility updated for $eventId');
+      } catch (e) {
+        debugPrint('Firestore (${db.databaseId}) toggleEventVisibility notice: $e');
+      }
+    });
+    await Future.wait(futures);
   }
 
   // --- Create / Save Event ---
@@ -374,15 +405,7 @@ class FirestoreService {
       updatedAt: DateTime.now().toIso8601String(),
     );
 
-    // 1. Sync with local in-memory MockData first
-    final existingIndex = MockData.events.indexWhere((e) => e.id == generatedId);
-    if (existingIndex >= 0) {
-      MockData.events[existingIndex] = updatedEvent;
-    } else {
-      MockData.events.insert(0, updatedEvent);
-    }
-
-    // 2. Write to Google Cloud Firestore Enterprise (MongoDB API)
+    // 1. Write to Google Cloud Firestore Enterprise (MongoDB API) with timeout
     if (MongoService.connectionUri.isNotEmpty) {
       try {
         await _mongo.saveEvent(updatedEvent).timeout(const Duration(seconds: 4));
@@ -392,14 +415,16 @@ class FirestoreService {
       }
     }
 
-    // 3. Dispatch to Firestore Native without blocking
-    try {
-      _db.collection('events').doc(generatedId).set(updatedEvent.toJson())
-          .timeout(const Duration(milliseconds: 600))
-          .catchError((e) => debugPrint('Firestore createEvent notice: $e'));
-    } catch (e) {
-      debugPrint('Firestore createEvent notice: $e');
-    }
+    // 2. Write directly to all candidate Firestore databases in parallel with timeout
+    final futures = _firestoreInstances.map((db) async {
+      try {
+        await db.collection('events').doc(generatedId).set(updatedEvent.toJson()).timeout(const Duration(seconds: 4));
+        debugPrint('Event "${updatedEvent.title}" saved to Cloud Firestore (${db.databaseId}).');
+      } catch (e) {
+        debugPrint('Firestore (${db.databaseId}) createEvent notice: $e');
+      }
+    });
+    await Future.wait(futures);
 
     return updatedEvent;
   }
@@ -407,29 +432,24 @@ class FirestoreService {
   // --- Update Event ---
 
   Future<EventItem> updateEvent(EventItem event) async {
+    final String docId = event.id.isNotEmpty
+        ? event.id
+        : 'event_${DateTime.now().millisecondsSinceEpoch}';
+
     final String specific = event.specificPassword.isNotEmpty
         ? event.specificPassword
-        : (MockData.events.where((e) => e.id == event.id).isNotEmpty
-            ? MockData.events.firstWhere((e) => e.id == event.id).specificPassword
-            : '');
+        : '';
 
     final String finalHash = specific.isNotEmpty ? hashPasscode(specific) : event.passwordHash;
 
     final updatedEvent = event.copyWith(
+      id: docId,
       specificPassword: specific,
       passwordHash: finalHash,
       updatedAt: DateTime.now().toIso8601String(),
     );
 
-    // 1. Sync with local MockData first
-    final existingIndex = MockData.events.indexWhere((e) => e.id == event.id);
-    if (existingIndex >= 0) {
-      MockData.events[existingIndex] = updatedEvent;
-    } else {
-      MockData.events.insert(0, updatedEvent);
-    }
-
-    // 2. Update in Google Cloud Firestore Enterprise (MongoDB API)
+    // 1. Update in Google Cloud Firestore Enterprise (MongoDB API) with timeout
     if (MongoService.connectionUri.isNotEmpty) {
       try {
         await _mongo.updateEvent(updatedEvent).timeout(const Duration(seconds: 4));
@@ -439,17 +459,19 @@ class FirestoreService {
       }
     }
 
-    // 3. Dispatch to Firestore Native without blocking
-    try {
-      _db.collection('events').doc(event.id).set(
-            updatedEvent.toJson(),
-            SetOptions(merge: true),
-          )
-          .timeout(const Duration(milliseconds: 600))
-          .catchError((e) => debugPrint('Firestore updateEvent notice: $e'));
-    } catch (e) {
-      debugPrint('Firestore updateEvent notice: $e');
-    }
+    // 2. Write directly to all candidate Cloud Firestore databases in parallel with timeout
+    final futures = _firestoreInstances.map((db) async {
+      try {
+        await db.collection('events').doc(docId).set(
+              updatedEvent.toJson(),
+              SetOptions(merge: true),
+            ).timeout(const Duration(seconds: 4));
+        debugPrint('Event "${updatedEvent.title}" updated in Cloud Firestore (${db.databaseId}).');
+      } catch (e) {
+        debugPrint('Firestore (${db.databaseId}) updateEvent notice: $e');
+      }
+    });
+    await Future.wait(futures);
 
     return updatedEvent;
   }
@@ -457,10 +479,7 @@ class FirestoreService {
   // --- Delete Event ---
 
   Future<bool> deleteEvent(String eventId) async {
-    // 1. Remove from local MockData first
-    MockData.events.removeWhere((e) => e.id == eventId);
-
-    // 2. Delete from Google Cloud Firestore Enterprise (MongoDB API)
+    // 1. Delete from Google Cloud Firestore Enterprise (MongoDB API) with timeout
     if (MongoService.connectionUri.isNotEmpty) {
       try {
         await _mongo.deleteEvent(eventId).timeout(const Duration(seconds: 4));
@@ -469,98 +488,18 @@ class FirestoreService {
       }
     }
 
-    // 3. Dispatch delete from Firestore Native without blocking
-    try {
-      _db.collection('events').doc(eventId).delete()
-          .timeout(const Duration(milliseconds: 600))
-          .catchError((e) => debugPrint('Firestore deleteEvent notice: $e'));
-    } catch (e) {
-      debugPrint('Firestore deleteEvent notice: $e');
-    }
+    // 2. Delete directly from all candidate Cloud Firestore databases in parallel with timeout
+    final futures = _firestoreInstances.map((db) async {
+      try {
+        await db.collection('events').doc(eventId).delete().timeout(const Duration(seconds: 4));
+        debugPrint('Event "$eventId" deleted from Cloud Firestore (${db.databaseId}).');
+      } catch (e) {
+        debugPrint('Firestore (${db.databaseId}) deleteEvent notice: $e');
+      }
+    });
+    await Future.wait(futures);
 
     return true;
-  }
-
-  // --- Seed Mock Data to Firestore ---
-
-  Future<({int count, String? error})> seedMockEventsToFirestore() async {
-    int count = 0;
-    try {
-      // Also seed to MongoDB
-      if (MongoService.connectionUri.isNotEmpty) {
-        try {
-          await _mongo.seedMockEventsToMongo();
-        } catch (_) {}
-      }
-
-      final batch = _db.batch();
-      int batchCount = 0;
-
-      for (final event in MockData.events) {
-        final specific = event.specificPassword.isNotEmpty
-            ? event.specificPassword
-            : generateSpecificPassword(event.title);
-        final preparedEvent = event.copyWith(
-          specificPassword: specific,
-          passwordHash: hashPasscode(specific),
-          isVisible: event.isVisible,
-          updatedAt: DateTime.now().toIso8601String(),
-        );
-        batch.set(
-          _db.collection('events').doc(event.id),
-          preparedEvent.toJson(),
-          SetOptions(merge: true),
-        );
-        batchCount++;
-        count++;
-
-        if (batchCount >= 400) {
-          await batch.commit();
-          batchCount = 0;
-        }
-      }
-
-      if (batchCount > 0) {
-        await batch.commit();
-      }
-      debugPrint('Successfully seeded $count events to Cloud Firestore!');
-      return (count: count, error: null);
-    } catch (e) {
-      debugPrint('Error batch seeding events: $e');
-      return (count: 0, error: e.toString());
-    }
-  }
-
-  Future<Map<String, int>> seedAllDataToFirestore() async {
-    final eventsRes = await seedMockEventsToFirestore();
-    final eventsCount = eventsRes.count;
-    int announcementsCount = 0;
-    int teamCount = 0;
-
-    for (final ann in MockData.announcements) {
-      try {
-        await _db.collection('announcements').doc(ann.id).set(ann.toJson());
-        announcementsCount++;
-      } catch (e) {
-        debugPrint('Error seeding announcement ${ann.id}: $e');
-      }
-    }
-
-    for (final member in MockData.team) {
-      try {
-        final docId = 'team_${member.order.toString().padLeft(2, '0')}_${member.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_')}';
-        await _db.collection('team').doc(docId).set(member.toJson());
-        teamCount++;
-      } catch (e) {
-        debugPrint('Error seeding team member ${member.name}: $e');
-      }
-    }
-
-    return {
-      'events': eventsCount,
-      'announcements': announcementsCount,
-      'team': teamCount,
-    };
   }
 
   // --- Team & Announcements ---
@@ -631,30 +570,16 @@ class FirestoreService {
 final firestoreServiceProvider = Provider((ref) => FirestoreService());
 final mongoServiceProvider = Provider((ref) => MongoService());
 
-/// Student-facing events provider: prefers MongoDB when configured, then Firestore, then local mock
-final eventsProvider = FutureProvider<List<EventItem>>((ref) async {
-  final mongo = ref.watch(mongoServiceProvider);
-  if (MongoService.connectionUri.isNotEmpty) {
-    try {
-      final list = await mongo.getEvents(includeHidden: false);
-      if (list.isNotEmpty) return list;
-    } catch (_) {}
-  }
+/// Student-facing events provider: live real-time stream from Firestore with offline cache
+final eventsProvider = StreamProvider<List<EventItem>>((ref) {
   final service = ref.watch(firestoreServiceProvider);
-  return service.getEvents(includeHidden: false);
+  return service.getEventsStream(includeHidden: false);
 });
 
-/// Admin/Developer events provider: returns all events including hidden
-final adminEventsProvider = FutureProvider<List<EventItem>>((ref) async {
-  final mongo = ref.watch(mongoServiceProvider);
-  if (MongoService.connectionUri.isNotEmpty) {
-    try {
-      final list = await mongo.getEvents(includeHidden: true);
-      if (list.isNotEmpty) return list;
-    } catch (_) {}
-  }
+/// Admin/Developer events provider: live real-time stream returning all events including hidden
+final adminEventsProvider = StreamProvider<List<EventItem>>((ref) {
   final service = ref.watch(firestoreServiceProvider);
-  return service.getEvents(includeHidden: true);
+  return service.getEventsStream(includeHidden: true);
 });
 
 final teamProvider = FutureProvider<List<CoreTeamMember>>((ref) async {

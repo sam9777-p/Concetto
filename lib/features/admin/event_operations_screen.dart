@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/network/repositories.dart';
-import '../../core/network/mock_data.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/event_item.dart';
 import 'widgets/event_passcode_prompt.dart';
@@ -21,7 +20,6 @@ class _EventOperationsScreenState extends ConsumerState<EventOperationsScreen> {
   String _searchQuery = '';
   String _selectedClub = 'All';
   String _visibilityFilter = 'All'; // 'All', 'Visible', 'Hidden'
-  bool _isSeeding = false;
 
   final List<String> _clubs = [
     'All',
@@ -64,72 +62,6 @@ class _EventOperationsScreenState extends ConsumerState<EventOperationsScreen> {
     super.dispose();
   }
 
-  Future<void> _seedMockData() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.scaffoldBg,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppTheme.cyberAmber, width: 1.2),
-        ),
-        title: Row(
-          children: [
-            const Icon(Icons.cloud_sync_outlined, color: AppTheme.cyberAmber),
-            const SizedBox(width: 10),
-            Text(
-              'Sync 55 Events to Cloud',
-              style: GoogleFonts.orbitron(fontSize: 15, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        content: Text(
-          'This will synchronize all 55 verified festival events with their dedicated passkeys to the live cloud database. Continue?',
-          style: GoogleFonts.rajdhani(fontSize: 14, color: AppTheme.metallicSilver),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(
-              'CANCEL',
-              style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, color: AppTheme.metallicMuted),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.cyberAmber,
-              foregroundColor: Colors.black,
-            ),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(
-              'SYNC ALL EVENTS',
-              style: GoogleFonts.rajdhani(fontWeight: FontWeight.w800),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-
-    setState(() => _isSeeding = true);
-    final results = await ref.read(firestoreServiceProvider).seedAllDataToFirestore();
-    setState(() => _isSeeding = false);
-
-    ref.invalidate(adminEventsProvider);
-    ref.invalidate(eventsProvider);
-
-    if (mounted) {
-      final successCount = results['events'] ?? 0;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Successfully synced $successCount events to cloud database!'),
-          backgroundColor: const Color(0xFF00E676),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
 
   Future<void> _onAddNewEvent() async {
     final result = await Navigator.of(context).push<String>(
@@ -157,10 +89,14 @@ class _EventOperationsScreenState extends ConsumerState<EventOperationsScreen> {
       event: event,
       actionTitle: 'Edit Event',
       onAuthorized: (masterPass, secondaryPass, isDevOverride) async {
+        // Fetch fresh event directly from Firestore so latest edited values are displayed
+        final freshEvent = await ref.read(firestoreServiceProvider).getEventById(event.id) ?? event;
+
+        if (!mounted) return;
         final result = await Navigator.of(context).push<String>(
           MaterialPageRoute(
             builder: (context) => EventEditorScreen(
-              initialEvent: event,
+              initialEvent: freshEvent,
               authorizedPasscode: secondaryPass,
               isMasterAdmin: true,
               isDeveloperMode: true,
@@ -227,12 +163,6 @@ class _EventOperationsScreenState extends ConsumerState<EventOperationsScreen> {
   }
 
   Future<void> _onToggleVisibility(EventItem event, bool newValue) async {
-    final idx = MockData.events.indexWhere((e) => e.id == event.id);
-    if (idx >= 0) {
-      MockData.events[idx] = MockData.events[idx].copyWith(isVisible: newValue);
-    }
-    setState(() {});
-
     try {
       await ref.read(firestoreServiceProvider).toggleEventVisibility(event.id, newValue);
       ref.invalidate(adminEventsProvider);
@@ -267,10 +197,6 @@ class _EventOperationsScreenState extends ConsumerState<EventOperationsScreen> {
         );
       }
     } catch (e) {
-      if (idx >= 0) {
-        MockData.events[idx] = MockData.events[idx].copyWith(isVisible: !newValue);
-      }
-      setState(() {});
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to update visibility: $e')),
@@ -302,7 +228,7 @@ class _EventOperationsScreenState extends ConsumerState<EventOperationsScreen> {
   Widget build(BuildContext context) {
     final eventsAsync = ref.watch(adminEventsProvider);
 
-    if (eventsAsync.isLoading && !eventsAsync.hasValue && MockData.events.isEmpty) {
+    if (eventsAsync.isLoading && !eventsAsync.hasValue) {
       return Scaffold(
         backgroundColor: AppTheme.scaffoldBg,
         appBar: AppBar(
@@ -318,7 +244,7 @@ class _EventOperationsScreenState extends ConsumerState<EventOperationsScreen> {
       );
     }
 
-    final allEvents = eventsAsync.asData?.value ?? MockData.events;
+    final allEvents = eventsAsync.asData?.value ?? const <EventItem>[];
 
     final filteredEvents = allEvents.where((e) {
       final matchesQuery = _searchQuery.isEmpty ||
@@ -385,17 +311,6 @@ class _EventOperationsScreenState extends ConsumerState<EventOperationsScreen> {
               ],
             ),
           ),
-          IconButton(
-            tooltip: 'Sync 55 Events',
-            icon: _isSeeding
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.cyberAmber),
-                  )
-                : const Icon(Icons.cloud_sync, color: AppTheme.cyberAmber),
-            onPressed: _isSeeding ? null : _seedMockData,
-          ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -434,43 +349,6 @@ class _EventOperationsScreenState extends ConsumerState<EventOperationsScreen> {
                     flagship: flagshipCount,
                   ),
                   const SizedBox(height: 14),
-
-                  if (totalCount < 50) ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: AppTheme.cyberAmber.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppTheme.cyberAmber, width: 0.8),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.cloud_upload_outlined, color: AppTheme.cyberAmber, size: 24),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Live database has $totalCount events. Upload full 55 events to cloud database.',
-                              style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                          ElevatedButton(
-                            onPressed: _isSeeding ? null : _seedMockData,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.cyberAmber,
-                              foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              minimumSize: Size.zero,
-                            ),
-                            child: Text(
-                              'SYNC NOW',
-                              style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 11),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                  ],
 
                   TextField(
                     controller: _searchController,

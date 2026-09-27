@@ -195,7 +195,9 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
       text: e?.endTime.isNotEmpty == true ? e!.endTime : EventItem.deriveEndTime(initialTime),
     );
     _venueController = TextEditingController(text: e?.venue ?? 'Central Arena (SAC Ground)');
-    _prizePoolController = TextEditingController(text: e?.prizePool ?? '₹ 30,000');
+    _prizePoolController = TextEditingController(
+      text: (e != null && e.prizePool.isNotEmpty) ? e.prizePool : 'TBD',
+    );
     _teamSizeController = TextEditingController(text: e?.teamSize ?? '1 - 4 Members');
     _isOpenRegistration = e?.isOpenRegistration ?? false;
     _minTeamSize = e?.minTeamSize ?? 1;
@@ -229,6 +231,79 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
         : _selectedCategories.toList();
     _tagsController = TextEditingController(text: initialTags.join(', '));
     _scheduleBreakdownController = TextEditingController(text: e?.scheduleBreakdown ?? '');
+
+    if (e != null && e.id.isNotEmpty) {
+      _fetchFreshEventFromFirestore(e.id);
+    }
+  }
+
+  bool _isFetchingFreshEvent = false;
+
+  Future<void> _fetchFreshEventFromFirestore(String eventId) async {
+    setState(() => _isFetchingFreshEvent = true);
+    try {
+      final fresh = await ref.read(firestoreServiceProvider).getEventById(eventId);
+      if (fresh != null && mounted) {
+        setState(() {
+          _titleController.text = fresh.title;
+          if (_popularClubs.contains(fresh.organizerClub)) {
+            _selectedClub = fresh.organizerClub;
+            _customClubController.text = '';
+          } else {
+            _selectedClub = 'Custom / Other';
+            _customClubController.text = fresh.organizerClub;
+          }
+
+          _selectedCategories.clear();
+          for (final c in fresh.tags) {
+            final matched = _allCategories.firstWhere(
+              (cat) => cat.toLowerCase() == c.toLowerCase(),
+              orElse: () => '',
+            );
+            if (matched.isNotEmpty) _selectedCategories.add(matched);
+          }
+          if (_selectedCategories.isEmpty) _selectedCategories.add('Robotics');
+
+          _isFlagship = fresh.isFlagship;
+          _isVisible = fresh.isVisible;
+          _isStageExperience = fresh.isStageExperience;
+          _stages = List<EventStage>.from(fresh.stages);
+
+          _posterUrlController.text = fresh.posterUrl;
+          _dateController.text = fresh.date;
+          _timeController.text = fresh.time;
+          _startTimeController.text = fresh.startTime.isNotEmpty ? fresh.startTime : EventItem.deriveStartTime(fresh.time);
+          _endTimeController.text = fresh.endTime.isNotEmpty ? fresh.endTime : EventItem.deriveEndTime(fresh.time);
+          _venueController.text = fresh.venue;
+          _prizePoolController.text = fresh.prizePool.isNotEmpty ? fresh.prizePool : 'TBD';
+          _teamSizeController.text = fresh.teamSize;
+          _isOpenRegistration = fresh.isOpenRegistration;
+          _minTeamSize = fresh.minTeamSize;
+          _maxTeamSize = fresh.maxTeamSize;
+          _minTeamSizeController.text = _minTeamSize.toString();
+          _maxTeamSizeController.text = _maxTeamSize.toString();
+          _descriptionController.text = fresh.description;
+          _rulebookUrlController.text = fresh.rulebookUrl;
+          _registrationUrlController.text = fresh.registrationUrl;
+          _coordinatorNameController.text = fresh.coordinatorName;
+          _coordinatorEmailController.text = fresh.coordinatorEmail;
+          _coordinatorPhoneController.text = fresh.coordinatorPhone.isNotEmpty ? fresh.coordinatorPhone : fresh.coordinatorContact;
+          if (fresh.specificPassword.isNotEmpty) {
+            _specificPasswordController.text = fresh.specificPassword;
+          }
+          final tags = fresh.tags.isNotEmpty ? fresh.tags : _selectedCategories.toList();
+          _tagsController.text = tags.join(', ');
+          _scheduleBreakdownController.text = fresh.scheduleBreakdown;
+        });
+        debugPrint('EventEditorScreen: Refreshed with latest Firestore data for event $eventId');
+      }
+    } catch (e) {
+      debugPrint('EventEditorScreen: Error fetching fresh event: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isFetchingFreshEvent = false);
+      }
+    }
   }
 
   @override
@@ -777,7 +852,9 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
       startTime: _startTimeController.text.trim(),
       endTime: _endTimeController.text.trim(),
       date: _dateController.text.trim(),
-      prizePool: primaryCategory.toLowerCase() == 'workshops' ? '' : _prizePoolController.text.trim(),
+      prizePool: (primaryCategory.toLowerCase() == 'workshops' || _isStageExperience)
+          ? ''
+          : (_prizePoolController.text.trim().isEmpty ? 'TBD' : _prizePoolController.text.trim()),
       teamSize: computedTeamSize,
       minTeamSize: _minTeamSize,
       maxTeamSize: _maxTeamSize,
@@ -1051,6 +1128,15 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
             onPressed: _isSaving ? null : _saveEvent,
           ),
         ],
+        bottom: _isFetchingFreshEvent
+            ? const PreferredSize(
+                preferredSize: Size.fromHeight(4),
+                child: LinearProgressIndicator(
+                  color: AppTheme.neonOrange,
+                  backgroundColor: Colors.transparent,
+                ),
+              )
+            : null,
       ),
       body: Form(
         key: _formKey,
@@ -1645,7 +1731,7 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
               _buildTextField(
                 controller: _prizePoolController,
                 label: 'Prize Money',
-                hint: 'e.g. ₹ 50,000 (Leave empty if no cash prize)',
+                hint: 'e.g. TBD or ₹ 50,000 (Leave empty or TBD if not finalized)',
               ),
               const SizedBox(height: 12),
             ],

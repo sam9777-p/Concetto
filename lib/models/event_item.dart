@@ -256,7 +256,11 @@ class EventItem {
       description: json['description'] ?? '',
       posterUrl: json['posterUrl'] ?? '',
       date: json['date'] ?? 'Oct 10-12, 2026',
-      prizePool: json['prizePool'] ?? '',
+      prizePool: (isStage || (json['category']?.toString().toLowerCase() == 'workshops'))
+          ? ''
+          : ((json['prizePool'] == null || json['prizePool'].toString().trim().isEmpty || json['prizePool'].toString().trim() == '0')
+              ? 'TBD'
+              : json['prizePool'].toString().trim()),
       teamSize: isStage ? '' : finalTeamSize,
       minTeamSize: minT,
       maxTeamSize: maxT,

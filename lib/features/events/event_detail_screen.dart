@@ -15,9 +15,10 @@ import 'team_registration_screen.dart';
 import 'team_details_screen.dart';
 
 class EventDetailScreen extends ConsumerStatefulWidget {
-  final EventItem event;
+  final EventItem? event;
+  final String? eventId;
 
-  const EventDetailScreen({super.key, required this.event});
+  const EventDetailScreen({super.key, this.event, this.eventId});
 
   @override
   ConsumerState<EventDetailScreen> createState() => _EventDetailScreenState();
@@ -28,13 +29,54 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
   Map<String, dynamic>? _existingTeamData;
   String? _existingTeamDocId;
   bool _isCheckingRegistration = false;
+  EventItem? _fetchedEvent;
+  bool _isFetchingEvent = false;
 
-  EventItem get event => widget.event;
+  String get eventId => widget.event?.id ?? widget.eventId ?? '';
+
+  EventItem get event {
+    // 1. Check live stream from eventsProvider for latest realtime Firestore updates
+    final liveList = ref.watch(eventsProvider).asData?.value;
+    if (liveList != null && eventId.isNotEmpty) {
+      final match = liveList.where((e) => e.id == eventId);
+      if (match.isNotEmpty) return match.first;
+    }
+    // 2. Return direct fetched event if loaded
+    if (_fetchedEvent != null) return _fetchedEvent!;
+    // 3. Fallback to passed event
+    if (widget.event != null) return widget.event!;
+    // 4. Default fallback
+    return EventItem(
+      id: eventId,
+      title: 'Event Details',
+      category: 'General',
+      venue: 'TBD',
+      time: 'TBD',
+      description: '',
+      posterUrl: '',
+    );
+  }
 
   @override
   void initState() {
     super.initState();
+    if (widget.event == null && widget.eventId != null) {
+      _loadEventDirectly();
+    }
     _checkExistingRegistration();
+  }
+
+  Future<void> _loadEventDirectly() async {
+    final id = widget.eventId;
+    if (id == null || id.isEmpty) return;
+    setState(() => _isFetchingEvent = true);
+    try {
+      final item = await ref.read(firestoreServiceProvider).getEventById(id);
+      if (item != null && mounted) {
+        setState(() => _fetchedEvent = item);
+      }
+    } catch (_) {}
+    if (mounted) setState(() => _isFetchingEvent = false);
   }
 
   /// Checks Firestore for an existing registration where the logged-in user
@@ -109,6 +151,15 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isFetchingEvent && widget.event == null && _fetchedEvent == null) {
+      return const Scaffold(
+        backgroundColor: AppTheme.scaffoldBg,
+        body: Center(
+          child: CircularProgressIndicator(color: AppTheme.neonOrange),
+        ),
+      );
+    }
+
     final primaryColor = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
@@ -422,7 +473,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                           Expanded(
                             flex: 2,
                             child: OutlinedButton.icon(
-                              onPressed: () => _launchExternalUrl(context, event.rulebookUrl),
+                              onPressed: () => _showRulebookDialog(context, primaryColor),
                               icon: const Icon(Icons.school_rounded, size: 16),
                               label: const Text(
                                 'CURRICULUM',
@@ -978,38 +1029,9 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
 
 
 
-
-
-  static const _availableRulebookIds = {
-    'aethera',
-    'code_wars',
-    'edge_ai_challenge',
-    'equity_auction',
-    'fault_hunt',
-    'logic_odyssey',
-    'mathalon',
-    'questree__26',
-    'aptiquest',
-    'reservoir_making___iadc',
-    'crack_the_crude',
-    'sparkathon',
-    'vibehack__26',
-    'vibehack',
-  };
-
   // --- Rulebook In-App PDF Viewer ---
+  // Opens for ALL events. The viewer screen handles "no URL" gracefully.
   void _showRulebookDialog(BuildContext context, Color primaryColor) {
-    final normalizedId = event.id.toLowerCase().replaceAll('-', '_');
-    if (!_availableRulebookIds.contains(normalizedId)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No rulebook for this event found'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
     Navigator.push(
       context,
       MaterialPageRoute(

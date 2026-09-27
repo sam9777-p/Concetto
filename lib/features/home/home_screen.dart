@@ -1482,7 +1482,10 @@ extension _HomeScreenHelpers on _HomeScreenState {
                       ),
                     ),
                   ),
-                  if (event.prizePool.isNotEmpty)
+                  if (event.prizePool.isNotEmpty &&
+                      event.category.toLowerCase() != 'workshops' &&
+                      !event.isStageExperience &&
+                      !event.isWatchableOnly)
                     Positioned(
                       bottom: 8,
                       left: 8,

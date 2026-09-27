@@ -11,7 +11,6 @@ import '../features/admin/admin_dashboard_screen.dart';
 import '../features/admin/event_editor_screen.dart';
 import '../features/splash/splash_screen.dart';
 import '../features/store/store_screen.dart';
-import '../core/network/mock_data.dart';
 
 class MainWrapper extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
@@ -100,10 +99,7 @@ final goRouter = GoRouter(
         !path.startsWith('/profile') &&
         !path.startsWith('/admin')) {
       final cleanSegment = path.startsWith('/') ? path.substring(1) : path;
-      final isEvent = MockData.events.any(
-        (e) => e.id.toLowerCase() == cleanSegment.toLowerCase(),
-      );
-      if (isEvent) {
+      if (cleanSegment.isNotEmpty && !cleanSegment.contains('/')) {
         return '/events/$cleanSegment';
       }
     }
@@ -119,23 +115,12 @@ final goRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/events/detail',
       builder: (context, state) {
-        EventItem? event = state.extra as EventItem?;
-        if (event == null) {
-          final id = state.uri.queryParameters['id'];
-          if (id != null && id.isNotEmpty) {
-            try {
-              event = MockData.events.firstWhere(
-                (e) => e.id.toLowerCase() == id.toLowerCase(),
-              );
-            } catch (_) {
-              event = null;
-            }
-          }
-        }
-        if (event == null) {
+        final EventItem? event = state.extra as EventItem?;
+        final id = state.uri.queryParameters['id'];
+        if (event == null && (id == null || id.isEmpty)) {
           return const EventsScreen();
         }
-        return EventDetailScreen(event: event);
+        return EventDetailScreen(event: event, eventId: id);
       },
     ),
     GoRoute(
@@ -143,20 +128,11 @@ final goRouter = GoRouter(
       path: '/events/:id',
       builder: (context, state) {
         final id = state.pathParameters['id'];
-        EventItem? event;
-        if (id != null && id.isNotEmpty) {
-          try {
-            event = MockData.events.firstWhere(
-              (e) => e.id.toLowerCase() == id.toLowerCase(),
-            );
-          } catch (_) {
-            event = null;
-          }
-        }
-        if (event == null) {
+        final EventItem? event = state.extra as EventItem?;
+        if (event == null && (id == null || id.isEmpty)) {
           return const EventsScreen();
         }
-        return EventDetailScreen(event: event);
+        return EventDetailScreen(event: event, eventId: id);
       },
     ),
     GoRoute(

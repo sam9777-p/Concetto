@@ -19,6 +19,7 @@ void main() async {
     debugPrint('Firebase initialization notice: $e');
   }
 
+
   // Maximize in-memory image cache so fetched cloud images never reload
   PaintingBinding.instance.imageCache.maximumSize = 1000;
   PaintingBinding.instance.imageCache.maximumSizeBytes = 250 * 1024 * 1024; // 250 MB

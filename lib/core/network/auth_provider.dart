@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -48,7 +49,7 @@ class AttendeeProfile {
     return passCategoryNames[passType] ?? 'ATTENDEE PASS';
   }
 
-  bool get isLoggedIn => !isGuest && isEmailVerified;
+  bool get isLoggedIn => !isGuest;
 
   bool get isIitIsm {
     final c = college.toLowerCase().trim();
@@ -90,10 +91,28 @@ class AttendeeProfile {
 }
 
 class AuthNotifier extends Notifier<AttendeeProfile> {
+  StreamSubscription<User?>? _authSub;
+
   @override
   AttendeeProfile build() {
+    ref.onDispose(() {
+      _authSub?.cancel();
+    });
+
+    _listenToAuthChanges();
     _initCurrentUser();
     return _initialGuestProfile();
+  }
+
+  void _listenToAuthChanges() {
+    _authSub?.cancel();
+    _authSub = FirebaseAuth.instance.authStateChanges().listen((user) {
+      if (user != null) {
+        _initCurrentUser();
+      } else if (!state.isGuest) {
+        state = _initialGuestProfile();
+      }
+    });
   }
 
   static AttendeeProfile _initialGuestProfile() {
@@ -162,17 +181,40 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
   Future<void> _initCurrentUser() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user != null && user.email != null) {
-        await user.reload();
-        final refreshed = FirebaseAuth.instance.currentUser;
-        if (refreshed != null && refreshed.emailVerified) {
-          // Try local cache first for instant rendering
-          await _loadProfileFromLocalCache(refreshed.uid);
-          await _loadProfileFromFirestore(refreshed);
-        } else {
-          // If not email verified, sign out
-          await FirebaseAuth.instance.signOut();
+      if (user != null) {
+        // 1. Try local cache first for instant zero-latency rendering
+        await _loadProfileFromLocalCache(user.uid);
+
+        // 2. If state is still guest (no cache yet), set logged in profile immediately
+        if (state.isGuest) {
+          final email = user.email ?? '';
+          final isIit = email.toLowerCase().endsWith('@iitism.ac.in');
+          final name = user.displayName?.isNotEmpty == true
+              ? user.displayName!
+              : (email.isNotEmpty ? email.split('@').first : 'Attendee');
+          final passId = 'CON-26-${user.uid.length >= 6 ? user.uid.substring(0, 6).toUpperCase() : user.uid.toUpperCase()}';
+
+          state = AttendeeProfile(
+            uid: user.uid,
+            name: name,
+            email: email,
+            college: isIit ? 'IIT (ISM) Dhanbad' : 'Visiting Participant',
+            phone: user.phoneNumber ?? '',
+            passId: passId,
+            passType: isIit ? 0 : 1,
+            isGuest: false,
+            isEmailVerified: true,
+            registeredEventIds: state.registeredEventIds,
+          );
         }
+
+        // 3. Background reload without signing out on failure
+        try {
+          await user.reload().timeout(const Duration(seconds: 4));
+        } catch (_) {}
+
+        final refreshed = FirebaseAuth.instance.currentUser ?? user;
+        await _loadProfileFromFirestore(refreshed);
       }
     } catch (e) {
       debugPrint('Init auth notice: $e');

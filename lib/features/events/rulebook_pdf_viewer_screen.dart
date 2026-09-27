@@ -1,7 +1,10 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../models/event_item.dart';
+import '../../core/services/pdf_cache_service.dart';
 
 class RulebookPdfViewerScreen extends StatefulWidget {
   final EventItem event;
@@ -21,27 +24,14 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
   int _currentPage = 1;
   bool _loadFailed = false;
   bool _isLoading = true;
-
-  // Bundled asset rulebooks map
-  static const Map<String, String> _bundledRulebooks = {
-    'aethera': 'assets/rulebooks/aethera.pdf',
-    'code_wars': 'assets/rulebooks/code_wars.pdf',
-    'edge_ai_challenge': 'assets/rulebooks/edge_ai_challenge.pdf',
-    'equity_auction': 'assets/rulebooks/equity_auction.pdf',
-    'fault_hunt': 'assets/rulebooks/fault_hunt.pdf',
-    'logic_odyssey': 'assets/rulebooks/logic_odyssey.pdf',
-    'mathalon': 'assets/rulebooks/mathalon.pdf',
-    'questree__26': 'assets/rulebooks/questree__26.pdf',
-    'pmx180dc_caseblitz': 'assets/rulebooks/questree__26.pdf',
-    'reservoir_making___iadc': 'assets/rulebooks/reservoir_making___iadc.pdf',
-    'sparkathon': 'assets/rulebooks/sparkathon.pdf',
-    'vibehack__26': 'assets/rulebooks/vibehack__26.pdf',
-  };
+  double _downloadProgress = 0.0;
+  Uint8List? _pdfBytes;
 
   @override
   void initState() {
     super.initState();
     _pdfViewerController = PdfViewerController();
+    _loadPdf();
   }
 
   @override
@@ -50,25 +40,14 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
     super.dispose();
   }
 
-  String? get _bundledAssetPath {
-    final id = widget.event.id.toLowerCase().trim();
-    if (_bundledRulebooks.containsKey(id)) {
-      return _bundledRulebooks[id];
-    }
-    // Check partial matches
-    for (final entry in _bundledRulebooks.entries) {
-      if (id.contains(entry.key) || entry.key.contains(id)) {
-        return entry.value;
-      }
-    }
-    return null;
-  }
-
+  /// Normalizes various PDF URL formats into a direct-download URL.
+  /// Handles: Cloudinary raw URLs, Google Drive share links, Google Docs links,
+  /// and plain https://.../*.pdf URLs.
   String get _normalizedPdfUrl {
     final raw = widget.event.rulebookUrl.trim();
     if (raw.isEmpty) return '';
 
-    // Google Drive direct export
+    // Google Drive /file/d/<id>  →  direct download
     if (raw.contains('drive.google.com/file/d/')) {
       final match = RegExp(r'/file/d/([a-zA-Z0-9_-]+)').firstMatch(raw);
       if (match != null && match.groupCount >= 1) {
@@ -77,7 +56,16 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
       }
     }
 
-    // Google Docs PDF export
+    // Google Drive /open?id=<id>
+    if (raw.contains('drive.google.com/open?id=')) {
+      final match = RegExp(r'[?&]id=([a-zA-Z0-9_-]+)').firstMatch(raw);
+      if (match != null && match.groupCount >= 1) {
+        final fileId = match.group(1);
+        return 'https://drive.google.com/uc?export=download&id=$fileId';
+      }
+    }
+
+    // Google Docs /document/d/<id>  →  PDF export
     if (raw.contains('docs.google.com/document/d/')) {
       final match = RegExp(r'/document/d/([a-zA-Z0-9_-]+)').firstMatch(raw);
       if (match != null && match.groupCount >= 1) {
@@ -89,15 +77,72 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
     return raw;
   }
 
+  /// Downloads the PDF via PdfCacheService (memory → disk → network)
+  /// and loads it into the viewer as raw bytes.
+  Future<void> _loadPdf() async {
+    final url = _normalizedPdfUrl;
+    if (url.isEmpty || !url.startsWith('http')) {
+      if (mounted) {
+        setState(() {
+          _loadFailed = false;
+          _isLoading = false;
+          _pdfBytes = null; // no source at all → show "coming soon"
+        });
+      }
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _loadFailed = false;
+      _downloadProgress = 0.0;
+      _pdfBytes = null;
+    });
+
+    try {
+      final bytes = await PdfCacheService.getOrFetchPdf(
+        url,
+        onProgress: (progress) {
+          if (mounted) {
+            setState(() => _downloadProgress = progress);
+          }
+        },
+      );
+
+      if (bytes != null && bytes.isNotEmpty) {
+        if (mounted) {
+          setState(() {
+            _pdfBytes = bytes;
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _loadFailed = true;
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('RulebookPdfViewer: PDF load error: $e');
+      if (mounted) {
+        setState(() {
+          _loadFailed = true;
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).colorScheme.primary;
     final cardBg = Theme.of(context).colorScheme.surface;
     final bgDark = Theme.of(context).scaffoldBackgroundColor;
 
-    final assetPath = _bundledAssetPath;
-    final effectiveUrl = _normalizedPdfUrl;
-    final hasSource = assetPath != null || (effectiveUrl.isNotEmpty && effectiveUrl.startsWith('http'));
+    final url = _normalizedPdfUrl;
+    final hasSource = url.isNotEmpty && url.startsWith('http');
 
     return Scaffold(
       backgroundColor: bgDark,
@@ -108,7 +153,6 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        // Title gets maximum space with zero crowding
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -134,20 +178,34 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
             ),
           ],
         ),
-        actions: const [], // Zero redundant buttons or page numbers to keep header clean and spacious
+        actions: [
+          // Open externally if user wants to download/share
+          if (hasSource && !_isLoading)
+            IconButton(
+              icon: const Icon(Icons.open_in_new, color: Colors.white70, size: 20),
+              tooltip: 'Open in Browser',
+              onPressed: () async {
+                try {
+                  await launchUrl(Uri.parse(widget.event.rulebookUrl.trim()),
+                      mode: LaunchMode.externalApplication);
+                } catch (_) {}
+              },
+            ),
+        ],
       ),
       body: Stack(
         children: [
-          if (!hasSource)
+          if (!hasSource && !_isLoading)
             _buildEmptyState(
               title: 'RULEBOOK ANNOUNCEMENT SOON',
-              subtitle: 'The official rulebook guidelines for ${widget.event.title} are being finalized by the organizing society and will be available here shortly.',
+              subtitle:
+                  'The official rulebook guidelines for ${widget.event.title} are being finalized by the organizing society and will be available here shortly.',
             )
           else if (_loadFailed)
             _buildLoadFailedState()
-          else if (assetPath != null)
-            SfPdfViewer.asset(
-              assetPath,
+          else if (_pdfBytes != null)
+            SfPdfViewer.memory(
+              _pdfBytes!,
               controller: _pdfViewerController,
               canShowScrollHead: false,
               canShowScrollStatus: false,
@@ -158,49 +216,6 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
                 if (mounted) {
                   setState(() {
                     _pageCount = details.document.pages.count;
-                    _loadFailed = false;
-                    _isLoading = false;
-                  });
-                }
-              },
-              onDocumentLoadFailed: (details) {
-                // If local asset failed, try network fallback if URL exists
-                if (effectiveUrl.isNotEmpty && effectiveUrl.startsWith('http')) {
-                  setState(() {
-                    _isLoading = true;
-                  });
-                } else {
-                  if (mounted) {
-                    setState(() {
-                      _loadFailed = true;
-                      _isLoading = false;
-                    });
-                  }
-                }
-              },
-              onPageChanged: (details) {
-                if (mounted && _currentPage != details.newPageNumber) {
-                  setState(() {
-                    _currentPage = details.newPageNumber;
-                  });
-                }
-              },
-            )
-          else
-            SfPdfViewer.network(
-              effectiveUrl,
-              controller: _pdfViewerController,
-              canShowScrollHead: false,
-              canShowScrollStatus: false,
-              canShowPaginationDialog: false,
-              enableDoubleTapZooming: true,
-              pageSpacing: 6,
-              onDocumentLoaded: (details) {
-                if (mounted) {
-                  setState(() {
-                    _pageCount = details.document.pages.count;
-                    _loadFailed = false;
-                    _isLoading = false;
                   });
                 }
               },
@@ -208,7 +223,6 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
                 if (mounted) {
                   setState(() {
                     _loadFailed = true;
-                    _isLoading = false;
                   });
                 }
               },
@@ -221,18 +235,38 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
               },
             ),
 
-          // Clean, quiet loading spinner with NO noisy text
-          if (_isLoading && hasSource && !_loadFailed)
+          // Loading overlay with download progress
+          if (_isLoading && hasSource)
             Container(
-              color: bgDark.withValues(alpha: 0.7),
+              color: bgDark.withValues(alpha: 0.85),
               child: Center(
-                child: SizedBox(
-                  width: 36,
-                  height: 36,
-                  child: CircularProgressIndicator(
-                    color: primaryColor,
-                    strokeWidth: 2.5,
-                  ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 44,
+                      height: 44,
+                      child: CircularProgressIndicator(
+                        value: _downloadProgress > 0 && _downloadProgress < 1.0
+                            ? _downloadProgress
+                            : null,
+                        color: primaryColor,
+                        strokeWidth: 3,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      _downloadProgress > 0 && _downloadProgress < 1.0
+                          ? 'DOWNLOADING ${(_downloadProgress * 100).toInt()}%'
+                          : 'LOADING RULEBOOK…',
+                      style: GoogleFonts.rajdhani(
+                        color: Colors.white60,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -325,7 +359,10 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
                         if (widget.event.time.isNotEmpty)
                           Text(
                             'Time: ${widget.event.time}',
-                            style: TextStyle(color: primaryColor, fontSize: 11, fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                                color: primaryColor,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600),
                             overflow: TextOverflow.ellipsis,
                           ),
                       ],
@@ -358,7 +395,8 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white12),
               ),
-              child: Icon(Icons.menu_book_outlined, size: 42, color: primaryColor.withValues(alpha: 0.6)),
+              child: Icon(Icons.menu_book_outlined,
+                  size: 42, color: primaryColor.withValues(alpha: 0.6)),
             ),
             const SizedBox(height: 16),
             Text(
@@ -395,10 +433,11 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.description_outlined, size: 42, color: primaryColor.withValues(alpha: 0.7)),
+            Icon(Icons.description_outlined,
+                size: 42, color: primaryColor.withValues(alpha: 0.7)),
             const SizedBox(height: 14),
             Text(
-              'RULEBOOK ACCESS UPDATING',
+              'UNABLE TO LOAD RULEBOOK',
               style: GoogleFonts.orbitron(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -408,7 +447,7 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'The document is being synced from the festival repository. Please try again shortly.',
+              'The document could not be loaded. This can happen with Google Drive links that require sign-in or have restricted sharing. Try opening externally.',
               style: GoogleFonts.rajdhani(
                 fontSize: 13,
                 color: Colors.white60,
@@ -416,25 +455,53 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 18),
-            OutlinedButton(
-              onPressed: () {
-                setState(() {
-                  _loadFailed = false;
-                  _isLoading = true;
-                });
-              },
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: Text(
-                'RETRY ACCESS',
-                style: GoogleFonts.rajdhani(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _loadPdf,
+                  icon: const Icon(Icons.refresh, size: 16),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                  label: Text(
+                    'RETRY',
+                    style: GoogleFonts.rajdhani(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final rawUrl = widget.event.rulebookUrl.trim();
+                    if (rawUrl.isNotEmpty) {
+                      try {
+                        await launchUrl(Uri.parse(rawUrl),
+                            mode: LaunchMode.externalApplication);
+                      } catch (_) {}
+                    }
+                  },
+                  icon: const Icon(Icons.open_in_new, size: 16),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.white24),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                  label: Text(
+                    'OPEN EXTERNALLY',
+                    style: GoogleFonts.rajdhani(
+                      color: Colors.white70,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

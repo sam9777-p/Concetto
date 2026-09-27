@@ -24,7 +24,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> with SingleTick
   bool _hapticFired = false;
   bool _isUserTouching = false;
   static const double _deadzone = 28.0;
-  static const double _pullThreshold = 110.0;
+  static const double _pullThreshold =75.0;
   DateTime _lastTransitionTime = DateTime.now();
 
   late final AnimationController _pullDismissController;
@@ -358,7 +358,6 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> with SingleTick
                             _updatePull(0.0, 0);
                           }
                         } else if (notification is OverscrollNotification) {
-                          if (notification.dragDetails == null) return false;
                           if (notification.overscroll > 0 && _selectedDayIndex < _festivalDays.length - 1) {
                             final raw = _pullExtent + (notification.overscroll * 0.7);
                             _updatePull(raw, 1);
@@ -813,9 +812,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> with SingleTick
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        isTriggered
-                            ? 'Release to view $targetDay'
-                            : (isNext ? 'Pull up for $targetDay' : 'Pull down for $targetDay'),
+                        targetDay,
                         style: GoogleFonts.orbitron(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,

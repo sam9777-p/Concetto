@@ -141,7 +141,7 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
-                      'OFFICIAL FESTIVAL T-SHIRT',
+                      'OFFICIAL FEST T-SHIRT',
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.orbitron(
                         fontSize: 14,

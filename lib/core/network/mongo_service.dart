@@ -1,7 +1,6 @@
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:flutter/foundation.dart';
 import '../../models/event_item.dart';
-import 'mock_data.dart';
 
 class MongoService {
   static const String host = 'f4a6506a-05dc-49cf-90c6-30e3b01ee57e.asia-south2.firestore.goog:443';
@@ -24,11 +23,16 @@ class MongoService {
     if (connectionUri.isEmpty) return null;
     if (_db != null && _db!.state == State.open) return _db;
     try {
-      _db = await Db.create(connectionUri);
-      await _db!.open();
+      final db = await Db.create(connectionUri);
+      await db.open().timeout(const Duration(seconds: 3));
+      _db = db;
       return _db;
     } catch (e) {
-      debugPrint('MongoService connection error: $e');
+      debugPrint('MongoService connection notice: $e');
+      try {
+        await _db?.close();
+      } catch (_) {}
+      _db = null;
       return null;
     }
   }
@@ -46,16 +50,6 @@ class MongoService {
             return EventItem.fromJson(Map<String, dynamic>.from(d), id);
           }).toList();
 
-          // Sync local mock data cache
-          for (final ev in list) {
-            final idx = MockData.events.indexWhere((e) => e.id == ev.id);
-            if (idx >= 0) {
-              MockData.events[idx] = ev;
-            } else {
-              MockData.events.add(ev);
-            }
-          }
-
           if (!includeHidden) {
             return list.where((e) => e.isVisible).toList();
           }
@@ -63,14 +57,10 @@ class MongoService {
         }
       }
     } catch (e) {
-      debugPrint('MongoService getEvents error: $e. Falling back to local events.');
+      debugPrint('MongoService getEvents error: $e.');
     }
 
-    // Fallback to local MockData if offline or credentials not yet entered
-    if (!includeHidden) {
-      return MockData.events.where((e) => e.isVisible).toList();
-    }
-    return MockData.events;
+    return const [];
   }
 
   /// Looks up a single event by ID from MongoDB
@@ -88,8 +78,7 @@ class MongoService {
     } catch (e) {
       debugPrint('MongoService getEventById error: $e');
     }
-    final local = MockData.events.where((e) => e.id == eventId);
-    return local.isNotEmpty ? local.first : null;
+    return null;
   }
 
   /// Saves a newly created event to MongoDB
@@ -103,13 +92,11 @@ class MongoService {
         data['id'] = event.id;
         final res = await col.insertOne(data);
         debugPrint('MongoService: Event "${event.title}" saved to MongoDB (errors: ${res.hasWriteErrors}).');
-        _syncLocalMock(event);
         return !res.hasWriteErrors;
       }
     } catch (e) {
       debugPrint('MongoService saveEvent error: $e');
     }
-    _syncLocalMock(event);
     return false;
   }
 
@@ -135,13 +122,11 @@ class MongoService {
           upsert: true,
         );
         debugPrint('MongoService: Event "${event.title}" updated in MongoDB: $res');
-        _syncLocalMock(event);
         return true;
       }
     } catch (e) {
       debugPrint('MongoService updateEvent error: $e');
     }
-    _syncLocalMock(event);
     return false;
   }
 
@@ -153,13 +138,11 @@ class MongoService {
         final col = db.collection('events');
         final res = await col.deleteOne(where.eq('_id', eventId));
         debugPrint('MongoService: Event "$eventId" deleted from MongoDB (errors: ${res.hasWriteErrors}).');
-        MockData.events.removeWhere((e) => e.id == eventId);
         return !res.hasWriteErrors;
       }
     } catch (e) {
       debugPrint('MongoService deleteEvent error: $e');
     }
-    MockData.events.removeWhere((e) => e.id == eventId);
     return true;
   }
 
@@ -174,59 +157,15 @@ class MongoService {
           modify.set('isVisible', isVisible),
         );
         debugPrint('MongoService: Event "$eventId" visibility set to $isVisible: $res');
-        final idx = MockData.events.indexWhere((e) => e.id == eventId);
-        if (idx >= 0) {
-          MockData.events[idx] = MockData.events[idx].copyWith(isVisible: isVisible);
-        }
         return true;
       }
     } catch (e) {
       debugPrint('MongoService toggleVisibility error: $e');
     }
-    final idx = MockData.events.indexWhere((e) => e.id == eventId);
-    if (idx >= 0) {
-      MockData.events[idx] = MockData.events[idx].copyWith(isVisible: isVisible);
-    }
     return false;
   }
 
-  void _syncLocalMock(EventItem event) {
-    final idx = MockData.events.indexWhere((e) => e.id == event.id);
-    if (idx >= 0) {
-      MockData.events[idx] = event;
-    } else {
-      MockData.events.insert(0, event);
-    }
-  }
 
-  /// Seeds all 55 events into MongoDB
-  Future<({int count, String? error})> seedMockEventsToMongo() async {
-    try {
-      final db = await _getDb();
-      if (db == null) {
-        return (count: 0, error: 'Database connection failed. Please verify SCRAM credentials.');
-      }
-      final col = db.collection('events');
-      int count = 0;
-      for (final event in MockData.events) {
-        final data = event.toJson();
-        data['_id'] = event.id;
-        data['id'] = event.id;
-
-        final setMap = Map<String, dynamic>.from(data)..remove('_id');
-        var modifier = modify;
-        setMap.forEach((key, value) {
-          modifier = modifier.set(key, value);
-        });
-
-        await col.modernUpdate(where.eq('_id', event.id), modifier, upsert: true);
-        count++;
-      }
-      return (count: count, error: null);
-    } catch (e) {
-      return (count: 0, error: e.toString());
-    }
-  }
 
   Future<void> dispose() async {
     try {
