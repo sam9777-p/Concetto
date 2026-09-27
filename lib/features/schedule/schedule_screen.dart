@@ -24,7 +24,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> with SingleTick
   bool _hapticFired = false;
   bool _isUserTouching = false;
   static const double _deadzone = 28.0;
-  static const double _pullThreshold =75.0;
+  static const double _pullThreshold =100.0;
   DateTime _lastTransitionTime = DateTime.now();
 
   late final AnimationController _pullDismissController;
