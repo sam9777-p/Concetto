@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import 'widgets/pass_scanner_screen.dart';
 import 'event_operations_screen.dart';
 import 'guest_pass_dashboard_screen.dart';
+import 'notification_sender_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final bool initialIsDeveloper;
@@ -22,6 +23,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   bool _isEventUnlocked = false;
   bool _isSecurityUnlocked = false;
   bool _isHospitalityUnlocked = false;
+  bool _isPromotionUnlocked = false;
 
   @override
   void initState() {
@@ -30,6 +32,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     _isEventUnlocked = false;
     _isSecurityUnlocked = false;
     _isHospitalityUnlocked = false;
+    _isPromotionUnlocked = false;
   }
 
   Future<void> _promptRolePassword({
@@ -175,6 +178,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             _isEventUnlocked = true;
                             _isSecurityUnlocked = true;
                             _isHospitalityUnlocked = true;
+                            _isPromotionUnlocked = true;
                           });
                         }
                         onAuthorized();
@@ -226,6 +230,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                       _isEventUnlocked = true;
                                       _isSecurityUnlocked = true;
                                       _isHospitalityUnlocked = true;
+                                      _isPromotionUnlocked = true;
                                     });
                                   }
                                   onAuthorized();
@@ -326,6 +331,29 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         setState(() => _isHospitalityUnlocked = true);
         Navigator.of(context).push(
           MaterialPageRoute(builder: (context) => const GuestPassDashboardScreen()),
+        );
+      },
+    );
+  }
+
+  void _onSelectBroadcastNotifications() {
+    if (_isPromotionUnlocked) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => const NotificationSenderScreen()),
+      );
+      return;
+    }
+
+    _promptRolePassword(
+      roleName: 'Promotion Password',
+      roleSubtitle: 'FCM Push Notifications & Broadcast Hub',
+      icon: Icons.campaign_rounded,
+      accentColor: const Color(0xFF00E5FF),
+      validator: MasterAdminConfig.verifyPromotion,
+      onAuthorized: () {
+        setState(() => _isPromotionUnlocked = true);
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => const NotificationSenderScreen()),
         );
       },
     );
@@ -446,6 +474,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 icon: Icons.badge_outlined,
                 isUnlocked: _isHospitalityUnlocked,
                 onTap: _onSelectEditPasses,
+              ),
+              const SizedBox(height: 18),
+
+              // ==========================================
+              // BOX 4: SEND BROADCAST NOTIFICATIONS (PROMOTION PASSWORD OR DEV)
+              // ==========================================
+              _buildBoxyModuleCard(
+                title: 'SEND BROADCAST NOTIFICATIONS',
+                subtitle: 'Push instant notifications across Android, iOS & Web via FCM. Attach banner images, deep-link to events/schedules, and publish live.',
+                roleBadge: 'REQUIRES PROMOTION PASS (OR DEV)',
+                accentColor: const Color(0xFF00E5FF),
+                icon: Icons.campaign_rounded,
+                isUnlocked: _isPromotionUnlocked,
+                onTap: _onSelectBroadcastNotifications,
               ),
               const SizedBox(height: 28),
 

@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -130,50 +129,30 @@ class AuthNotifier extends Notifier<AttendeeProfile> {
     );
   }
 
-  static List<FirebaseFirestore> _getFirestoreInstances() {
-    final list = <FirebaseFirestore>[];
-    try {
-      // 1. Default Firestore database
-      list.add(FirebaseFirestore.instance);
-    } catch (_) {}
-    try {
-      // 2. Named 'concetto' database
-      if (FirestoreConfig.databaseId.isNotEmpty && FirestoreConfig.databaseId != '(default)') {
-        list.add(FirebaseFirestore.instanceFor(
-          app: Firebase.app(),
-          databaseId: FirestoreConfig.databaseId,
-        ));
-      }
-    } catch (_) {}
-    return list;
-  }
-
   static Future<void> _persistUserToFirestore({
     required String uid,
     required String passId,
     required Map<String, dynamic> userData,
   }) async {
-    for (final db in _getFirestoreInstances()) {
-      try {
-        // ONLY persist user profile under their unique Auth UID
-        await db.collection('users').doc(uid).set(userData, SetOptions(merge: true)).timeout(const Duration(seconds: 4));
-        debugPrint('Successfully persisted user to Firestore database ${db.databaseId}');
-      } catch (e) {
-        debugPrint('Notice persisting to Firestore (${db.databaseId}): $e');
-      }
+    try {
+      final db = FirestoreConfig.instance;
+      // ONLY persist user profile under their unique Auth UID in the 'concetto' database
+      await db.collection('users').doc(uid).set(userData, SetOptions(merge: true)).timeout(const Duration(seconds: 4));
+      debugPrint('Successfully persisted user to Firestore concetto database');
+    } catch (e) {
+      debugPrint('Notice persisting to Firestore concetto database: $e');
     }
   }
 
   static Future<Map<String, dynamic>?> _readUserFromFirestore(String uid) async {
-    for (final db in _getFirestoreInstances()) {
-      try {
-        final doc = await db.collection('users').doc(uid).get().timeout(const Duration(seconds: 4));
-        if (doc.exists && doc.data() != null) {
-          return doc.data();
-        }
-      } catch (e) {
-        debugPrint('Notice reading user from Firestore (${db.databaseId}): $e');
+    try {
+      final db = FirestoreConfig.instance;
+      final doc = await db.collection('users').doc(uid).get().timeout(const Duration(seconds: 4));
+      if (doc.exists && doc.data() != null) {
+        return doc.data();
       }
+    } catch (e) {
+      debugPrint('Notice reading user from Firestore concetto database: $e');
     }
     return null;
   }

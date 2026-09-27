@@ -1,11 +1,8 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../core/network/auth_provider.dart';
 import '../../../core/network/repositories.dart';
 import '../../../core/theme/app_theme.dart';
 
@@ -31,23 +28,6 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
   String? _lastScannedCode;
   DateTime? _lastScannedTime;
 
-  static List<FirebaseFirestore> _getDatabases() {
-    final list = <FirebaseFirestore>[];
-    try {
-      // 1. Default database
-      list.add(FirebaseFirestore.instance);
-    } catch (_) {}
-    try {
-      // 2. Named 'concetto' database
-      if (FirestoreConfig.databaseId.isNotEmpty && FirestoreConfig.databaseId != '(default)') {
-        list.add(FirebaseFirestore.instanceFor(
-          app: Firebase.app(),
-          databaseId: FirestoreConfig.databaseId,
-        ));
-      }
-    } catch (_) {}
-    return list;
-  }
 
   @override
   void dispose() {
@@ -120,186 +100,137 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
     await _lookupAndVerifyPass(rawValue);
   }
 
-  Future<void> _lookupAndVerifyPass(String rawInput) async {
-    final cleanInput = rawInput.trim();
-    if (cleanInput.isEmpty) return;
+  Future<void> _lookupAndVerifyPass(String rawValue) async {
+    if (_isProcessing) return;
 
-    setState(() {
-      _isProcessing = true;
-      _statusMessage = 'Verifying Pass...';
-      _isError = false;
-    });
+    final passIdToSearch = rawValue.trim();
 
-    String passIdToSearch = cleanInput;
-    String? userIdHint;
-    Map<String, dynamic>? passData;
-
-    // Check if payload is JSON formatted: {"passId":"...", ...} or raw pass ID string
-    if (cleanInput.startsWith('{') && cleanInput.endsWith('}')) {
-      try {
-        final decoded = jsonDecode(cleanInput);
-        if (decoded is Map<String, dynamic>) {
-          if (decoded.containsKey('passId')) {
-            passIdToSearch = decoded['passId'].toString();
-          }
-          if (decoded.containsKey('uid')) {
-            userIdHint = decoded['uid'].toString();
-          }
-        }
-      } catch (_) {}
+    if (passIdToSearch.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _statusMessage = 'Please enter a valid Pass ID';
+          _isError = true;
+        });
+      }
+      return;
     }
 
-    String resolvedPassId = passIdToSearch;
-    String resolvedUserId = userIdHint ?? '';
-    String? firestoreError;
-
-    final databases = _getDatabases();
-
-    for (final db in databases) {
-      try {
-        DocumentSnapshot<Map<String, dynamic>>? primaryUserDoc;
-
-        // Step 1: Query 'users' collection by passId field
-        final userQuery = await db
-            .collection('users')
-            .where('passId', isEqualTo: passIdToSearch)
-            .get()
-            .timeout(const Duration(seconds: 4));
-
-        for (final doc in userQuery.docs) {
-          // If this doc was accidentally created with passId as document ID, purge it immediately
-          if (doc.id.startsWith('CON-')) {
-            final possibleUid = doc.data()['uid']?.toString();
-            if (possibleUid != null && !possibleUid.startsWith('CON-') && possibleUid.length >= 20) {
-              resolvedUserId = possibleUid;
-            }
-            try {
-              await db.collection('users').doc(doc.id).delete();
-              debugPrint('Purged accidental passId doc: users/${doc.id}');
-            } catch (_) {}
-            continue;
-          }
-
-          // Real user document found (keyed by unique Auth UID)!
-          primaryUserDoc = doc;
-          resolvedUserId = doc.id;
-          break;
-        }
-
-        // Step 2: Fallback query formatted ID (e.g. CON-26-...) in 'users'
-        if (primaryUserDoc == null && !passIdToSearch.startsWith('CON-')) {
-          final formatted = 'CON-26-${passIdToSearch.toUpperCase()}';
-          final pQuery = await db
-              .collection('users')
-              .where('passId', isEqualTo: formatted)
-              .get()
-              .timeout(const Duration(seconds: 4));
-
-          for (final doc in pQuery.docs) {
-            if (doc.id.startsWith('CON-')) {
-              final possibleUid = doc.data()['uid']?.toString();
-              if (possibleUid != null && !possibleUid.startsWith('CON-') && possibleUid.length >= 20) {
-                resolvedUserId = possibleUid;
-              }
-              try {
-                await db.collection('users').doc(doc.id).delete();
-              } catch (_) {}
-              continue;
-            }
-
-            primaryUserDoc = doc;
-            resolvedUserId = doc.id;
-            resolvedPassId = formatted;
-            break;
-          }
-        }
-
-        // Step 3: If primaryUserDoc was not yet found, check direct UID lookup if available
-        final targetUid = (resolvedUserId.isNotEmpty && !resolvedUserId.startsWith('CON-'))
-            ? resolvedUserId
-            : (userIdHint != null && userIdHint.isNotEmpty ? userIdHint : '');
-
-        if (primaryUserDoc == null && targetUid.isNotEmpty) {
-          final uDoc = await db.collection('users').doc(targetUid).get().timeout(const Duration(seconds: 4));
-          if (uDoc.exists && uDoc.data() != null) {
-            primaryUserDoc = uDoc;
-            resolvedUserId = uDoc.id;
-          }
-        }
-
-        // Clean up any accidental stub created at doc(passIdToSearch)
-        try {
-          final stubDoc = await db.collection('users').doc(passIdToSearch).get().timeout(const Duration(seconds: 2));
-          if (stubDoc.exists) {
-            await db.collection('users').doc(passIdToSearch).delete();
-          }
-        } catch (_) {}
-
-        if (primaryUserDoc != null && primaryUserDoc.data() != null) {
-          passData = primaryUserDoc.data()!;
-          resolvedUserId = primaryUserDoc.id; // GUARANTEED UNIQUE BIG UID!
-          resolvedPassId = passData['passId']?.toString() ?? passIdToSearch;
-          break;
-        }
-      } catch (e) {
-        debugPrint('Error searching user in ${db.databaseId}: $e');
-        if (e.toString().contains('permission-denied')) {
-          firestoreError = 'Permission Denied: Please check Firestore rules for "users" in Firebase Console.';
-        }
-      }
-    }
-
-    if (!mounted) return;
-
-    if (passData != null) {
-      final name = passData['name']?.toString() ?? 'Attendee';
-      final email = passData['email']?.toString() ?? 'N/A';
-      final phone = _extractPhone(passData);
-      final college = passData['college']?.toString() ?? 'N/A';
-      final passTypeRaw = passData['passType'];
-      int passType = 1;
-      if (passTypeRaw is int) {
-        passType = passTypeRaw;
-      } else if (passTypeRaw != null) {
-        passType = int.tryParse(passTypeRaw.toString()) ?? 1;
-      }
-      final passCategoryTitle = AttendeeProfile.passCategoryNames[passType] ?? 'ATTENDEE PASS';
-
-      // Scan Count tracking from users collection
-      final scanCountRaw = passData['scanCount'] ?? passData['scannedCount'] ?? passData['timesScanned'];
-      int scanCount = 0;
-      if (scanCountRaw is int) {
-        scanCount = scanCountRaw;
-      } else if (scanCountRaw != null) {
-        scanCount = int.tryParse(scanCountRaw.toString()) ?? 0;
-      }
-
+    if (mounted) {
       setState(() {
-        _statusMessage = null;
+        _isProcessing = true;
+        _statusMessage = 'VERIFYING PASS...';
+        _isError = false;
       });
+    }
+
+    try {
+      final db = FirestoreConfig.instance;
+      final query = await db
+          .collection('users')
+          .where('passId', isEqualTo: passIdToSearch)
+          .limit(1)
+          .get();
+
+      if (query.docs.isEmpty) {
+        throw Exception('Pass not found');
+      }
+
+      final userDoc = query.docs.first;
+      final userId = userDoc.id;
+      final data = userDoc.data();
+
+      // Firebase Auth UID must be the Firestore document ID.
+      // If a malformed/legacy document is encountered, reject it.
+      final storedUid = data['uid']?.toString().trim();
+      if (userId.isEmpty ||
+          userId.startsWith('CON-') ||
+          (storedUid != null && storedUid.isNotEmpty && storedUid != userId)) {
+        throw Exception('Invalid user record');
+      }
+
+      final name = data['name']?.toString().trim() ?? '';
+      final email = data['email']?.toString().trim() ?? '';
+      final phone = _extractPhone(data);
+      final college = data['college']?.toString().trim() ?? '';
+
+      int passType = 0;
+      final rawPassType = data['passType'];
+      if (rawPassType is int) {
+        passType = rawPassType;
+      } else if (rawPassType != null) {
+        passType = int.tryParse(rawPassType.toString()) ?? 0;
+      }
+
+      String passCategory = data['passCategory']?.toString().trim() ?? '';
+      if (passCategory.isEmpty) {
+        const categories = {
+          0: 'Student Pass',
+          1: 'Guest Pass',
+          2: 'Silver Pass',
+          3: 'Gold Pass',
+          4: 'Diamond Pass',
+          5: 'Diamond+ Pass',
+        };
+        passCategory = categories[passType] ?? 'Student Pass';
+      }
+
+      int scanCount = 0;
+      final rawScanCount = data['scanCount'];
+      if (rawScanCount is int) {
+        scanCount = rawScanCount;
+      } else if (rawScanCount is num) {
+        scanCount = rawScanCount.toInt();
+      } else if (rawScanCount != null) {
+        scanCount = int.tryParse(rawScanCount.toString()) ?? 0;
+      }
+
+      final storedPassId = data['passId']?.toString().trim() ?? '';
+      if (storedPassId.isEmpty || storedPassId != passIdToSearch) {
+        throw Exception('Invalid pass record');
+      }
+
+      if (mounted) {
+        setState(() {
+          _statusMessage = 'PASS VERIFIED';
+          _isError = false;
+        });
+      }
 
       await _showAdmissionDialog(
-        userId: resolvedUserId,
-        passId: resolvedPassId,
+        userId: userId,
+        passId: storedPassId,
         scanCount: scanCount,
-        name: name,
+        name: name.isNotEmpty ? name : 'Unnamed',
         email: email,
         phone: phone,
         college: college,
         passType: passType,
-        passCategory: passCategoryTitle,
+        passCategory: passCategory,
       );
+    } on FirebaseException catch (e) {
+      debugPrint('Pass lookup failed: ${e.code}: ${e.message}');
 
-      _resetScannerForNextPass();
-    } else {
-      setState(() {
-        _isProcessing = false;
-        _isError = true;
-        _statusMessage = firestoreError != null
-            ? 'Firestore Permission Denied. Please ensure read rules for "users" are enabled in Firebase Console.'
-            : 'Pass "$passIdToSearch" not found in users database.';
-      });
-      HapticFeedback.vibrate();
+      if (mounted) {
+        setState(() {
+          _statusMessage = e.code == 'permission-denied'
+              ? 'Permission denied'
+              : 'Pass not found';
+          _isError = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('Pass lookup failed: $e');
+
+      if (mounted) {
+        setState(() {
+          _statusMessage = 'Invalid or unregistered Pass ID';
+          _isError = true;
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
     }
   }
 
@@ -454,29 +385,27 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
                                 'lastScannedBy': 'Organizer Command Hub',
                               };
 
-                              for (final db in _getDatabases()) {
-                                try {
-                                  // Perform BOTH writes simultaneously:
-                                  // 1. Continuous audit log of every scan in scan_logs collection
-                                  // 2. Increment scanCount on the user's primary document (unique big UID) in users
-                                  final futures = <Future>[
-                                    db.collection('scan_logs').add(logData),
-                                  ];
+                              try {
+                                final db = FirestoreConfig.instance;
+                                // Perform BOTH writes simultaneously in the 'concetto' database:
+                                // 1. Continuous audit log of every scan in scan_logs collection
+                                // 2. Increment scanCount on the existing users/{uid} document only
+                                final futures = <Future>[
+                                  db.collection('scan_logs').add(logData),
+                                ];
 
-                                  if (userId.isNotEmpty) {
-                                    futures.add(
-                                      db.collection('users').doc(userId).set(
-                                            userUpdateData,
-                                            SetOptions(merge: true),
-                                          ),
-                                    );
-                                  }
-
-                                  await Future.wait(futures).timeout(const Duration(seconds: 4));
-                                  debugPrint('Simultaneous write completed for scan_logs and users/$userId in ${db.databaseId}');
-                                } catch (e) {
-                                  debugPrint('Notice logging scan in ${db.databaseId}: $e');
+                                if (userId.isNotEmpty) {
+                                  futures.add(
+                                    db.collection('users').doc(userId).update(
+                                          userUpdateData,
+                                        ),
+                                  );
                                 }
+
+                                await Future.wait(futures).timeout(const Duration(seconds: 4));
+                                debugPrint('Scan logged and users/$userId updated successfully');
+                              } catch (e) {
+                                debugPrint('Notice logging scan in concetto database: $e');
                               }
 
                               if (dlgContext.mounted) {
@@ -723,7 +652,7 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
                         controller: _manualIdController,
                         style: GoogleFonts.orbitron(color: Colors.white, fontSize: 14),
                         decoration: InputDecoration(
-                          hintText: 'e.g. CON-26-A1B2C3',
+                          hintText: 'Enter Pass ID',
                           hintStyle: GoogleFonts.orbitron(color: Colors.white24, fontSize: 13),
                           filled: true,
                           fillColor: const Color(0xFF1E0907),

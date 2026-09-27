@@ -5,6 +5,7 @@ import 'core/theme/app_theme.dart';
 import 'core/router.dart';
 
 import 'core/network/cloudinary_config.dart';
+import 'services/notification_service.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -19,6 +20,12 @@ void main() async {
     debugPrint('Firebase initialization notice: $e');
   }
 
+  // Initialize FCM Notification service
+  try {
+    await NotificationService.init();
+  } catch (e) {
+    debugPrint('NotificationService init notice: $e');
+  }
 
   // Maximize in-memory image cache so fetched cloud images never reload
   PaintingBinding.instance.imageCache.maximumSize = 1000;

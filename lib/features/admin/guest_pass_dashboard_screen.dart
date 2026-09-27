@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
 import '../../core/network/auth_provider.dart';
 import '../../core/network/repositories.dart';
 import '../../core/theme/app_theme.dart';
@@ -31,21 +30,6 @@ class _GuestPassDashboardScreenState extends State<GuestPassDashboardScreen> {
     5: Color(0xFFE040FB), // Diamond+ Merch
   };
 
-  static List<FirebaseFirestore> _getDatabases() {
-    final list = <FirebaseFirestore>[];
-    try {
-      list.add(FirebaseFirestore.instance);
-    } catch (_) {}
-    try {
-      if (FirestoreConfig.databaseId.isNotEmpty && FirestoreConfig.databaseId != '(default)') {
-        list.add(FirebaseFirestore.instanceFor(
-          app: Firebase.app(),
-          databaseId: FirestoreConfig.databaseId,
-        ));
-      }
-    } catch (_) {}
-    return list;
-  }
 
   @override
   void initState() {
@@ -70,32 +54,27 @@ class _GuestPassDashboardScreenState extends State<GuestPassDashboardScreen> {
       _errorMessage = null;
     });
 
-    final dbs = _getDatabases();
+    final db = FirestoreConfig.instance;
     final Map<String, Map<String, dynamic>> mergedUsers = {};
 
-    for (final db in dbs) {
-      try {
-        final querySnap = await db.collection('users').get().timeout(const Duration(seconds: 7));
-        for (final doc in querySnap.docs) {
-          final data = doc.data();
-          final uid = data['uid'] as String? ?? doc.id;
-          
-          // Skip any stub pass-id documents that aren't actual user profiles
-          if (doc.id.startsWith('CON-') && !data.containsKey('email')) {
-            continue;
-          }
-
-          // Merge latest data
-          if (!mergedUsers.containsKey(uid) || data.containsKey('lastModified')) {
-            mergedUsers[uid] = {
-              'docId': doc.id,
-              ...data,
-            };
-          }
+    try {
+      final querySnap = await db.collection('users').get().timeout(const Duration(seconds: 7));
+      for (final doc in querySnap.docs) {
+        final data = doc.data();
+        final uid = data['uid'] as String? ?? doc.id;
+        
+        // Skip any stub pass-id documents that aren't actual user profiles
+        if (doc.id.startsWith('CON-') && !data.containsKey('email')) {
+          continue;
         }
-      } catch (e) {
-        debugPrint('Fetch attendees error from db ${db.databaseId}: $e');
+
+        mergedUsers[uid] = {
+          'docId': doc.id,
+          ...data,
+        };
       }
+    } catch (e) {
+      debugPrint('Fetch attendees error from concetto db: $e');
     }
 
     final list = mergedUsers.values.toList();
@@ -434,19 +413,17 @@ class _GuestPassDashboardScreenState extends State<GuestPassDashboardScreen> {
                                 'lastModifiedByOrganizer': true,
                               };
 
-                              final dbs = _getDatabases();
+                              final db = FirestoreConfig.instance;
                               bool success = false;
 
-                              for (final db in dbs) {
-                                try {
-                                  await db.collection('users').doc(docId).set(
-                                    updateMap,
-                                    SetOptions(merge: true),
-                                  ).timeout(const Duration(seconds: 4));
-                                  success = true;
-                                } catch (e) {
-                                  debugPrint('Update attendee notice on db ${db.databaseId}: $e');
-                                }
+                              try {
+                                await db.collection('users').doc(docId).set(
+                                  updateMap,
+                                  SetOptions(merge: true),
+                                ).timeout(const Duration(seconds: 4));
+                                success = true;
+                              } catch (e) {
+                                debugPrint('Update attendee notice on concetto db: $e');
                               }
 
                               if (!context.mounted) return;

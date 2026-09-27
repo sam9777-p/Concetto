@@ -88,6 +88,10 @@ final goRouter = GoRouter(
       return '/events';
     }
 
+    if (path == '/about') {
+      return '/profile';
+    }
+
     // 2. Handle custom scheme paths like /sparkathon where host was 'events'
     if (path != '/' &&
         path != '/splash' &&

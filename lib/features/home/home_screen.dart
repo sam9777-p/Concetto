@@ -895,16 +895,18 @@ extension _HomeScreenHelpers on _HomeScreenState {
                 child: Text('No active announcements right now.'),
               );
             }
+            final sorted = List<AnnouncementItem>.from(announcements);
+            sorted.sort((a, b) => b.timestamp.compareTo(a.timestamp));
             return SizedBox(
-              height: 140,
+              height: 142,
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
-                itemCount: announcements.length,
+                itemCount: sorted.length,
                 itemBuilder: (context, index) {
-                  final ann = announcements[index];
-                  return _buildAnnouncementCard(ann, primaryColor);
+                  final ann = sorted[index];
+                  return _buildAnnouncementCard(ann, primaryColor, isLatest: index == 0);
                 },
               ),
             );
@@ -914,13 +916,29 @@ extension _HomeScreenHelpers on _HomeScreenState {
     );
   }
 
-  Widget _buildAnnouncementCard(AnnouncementItem ann, Color primaryColor) {
+  Widget _buildAnnouncementCard(AnnouncementItem ann, Color primaryColor, {bool isLatest = false}) {
     Color tagColor = primaryColor;
-    if (ann.tag == 'URGENT') tagColor = const Color(0xFFFF5252);
-    if (ann.tag == 'HACKATHON') tagColor = const Color(0xFF00E5FF);
-    if (ann.tag == 'INFO') tagColor = const Color(0xFF64B5F6);
+    final upperTag = ann.tag.toUpperCase();
+    if (upperTag.contains('URGENT') || upperTag.contains('ALERT')) {
+      tagColor = const Color(0xFFFF5252);
+    } else if (upperTag.contains('HACKATHON')) {
+      tagColor = const Color(0xFF00E5FF);
+    } else if (upperTag.contains('SCHEDULE')) {
+      tagColor = const Color(0xFFFFB300);
+    } else if (upperTag.contains('WORKSHOP')) {
+      tagColor = const Color(0xFF69F0AE);
+    } else if (upperTag.contains('CULTURAL') || upperTag.contains('MUSIC')) {
+      tagColor = const Color(0xFFE040FB);
+    } else if (upperTag.contains('FLAGSHIP') || upperTag.contains('HIGHLIGHTS')) {
+      tagColor = const Color(0xFFFF6D00);
+    } else if (upperTag.contains('CDC') || upperTag.contains('TALKS')) {
+      tagColor = const Color(0xFF7C4DFF);
+    }
 
     final dateStr = DateFormat('MMM d, h:mm a').format(ann.timestamp);
+    final hasRoute = ann.route != null && ann.route!.trim().isNotEmpty && ann.route!.trim() != 'none';
+    final hasLink = ann.contentUrl != null && ann.contentUrl!.trim().isNotEmpty;
+    final hasImage = ann.imageUrl != null && ann.imageUrl!.trim().isNotEmpty;
 
     return InkWell(
       onTap: () {
@@ -966,6 +984,19 @@ extension _HomeScreenHelpers on _HomeScreenState {
                     ],
                   ),
                   const SizedBox(height: 12),
+                  if (hasImage) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.network(
+                        ann.imageUrl!.trim(),
+                        width: double.infinity,
+                        height: 150,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   Text(
                     ann.title,
                     style: GoogleFonts.rajdhani(
@@ -979,13 +1010,60 @@ extension _HomeScreenHelpers on _HomeScreenState {
                     ann.description,
                     style: const TextStyle(fontSize: 13, color: Colors.white70, height: 1.5),
                   ),
-                  const SizedBox(height: 16),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: Text('CLOSE', style: TextStyle(color: primaryColor)),
-                    ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('CLOSE', style: TextStyle(color: Colors.white60)),
+                      ),
+                      if (hasLink) ...[
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFE50914),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            final uri = Uri.tryParse(ann.contentUrl!.trim());
+                            if (uri != null) launchUrl(uri, mode: LaunchMode.externalApplication);
+                          },
+                          icon: const Icon(Icons.open_in_new, size: 14),
+                          label: Text('OPEN LINK', style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 13)),
+                        ),
+                      ] else if (hasRoute) ...[
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF00E5FF),
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            context.go(ann.route!.trim());
+                          },
+                          icon: const Icon(Icons.arrow_forward, size: 14),
+                          label: Text(
+                            ann.route!.startsWith('/events/')
+                                ? 'VIEW EVENT'
+                                : ann.route == '/schedule'
+                                    ? 'VIEW SCHEDULE'
+                                    : ann.route == '/store'
+                                        ? 'VISIT STORE'
+                                        : ann.route == '/profile' || ann.route == '/about'
+                                            ? 'ABOUT FEST'
+                                            : 'OPEN IN APP',
+                            style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),
@@ -995,17 +1073,20 @@ extension _HomeScreenHelpers on _HomeScreenState {
       },
       borderRadius: BorderRadius.circular(14),
       child: Container(
-        width: 285,
+        width: 295,
         margin: const EdgeInsets.symmetric(horizontal: 5),
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(13),
         decoration: BoxDecoration(
           color: const Color(0xFF120504),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+          border: Border.all(
+            color: isLatest ? const Color(0xFF00E5FF).withValues(alpha: 0.6) : primaryColor.withValues(alpha: 0.3),
+            width: isLatest ? 1.2 : 1.0,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.4),
-              blurRadius: 8,
+              color: isLatest ? const Color(0xFF00E5FF).withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.4),
+              blurRadius: isLatest ? 10 : 8,
               offset: const Offset(0, 3),
             ),
           ],
@@ -1018,24 +1099,52 @@ extension _HomeScreenHelpers on _HomeScreenState {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Flexible(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: tagColor.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: tagColor.withValues(alpha: 0.5)),
-                    ),
-                    child: Text(
-                      ann.tag,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.rajdhani(
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.bold,
-                        color: tagColor,
-                        letterSpacing: 0.8,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: tagColor.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: tagColor.withValues(alpha: 0.5)),
+                          ),
+                          child: Text(
+                            ann.tag,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                              color: tagColor,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      if (isLatest) ...[
+                        const SizedBox(width: 5),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFE50914), Color(0xFFFF5252)],
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'NEW',
+                            style: GoogleFonts.orbitron(
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 0.6,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -1046,23 +1155,74 @@ extension _HomeScreenHelpers on _HomeScreenState {
               ],
             ),
             const SizedBox(height: 6),
-            Text(
-              ann.title,
-              style: GoogleFonts.rajdhani(
-                fontSize: 13.5,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        ann.title,
+                        style: GoogleFonts.rajdhani(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        ann.description,
+                        style: const TextStyle(fontSize: 11, color: Colors.white70, height: 1.3),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                if (hasImage) ...[
+                  const SizedBox(width: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: Image.network(
+                      ann.imageUrl!.trim(),
+                      width: 44,
+                      height: 44,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            if (hasRoute || hasLink) ...[
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Icon(
+                    hasLink ? Icons.open_in_new : Icons.arrow_forward_rounded,
+                    size: 11,
+                    color: const Color(0xFF00E5FF),
+                  ),
+                  const SizedBox(width: 3),
+                  Text(
+                    hasLink
+                        ? 'Link'
+                        : ann.route!.startsWith('/events/')
+                            ? 'Event'
+                            : 'View',
+                    style: GoogleFonts.rajdhani(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF00E5FF),
+                    ),
+                  ),
+                ],
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              ann.description,
-              style: const TextStyle(fontSize: 11, color: Colors.white70, height: 1.3),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
+            ],
           ],
         ),
       ),

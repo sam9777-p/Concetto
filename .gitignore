@@ -68,6 +68,12 @@ lib/firebase_options.dart
 **/GoogleService-Info.plist
 
 # Passwords, Secrets, and Security Registries
+functions/
+lib/core/config/fcm_security_vault.dart
+*service_account*.json
+*service-account*.json
+assets/service_account.json
+.firebaserc
 docs/*password*
 docs/*credential*
 *passwords*

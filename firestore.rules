@@ -16,6 +16,14 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    match /broadcast_notifications/{notificationId} {
+      allow read, write: if true;
+    }
+
+    match /admin_config/{configId} {
+      allow read, write: if true;
+    }
+
     match /team/{memberId} {
       allow read, write: if true;
     }

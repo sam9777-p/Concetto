@@ -8,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/event_item.dart';
 import '../../models/core_team_member.dart';
 import '../../models/announcement_item.dart';
-import 'mock_data.dart';
 import 'mongo_service.dart';
 
 // --- Master & Developer Access Config ---
@@ -36,6 +35,10 @@ class MasterAdminConfig {
   // 5. Hospitality Password: Edit Passes / Non-IIT ISM Guest Management
   static const String _hospitalityHash =
       '7e31792f969f85b3357557ad1a7a8564179b959bca8bd7b3f98c31dcb28b51eb';
+
+  // 6. Promotion Password: Send Broadcast Notifications & PR Announcements
+  static const String _promotionHash =
+      'e874a7c6f368a2468f7a76bd120112507267d885e5dbdf86a853adbf14b6001a';
 
   /// Verifies Master General Password strictly (case-sensitive, exact match)
   static bool verifyMaster(String entered) {
@@ -73,6 +76,13 @@ class MasterAdminConfig {
     return hash == _hospitalityHash || hash == _devHash;
   }
 
+  /// Verifies Promotion Password strictly, with Developer Password override
+  static bool verifyPromotion(String entered) {
+    if (entered.isEmpty) return false;
+    final hash = _sha256(entered);
+    return hash == _promotionHash || hash == _devHash;
+  }
+
   /// Verifies login to Organizer Portal (strictly Master Password only)
   static bool verifyOrganizerLogin(String entered) {
     return verifyMaster(entered);
@@ -91,44 +101,22 @@ class MasterAdminConfig {
 
 class FirestoreConfig {
   /// The Firestore database ID to use.
-  /// Set to 'concetto' to connect to the dedicated named database.
-  static String databaseId = 'concetto';
+  /// Strictly set to 'concetto' to connect to the dedicated named database.
+  static const String databaseId = 'concetto';
 
-  /// Returns candidate Firestore instances: default and named 'concetto'
-  static List<FirebaseFirestore> get allInstances {
-    final list = <FirebaseFirestore>[];
-    // Dedicated 'concetto' database must be FIRST
-    try {
-      if (databaseId.isNotEmpty && databaseId != '(default)' && Firebase.apps.isNotEmpty) {
-        list.add(FirebaseFirestore.instanceFor(
-          app: Firebase.app(),
-          databaseId: databaseId,
-        ));
-      }
-    } catch (e) {
-      debugPrint('FirestoreConfig notice for "$databaseId": $e.');
-    }
-    // Fallback default instance
-    try {
-      list.add(FirebaseFirestore.instance);
-    } catch (_) {}
-    return list;
-  }
-
-  /// Returns the configured FirebaseFirestore instance safely.
+  /// Returns the configured FirebaseFirestore instance for the 'concetto' database.
   static FirebaseFirestore get instance {
-    try {
-      if (databaseId.isNotEmpty && databaseId != '(default)' && Firebase.apps.isNotEmpty) {
-        return FirebaseFirestore.instanceFor(
-          app: Firebase.app(),
-          databaseId: databaseId,
-        );
-      }
-    } catch (e) {
-      debugPrint('FirestoreConfig notice for "$databaseId": $e. Falling back to default instance.');
-    }
-    return FirebaseFirestore.instance;
+    return FirebaseFirestore.instanceFor(
+      app: Firebase.app(),
+      databaseId: databaseId,
+    );
   }
+
+  /// Alias for instance
+  static FirebaseFirestore get activeDb => instance;
+
+  /// Returns the 'concetto' database instance
+  static List<FirebaseFirestore> get allInstances => [instance];
 }
 
 // --- Service ---
@@ -136,34 +124,14 @@ class FirestoreConfig {
 class FirestoreService {
   final FirebaseFirestore? _customDb;
   final MongoService _mongo = MongoService();
-  static FirebaseFirestore? _activeInstance;
 
   FirestoreService({FirebaseFirestore? db}) : _customDb = db;
 
   FirebaseFirestore get _db => _customDb ?? FirestoreConfig.instance;
 
-  static List<FirebaseFirestore> get _firestoreInstances {
-    return FirestoreConfig.allInstances;
-  }
-
-  /// Automatically detects and caches which Firestore instance holds active event data
+  /// Returns the active 'concetto' Firestore instance
   Future<FirebaseFirestore> getActiveFirestore() async {
-    if (_customDb != null) return _customDb;
-    if (_activeInstance != null) return _activeInstance!;
-    for (final db in _firestoreInstances) {
-      try {
-        final snap = await db.collection('events').limit(1).get(const GetOptions(source: Source.serverAndCache)).timeout(const Duration(seconds: 4));
-        if (snap.docs.isNotEmpty) {
-          _activeInstance = db;
-          debugPrint('Active Firestore database detected: ${db.databaseId}');
-          return db;
-        }
-      } catch (e) {
-        debugPrint('Candidate database check for ${db.databaseId}: $e');
-      }
-    }
-    _activeInstance = FirestoreConfig.instance;
-    return _activeInstance!;
+    return _db;
   }
 
   /// Hashes raw passcodes with SHA-256 for secure comparison
@@ -196,32 +164,32 @@ class FirestoreService {
       }
     }
 
-    // 2. Try candidate Firestore databases with cache-first and server refresh
-    for (final db in _firestoreInstances) {
-      try {
-        final snapshot = await db.collection('events').get(const GetOptions(source: Source.serverAndCache)).timeout(const Duration(seconds: 4));
-        if (snapshot.docs.isNotEmpty) {
-          final List<EventItem> firestoreList = [];
-          for (final doc in snapshot.docs) {
-            try {
-              final item = EventItem.fromJson(doc.data(), doc.id);
-              firestoreList.add(item);
-            } catch (e) {
-              debugPrint('Error parsing Firestore event ${doc.id}: $e');
-            }
-          }
-
-          if (firestoreList.isNotEmpty) {
-            _activeInstance = db;
-            if (!includeHidden) {
-              return firestoreList.where((e) => e.isVisible).toList();
-            }
-            return firestoreList;
+    // 2. Fetch directly from 'concetto' Cloud Firestore database
+    try {
+      final snapshot = await _db
+          .collection('events')
+          .get(const GetOptions(source: Source.serverAndCache))
+          .timeout(const Duration(seconds: 4));
+      if (snapshot.docs.isNotEmpty) {
+        final List<EventItem> firestoreList = [];
+        for (final doc in snapshot.docs) {
+          try {
+            final item = EventItem.fromJson(doc.data(), doc.id);
+            firestoreList.add(item);
+          } catch (e) {
+            debugPrint('Error parsing Firestore event ${doc.id}: $e');
           }
         }
-      } catch (e) {
-        debugPrint('Firestore (${db.databaseId}) getEvents notice: $e');
+
+        if (firestoreList.isNotEmpty) {
+          if (!includeHidden) {
+            return firestoreList.where((e) => e.isVisible).toList();
+          }
+          return firestoreList;
+        }
       }
+    } catch (e) {
+      debugPrint('Firestore (${_db.databaseId}) getEvents notice: $e');
     }
 
     return const [];
@@ -229,16 +197,14 @@ class FirestoreService {
 
   /// Real-time stream of events using Firestore live snapshots
   Stream<List<EventItem>> getEventsStream({bool includeHidden = false}) async* {
-
     // Initial emission
     final initial = await getEvents(includeHidden: includeHidden);
     if (initial.isNotEmpty) {
       yield initial;
     }
 
-    // Listen to real-time snapshots from active database
-    final db = await getActiveFirestore();
-    yield* db.collection('events').snapshots().map((snapshot) {
+    // Listen to real-time snapshots from 'concetto' database
+    yield* _db.collection('events').snapshots().map((snapshot) {
       final List<EventItem> list = [];
       for (final doc in snapshot.docs) {
         try {
@@ -254,17 +220,15 @@ class FirestoreService {
     });
   }
 
-  /// Fetches a single event directly from Cloud Firestore by ID (checks all databases)
+  /// Fetches a single event directly from Cloud Firestore 'concetto' database by ID
   Future<EventItem?> getEventById(String eventId) async {
-    for (final db in _firestoreInstances) {
-      try {
-        final doc = await db.collection('events').doc(eventId).get().timeout(const Duration(seconds: 4));
-        if (doc.exists && doc.data() != null) {
-          return EventItem.fromJson(doc.data()!, doc.id);
-        }
-      } catch (e) {
-        debugPrint('Error getting event by ID $eventId from Firestore (${db.databaseId}): $e');
+    try {
+      final doc = await _db.collection('events').doc(eventId).get().timeout(const Duration(seconds: 4));
+      if (doc.exists && doc.data() != null) {
+        return EventItem.fromJson(doc.data()!, doc.id);
       }
+    } catch (e) {
+      debugPrint('Error getting event by ID $eventId from Firestore (${_db.databaseId}): $e');
     }
     return null;
   }
@@ -322,28 +286,26 @@ class FirestoreService {
       }
     }
 
-    // 2. Check Candidate Firestore Databases
-    for (final db in _firestoreInstances) {
-      try {
-        final doc = await db.collection('events').doc(eventId).get();
-        if (doc.exists && doc.data() != null) {
-          final data = doc.data()!;
-          final specificPass = (data['specificPassword'] as String?)?.trim() ?? '';
-          final storedHash = (data['passwordHash'] as String?)?.trim() ?? '';
+    // 2. Check 'concetto' Firestore Database
+    try {
+      final doc = await _db.collection('events').doc(eventId).get();
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data()!;
+        final specificPass = (data['specificPassword'] as String?)?.trim() ?? '';
+        final storedHash = (data['passwordHash'] as String?)?.trim() ?? '';
 
-          if (specificPass.isNotEmpty && specificPass == enteredClean) {
-            return true;
-          }
-          if (storedHash.isNotEmpty && storedHash == enteredHash) {
-            return true;
-          }
-          if (specificPass.isNotEmpty && hashPasscode(specificPass) == enteredHash) {
-            return true;
-          }
+        if (specificPass.isNotEmpty && specificPass == enteredClean) {
+          return true;
         }
-      } catch (e) {
-        debugPrint('Firestore verify notice for ${db.databaseId}: $e');
+        if (storedHash.isNotEmpty && storedHash == enteredHash) {
+          return true;
+        }
+        if (specificPass.isNotEmpty && hashPasscode(specificPass) == enteredHash) {
+          return true;
+        }
       }
+    } catch (e) {
+      debugPrint('Firestore verify notice for ${_db.databaseId}: $e');
     }
 
     return false;
@@ -361,19 +323,16 @@ class FirestoreService {
       }
     }
 
-    // 2. Write to all Firestore candidate databases in parallel with timeout
-    final futures = _firestoreInstances.map((db) async {
-      try {
-        await db.collection('events').doc(eventId).set(
-          {'isVisible': isVisible},
-          SetOptions(merge: true),
-        ).timeout(const Duration(seconds: 4));
-        debugPrint('Firestore (${db.databaseId}) toggleEventVisibility updated for $eventId');
-      } catch (e) {
-        debugPrint('Firestore (${db.databaseId}) toggleEventVisibility notice: $e');
-      }
-    });
-    await Future.wait(futures);
+    // 2. Write to 'concetto' Firestore database
+    try {
+      await _db.collection('events').doc(eventId).set(
+        {'isVisible': isVisible},
+        SetOptions(merge: true),
+      ).timeout(const Duration(seconds: 4));
+      debugPrint('Firestore (${_db.databaseId}) toggleEventVisibility updated for $eventId');
+    } catch (e) {
+      debugPrint('Firestore (${_db.databaseId}) toggleEventVisibility notice: $e');
+    }
   }
 
   // --- Create / Save Event ---
@@ -415,16 +374,13 @@ class FirestoreService {
       }
     }
 
-    // 2. Write directly to all candidate Firestore databases in parallel with timeout
-    final futures = _firestoreInstances.map((db) async {
-      try {
-        await db.collection('events').doc(generatedId).set(updatedEvent.toJson()).timeout(const Duration(seconds: 4));
-        debugPrint('Event "${updatedEvent.title}" saved to Cloud Firestore (${db.databaseId}).');
-      } catch (e) {
-        debugPrint('Firestore (${db.databaseId}) createEvent notice: $e');
-      }
-    });
-    await Future.wait(futures);
+    // 2. Write directly to 'concetto' Firestore database
+    try {
+      await _db.collection('events').doc(generatedId).set(updatedEvent.toJson()).timeout(const Duration(seconds: 4));
+      debugPrint('Event "${updatedEvent.title}" saved to Cloud Firestore (${_db.databaseId}).');
+    } catch (e) {
+      debugPrint('Firestore (${_db.databaseId}) createEvent notice: $e');
+    }
 
     return updatedEvent;
   }
@@ -459,19 +415,16 @@ class FirestoreService {
       }
     }
 
-    // 2. Write directly to all candidate Cloud Firestore databases in parallel with timeout
-    final futures = _firestoreInstances.map((db) async {
-      try {
-        await db.collection('events').doc(docId).set(
-              updatedEvent.toJson(),
-              SetOptions(merge: true),
-            ).timeout(const Duration(seconds: 4));
-        debugPrint('Event "${updatedEvent.title}" updated in Cloud Firestore (${db.databaseId}).');
-      } catch (e) {
-        debugPrint('Firestore (${db.databaseId}) updateEvent notice: $e');
-      }
-    });
-    await Future.wait(futures);
+    // 2. Update directly in 'concetto' Cloud Firestore database
+    try {
+      await _db.collection('events').doc(docId).set(
+            updatedEvent.toJson(),
+            SetOptions(merge: true),
+          ).timeout(const Duration(seconds: 4));
+      debugPrint('Event "${updatedEvent.title}" updated in Cloud Firestore (${_db.databaseId}).');
+    } catch (e) {
+      debugPrint('Firestore (${_db.databaseId}) updateEvent notice: $e');
+    }
 
     return updatedEvent;
   }
@@ -488,16 +441,13 @@ class FirestoreService {
       }
     }
 
-    // 2. Delete directly from all candidate Cloud Firestore databases in parallel with timeout
-    final futures = _firestoreInstances.map((db) async {
-      try {
-        await db.collection('events').doc(eventId).delete().timeout(const Duration(seconds: 4));
-        debugPrint('Event "$eventId" deleted from Cloud Firestore (${db.databaseId}).');
-      } catch (e) {
-        debugPrint('Firestore (${db.databaseId}) deleteEvent notice: $e');
-      }
-    });
-    await Future.wait(futures);
+    // 2. Delete directly from 'concetto' Cloud Firestore database
+    try {
+      await _db.collection('events').doc(eventId).delete().timeout(const Duration(seconds: 4));
+      debugPrint('Event "$eventId" deleted from Cloud Firestore (${_db.databaseId}).');
+    } catch (e) {
+      debugPrint('Firestore (${_db.databaseId}) deleteEvent notice: $e');
+    }
 
     return true;
   }
@@ -506,51 +456,46 @@ class FirestoreService {
 
   Future<List<CoreTeamMember>> getTeam() async {
     try {
-      final snapshot = await _db.collection('team').get().timeout(const Duration(milliseconds: 700));
+      final snapshot = await _db.collection('team').get().timeout(const Duration(seconds: 5));
       if (snapshot.docs.isNotEmpty) {
         final list = snapshot.docs
             .map((doc) => CoreTeamMember.fromJson(doc.data()))
             .toList();
-        final mockMap = {for (var m in MockData.team) m.name: m};
-        for (int i = 0; i < list.length; i++) {
-          final mock = mockMap[list[i].name] ??
-              (list[i].name.contains('Arun') ? mockMap['Prof. Arun Udai'] : null);
-          if (mock != null) {
-            list[i] = list[i].copyWith(
-              name: mock.name,
-              role: mock.role,
-              quote: list[i].quote.isEmpty ? mock.quote : list[i].quote,
-              phone: list[i].phone.isEmpty ? mock.phone : list[i].phone,
-              imageUrl: list[i].imageUrl.isEmpty ? mock.imageUrl : list[i].imageUrl,
-              order: mock.order,
-            );
-          }
-        }
         list.sort((a, b) => a.order.compareTo(b.order));
-        if (list.length >= 50) {
-          return list;
-        }
+        return list;
       }
-      return MockData.team;
+      return const [];
     } catch (e) {
-      debugPrint('Firestore getTeam notice: $e. Falling back to verified mock data.');
-      return MockData.team;
+      debugPrint('Firestore getTeam notice: $e');
+      return const [];
     }
   }
 
   Future<List<AnnouncementItem>> getAnnouncements() async {
     try {
-      final snapshot = await _db.collection('announcements').get();
+      final snapshot = await _db.collection('announcements').get().timeout(const Duration(seconds: 5));
       if (snapshot.docs.isNotEmpty) {
-        return snapshot.docs
+        final list = snapshot.docs
             .map((doc) => AnnouncementItem.fromJson(doc.data(), doc.id))
             .toList();
+        list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        return list;
       }
-      return MockData.announcements;
+      return const [];
     } catch (e) {
-      debugPrint('Firestore getAnnouncements notice: $e. Falling back to mock data.');
-      return MockData.announcements;
+      debugPrint('Firestore getAnnouncements notice: $e');
+      return const [];
     }
+  }
+
+  Stream<List<AnnouncementItem>> getAnnouncementsStream() {
+    return _db.collection('announcements').snapshots().map((snapshot) {
+      final list = snapshot.docs
+          .map((doc) => AnnouncementItem.fromJson(doc.data(), doc.id))
+          .toList();
+      list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      return list;
+    });
   }
 
   // --- Registrations ---
@@ -587,7 +532,7 @@ final teamProvider = FutureProvider<List<CoreTeamMember>>((ref) async {
   return service.getTeam();
 });
 
-final announcementsProvider = FutureProvider<List<AnnouncementItem>>((ref) async {
+final announcementsProvider = StreamProvider<List<AnnouncementItem>>((ref) {
   final service = ref.watch(firestoreServiceProvider);
-  return service.getAnnouncements();
+  return service.getAnnouncementsStream();
 });
