@@ -9,6 +9,8 @@ import '../../models/event_item.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../admin/admin_dashboard_screen.dart';
 import '../admin/widgets/admin_login_dialog.dart';
+import '../../services/event_likes_service.dart';
+import 'widgets/event_like_button.dart';
 
 class EventsScreen extends ConsumerStatefulWidget {
   const EventsScreen({super.key});
@@ -21,6 +23,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   int _selectedCategoryIndex = 0;
+  int _randomSeed = DateTime.now().millisecondsSinceEpoch;
 
   final List<String> _categories = [
     'All',
@@ -314,6 +317,9 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
             child: RefreshIndicator(
               color: primaryColor,
               onRefresh: () async {
+                setState(() {
+                  _randomSeed = DateTime.now().millisecondsSinceEpoch;
+                });
                 try {
                   final _ = await ref.refresh(eventsProvider.future);
                 } catch (_) {}
@@ -483,12 +489,20 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
       return matchesCategory && matchesSearch;
     }).toList();
 
-    // Sort events by the official priority order, then alphabetically
+    ref.watch(eventLikesProvider);
+    final likesNotifier = ref.read(eventLikesProvider.notifier);
+
+    // Arrange priority by number of likes (highest likes first).
+    // For ties with the same number of likes, arrange randomly.
     filteredEvents.sort((a, b) {
-      final rankA = EventItem.getCategoryPriority(a.displayCategory);
-      final rankB = EventItem.getCategoryPriority(b.displayCategory);
-      if (rankA != rankB) return rankA.compareTo(rankB);
-      return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+      final likesA = likesNotifier.getEffectiveLikes(a);
+      final likesB = likesNotifier.getEffectiveLikes(b);
+      if (likesA != likesB) {
+        return likesB.compareTo(likesA); // Highest likes first
+      }
+      final weightA = (a.id.hashCode ^ _randomSeed).abs();
+      final weightB = (b.id.hashCode ^ _randomSeed).abs();
+      return weightB.compareTo(weightA);
     });
 
     if (filteredEvents.isEmpty) {
@@ -655,6 +669,11 @@ class EventCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: EventLikeButton(event: event),
                   ),
                   if (event.displayCategory.isNotEmpty)
                     Positioned(

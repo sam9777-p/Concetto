@@ -14,6 +14,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'rulebook_pdf_viewer_screen.dart';
 import 'team_registration_screen.dart';
 import 'team_details_screen.dart';
+import 'widgets/event_like_button.dart';
 
 class EventDetailScreen extends ConsumerStatefulWidget {
   final EventItem? event;
@@ -297,8 +298,10 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                               ),
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      EventLikeButton(event: event),
                       if (event.displayCategory.isNotEmpty) ...[
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(

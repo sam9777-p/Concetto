@@ -1544,8 +1544,16 @@ extension _HomeScreenHelpers on _HomeScreenState {
             child: Text('Failed to load events: $err'),
           ),
           data: (events) {
-            final flagshipEvents = events.where((e) => e.isFlagship).toList();
-            final displayEvents = flagshipEvents.isNotEmpty ? flagshipEvents : events.take(6).toList();
+            final flagshipEvents = events.where((e) =>
+              e.isVisible &&
+              (e.isFlagship ||
+               e.category.toLowerCase() == 'flagship' ||
+               e.tags.any((t) => t.toLowerCase() == 'flagship'))
+            ).toList();
+
+            if (flagshipEvents.isEmpty) {
+              return const SizedBox.shrink();
+            }
 
             final screenWidth = MediaQuery.of(context).size.width;
             final carouselHeight = screenWidth < 360 ? 228.0 : 236.0;
@@ -1556,9 +1564,9 @@ extension _HomeScreenHelpers on _HomeScreenState {
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
-                itemCount: displayEvents.length,
+                itemCount: flagshipEvents.length,
                 itemBuilder: (context, index) {
-                  final event = displayEvents[index];
+                  final event = flagshipEvents[index];
                   return _buildFeaturedEventCard(event, primaryColor);
                 },
               ),

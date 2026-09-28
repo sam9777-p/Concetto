@@ -32,6 +32,7 @@ class EventItem {
   final bool isVisible;
   final String scheduleBreakdown;
   final List<EventStage> stages;
+  final int likeCount;
 
   EventItem({
     required this.id,
@@ -66,6 +67,7 @@ class EventItem {
     this.isVisible = true,
     this.scheduleBreakdown = '',
     this.stages = const [],
+    this.likeCount = 0,
   })  : startTime = (startTime != null && startTime.isNotEmpty)
             ? startTime
             : deriveStartTime(time),
@@ -189,6 +191,7 @@ class EventItem {
     bool? isVisible,
     String? scheduleBreakdown,
     List<EventStage>? stages,
+    int? likeCount,
   }) {
     final newMin = minTeamSize ?? this.minTeamSize;
     final newMax = maxTeamSize ?? this.maxTeamSize;
@@ -240,6 +243,7 @@ class EventItem {
       isVisible: isVisible ?? this.isVisible,
       scheduleBreakdown: scheduleBreakdown ?? this.scheduleBreakdown,
       stages: stages ?? this.stages,
+      likeCount: likeCount ?? this.likeCount,
     );
   }
 
@@ -343,6 +347,7 @@ class EventItem {
       isVisible: json['isVisible'] ?? true,
       scheduleBreakdown: json['scheduleBreakdown'] ?? '',
       stages: parsedStages,
+      likeCount: int.tryParse(json['likeCount']?.toString() ?? json['likes']?.toString() ?? '0') ?? 0,
     );
   }
 
@@ -379,6 +384,7 @@ class EventItem {
       'isVisible': isVisible,
       'scheduleBreakdown': scheduleBreakdown,
       'stages': stages.map((s) => s.toJson()).toList(),
+      'likeCount': likeCount,
     };
   }
 }

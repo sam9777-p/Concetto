@@ -1587,25 +1587,33 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.hub_outlined, color: AppTheme.neonOrange, size: 18),
-                          const SizedBox(width: 8),
-                          Text(
-                            'INDIVIDUAL ROUNDS & STAGES (${_stages.length})',
-                            style: GoogleFonts.orbitron(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              letterSpacing: 0.8,
+                      Expanded(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.hub_outlined, color: AppTheme.neonOrange, size: 18),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                'ROUNDS & STAGES (${_stages.length})',
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.orbitron(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 6),
                       TextButton.icon(
                         style: TextButton.styleFrom(
                           foregroundColor: AppTheme.cyberAmber,
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          visualDensity: VisualDensity.compact,
                         ),
                         icon: const Icon(Icons.add, size: 16),
                         label: Text(
@@ -2382,16 +2390,19 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(icon, color: AppTheme.neonOrange, size: 18),
           const SizedBox(width: 8),
-          Text(
-            title,
-            style: GoogleFonts.orbitron(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.1,
-              color: Colors.white,
+          Expanded(
+            child: Text(
+              title,
+              style: GoogleFonts.orbitron(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.1,
+                color: Colors.white,
+              ),
             ),
           ),
         ],
