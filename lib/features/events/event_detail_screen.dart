@@ -37,7 +37,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
 
   EventItem get event {
     // 1. Check live stream from eventsProvider for latest realtime Firestore updates
-    final liveList = ref.watch(eventsProvider).asData?.value;
+    final liveList = ref.read(eventsProvider).asData?.value;
     if (liveList != null && eventId.isNotEmpty) {
       final match = liveList.where((e) => e.id == eventId);
       if (match.isNotEmpty) return match.first;
@@ -152,6 +152,8 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(eventsProvider);
+
     if (_isFetchingEvent && widget.event == null && _fetchedEvent == null) {
       return const Scaffold(
         backgroundColor: AppTheme.scaffoldBg,

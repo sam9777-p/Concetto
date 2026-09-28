@@ -41,9 +41,12 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
   void initState() {
     super.initState();
     _searchController.addListener(() {
-      setState(() {
-        _searchQuery = _searchController.text.trim().toLowerCase();
-      });
+      final newQuery = _searchController.text.trim().toLowerCase();
+      if (_searchQuery != newQuery) {
+        setState(() {
+          _searchQuery = newQuery;
+        });
+      }
     });
   }
 

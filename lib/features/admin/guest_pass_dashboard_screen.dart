@@ -36,9 +36,12 @@ class _GuestPassDashboardScreenState extends State<GuestPassDashboardScreen> {
     super.initState();
     _fetchAttendees();
     _searchController.addListener(() {
-      setState(() {
-        _searchQuery = _searchController.text.trim().toLowerCase();
-      });
+      final newQuery = _searchController.text.trim().toLowerCase();
+      if (_searchQuery != newQuery) {
+        setState(() {
+          _searchQuery = newQuery;
+        });
+      }
     });
   }
 

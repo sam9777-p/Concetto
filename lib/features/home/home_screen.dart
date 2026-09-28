@@ -2758,5 +2758,6 @@ class StarfieldPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant StarfieldPainter oldDelegate) => true;
+  bool shouldRepaint(covariant StarfieldPainter oldDelegate) =>
+      oldDelegate.animationValue != animationValue;
 }

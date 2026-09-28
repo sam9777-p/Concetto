@@ -8,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/event_item.dart';
 import '../../models/core_team_member.dart';
 import '../../models/announcement_item.dart';
-import 'mongo_service.dart';
 
 // --- Master & Developer Access Config ---
 class MasterAdminConfig {
@@ -123,7 +122,6 @@ class FirestoreConfig {
 
 class FirestoreService {
   final FirebaseFirestore? _customDb;
-  final MongoService _mongo = MongoService();
 
   FirestoreService({FirebaseFirestore? db}) : _customDb = db;
 
@@ -152,19 +150,7 @@ class FirestoreService {
   // --- Read Events ---
 
   Future<List<EventItem>> getEvents({bool includeHidden = false}) async {
-    // 1. Try Google Cloud Firestore Enterprise (MongoDB API)
-    if (MongoService.connectionUri.isNotEmpty) {
-      try {
-        final mongoEvents = await _mongo.getEvents(includeHidden: includeHidden);
-        if (mongoEvents.isNotEmpty) {
-          return mongoEvents;
-        }
-      } catch (e) {
-        debugPrint('MongoService getEvents error: $e');
-      }
-    }
-
-    // 2. Fetch directly from 'concetto' Cloud Firestore database
+    // Fetch directly from 'concetto' Cloud Firestore database
     try {
       final snapshot = await _db
           .collection('events')
@@ -269,24 +255,7 @@ class FirestoreService {
 
     final enteredHash = hashPasscode(enteredClean);
 
-    // 1. Check MongoDB (Firestore Enterprise) if configured
-    if (MongoService.connectionUri.isNotEmpty) {
-      try {
-        final mongoEvent = await _mongo.getEventById(eventId).timeout(const Duration(seconds: 2));
-        if (mongoEvent != null) {
-          if (mongoEvent.specificPassword.isNotEmpty && mongoEvent.specificPassword == enteredClean) {
-            return true;
-          }
-          if (mongoEvent.passwordHash.isNotEmpty && mongoEvent.passwordHash == enteredHash) {
-            return true;
-          }
-        }
-      } catch (e) {
-        debugPrint('Mongo verify notice: $e');
-      }
-    }
-
-    // 2. Check 'concetto' Firestore Database
+    // Check 'concetto' Firestore Database
     try {
       final doc = await _db.collection('events').doc(eventId).get();
       if (doc.exists && doc.data() != null) {
@@ -314,16 +283,7 @@ class FirestoreService {
   // --- Toggle Visibility ---
 
   Future<void> toggleEventVisibility(String eventId, bool isVisible) async {
-    // 1. Sync to MongoDB (Firestore Enterprise)
-    if (MongoService.connectionUri.isNotEmpty) {
-      try {
-        await _mongo.toggleVisibility(eventId, isVisible).timeout(const Duration(seconds: 4));
-      } catch (e) {
-        debugPrint('Mongo toggleEventVisibility notice: $e');
-      }
-    }
-
-    // 2. Write to 'concetto' Firestore database
+    // Write directly to 'concetto' Firestore database
     try {
       await _db.collection('events').doc(eventId).set(
         {'isVisible': isVisible},
@@ -364,17 +324,7 @@ class FirestoreService {
       updatedAt: DateTime.now().toIso8601String(),
     );
 
-    // 1. Write to Google Cloud Firestore Enterprise (MongoDB API) with timeout
-    if (MongoService.connectionUri.isNotEmpty) {
-      try {
-        await _mongo.saveEvent(updatedEvent).timeout(const Duration(seconds: 4));
-        debugPrint('Event "${updatedEvent.title}" written to MongoDB Enterprise.');
-      } catch (e) {
-        debugPrint('Mongo createEvent notice: $e');
-      }
-    }
-
-    // 2. Write directly to 'concetto' Firestore database
+    // Write directly to 'concetto' Firestore database
     try {
       await _db.collection('events').doc(generatedId).set(updatedEvent.toJson()).timeout(const Duration(seconds: 4));
       debugPrint('Event "${updatedEvent.title}" saved to Cloud Firestore (${_db.databaseId}).');
@@ -405,17 +355,7 @@ class FirestoreService {
       updatedAt: DateTime.now().toIso8601String(),
     );
 
-    // 1. Update in Google Cloud Firestore Enterprise (MongoDB API) with timeout
-    if (MongoService.connectionUri.isNotEmpty) {
-      try {
-        await _mongo.updateEvent(updatedEvent).timeout(const Duration(seconds: 4));
-        debugPrint('Event "${updatedEvent.title}" updated in MongoDB Enterprise.');
-      } catch (e) {
-        debugPrint('Mongo updateEvent notice: $e');
-      }
-    }
-
-    // 2. Update directly in 'concetto' Cloud Firestore database
+    // Update directly in 'concetto' Cloud Firestore database
     try {
       await _db.collection('events').doc(docId).set(
             updatedEvent.toJson(),
@@ -432,16 +372,7 @@ class FirestoreService {
   // --- Delete Event ---
 
   Future<bool> deleteEvent(String eventId) async {
-    // 1. Delete from Google Cloud Firestore Enterprise (MongoDB API) with timeout
-    if (MongoService.connectionUri.isNotEmpty) {
-      try {
-        await _mongo.deleteEvent(eventId).timeout(const Duration(seconds: 4));
-      } catch (e) {
-        debugPrint('Mongo deleteEvent notice: $e');
-      }
-    }
-
-    // 2. Delete directly from 'concetto' Cloud Firestore database
+    // Delete directly from 'concetto' Cloud Firestore database
     try {
       await _db.collection('events').doc(eventId).delete().timeout(const Duration(seconds: 4));
       debugPrint('Event "$eventId" deleted from Cloud Firestore (${_db.databaseId}).');
@@ -513,7 +444,6 @@ class FirestoreService {
 // --- Providers ---
 
 final firestoreServiceProvider = Provider((ref) => FirestoreService());
-final mongoServiceProvider = Provider((ref) => MongoService());
 
 /// Student-facing events provider: live real-time stream from Firestore with offline cache
 final eventsProvider = StreamProvider<List<EventItem>>((ref) {
