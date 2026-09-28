@@ -515,9 +515,11 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
     }
 
     final screenWidth = MediaQuery.of(context).size.width;
-    final childAspectRatio = screenWidth < 360
-        ? 0.72
-        : (screenWidth < 400 ? 0.74 : 0.76);
+    final childAspectRatio = screenWidth < 350
+        ? 0.60
+        : (screenWidth < 380
+            ? 0.64
+            : (screenWidth < 420 ? 0.67 : 0.70));
 
     return GridView.builder(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
@@ -583,9 +585,9 @@ class EventCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Poster in 1.38 ratio for rich visuals
+            // Poster in balanced ratio
             AspectRatio(
-              aspectRatio: 1.38,
+              aspectRatio: 1.34,
               child: Stack(
                 children: [
                   Positioned.fill(
@@ -695,61 +697,63 @@ class EventCard extends StatelessWidget {
             // Details
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(9, 6, 9, 7),
+                padding: const EdgeInsets.fromLTRB(9, 6, 9, 6),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          event.title,
-                          style: GoogleFonts.rajdhani(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            event.title,
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          event.organizerClub,
-                          style: GoogleFonts.rajdhani(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFFFFA000),
+                          const SizedBox(height: 2),
+                          Text(
+                            event.organizerClub,
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFFFFA000),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          physics: const BouncingScrollPhysics(),
-                          child: Row(
-                            children: (event.tags.isNotEmpty ? event.tags : [event.category, 'Concetto26']).take(3).map((tag) => Container(
-                              margin: const EdgeInsets.only(right: 4),
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFA000).withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(color: const Color(0xFFFFA000).withValues(alpha: 0.35), width: 0.6),
-                              ),
-                              child: Text(
-                                '#$tag',
-                                style: GoogleFonts.rajdhani(
-                                  fontSize: 8.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFFFFB300),
+                          const SizedBox(height: 4),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            child: Row(
+                              children: (event.tags.isNotEmpty ? event.tags : [event.category, 'Concetto26']).take(3).map((tag) => Container(
+                                margin: const EdgeInsets.only(right: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFA000).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: const Color(0xFFFFA000).withValues(alpha: 0.35), width: 0.6),
                                 ),
-                              ),
-                            )).toList(),
+                                child: Text(
+                                  '#$tag',
+                                  style: GoogleFonts.rajdhani(
+                                    fontSize: 8.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFFFFB300),
+                                  ),
+                                ),
+                              )).toList(),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -798,9 +802,9 @@ class EventCard extends StatelessWidget {
                 ),
               ),
             ),
-              ],
-            ),
-          ),
-        );
+          ],
+        ),
+      ),
+    );
   }
 }

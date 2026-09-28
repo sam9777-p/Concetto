@@ -905,9 +905,10 @@ extension _HomeScreenHelpers on _HomeScreenState {
               );
             }
             final sorted = List<AnnouncementItem>.from(announcements);
-            sorted.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+            final screenWidth = MediaQuery.of(context).size.width;
+            final annHeight = screenWidth < 360 ? 150.0 : 144.0;
             return SizedBox(
-              height: 142,
+              height: annHeight,
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 scrollDirection: Axis.horizontal,
@@ -1546,8 +1547,11 @@ extension _HomeScreenHelpers on _HomeScreenState {
             final flagshipEvents = events.where((e) => e.isFlagship).toList();
             final displayEvents = flagshipEvents.isNotEmpty ? flagshipEvents : events.take(6).toList();
 
+            final screenWidth = MediaQuery.of(context).size.width;
+            final carouselHeight = screenWidth < 360 ? 228.0 : 236.0;
+
             return SizedBox(
-              height: 220,
+              height: carouselHeight,
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 scrollDirection: Axis.horizontal,
@@ -1567,7 +1571,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
 
   Widget _buildFeaturedEventCard(EventItem event, Color primaryColor) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = (screenWidth * 0.54).clamp(195.0, 225.0);
+    final cardWidth = (screenWidth * 0.52).clamp(185.0, 220.0);
 
     return GestureDetector(
       onTap: () => context.push('/events/detail', extra: event),
@@ -1700,56 +1704,58 @@ extension _HomeScreenHelpers on _HomeScreenState {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          event.title,
-                          style: GoogleFonts.rajdhani(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            event.title,
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 1),
-                        Text(
-                          event.organizerClub.isNotEmpty ? event.organizerClub : 'Concetto Premier',
-                          style: GoogleFonts.rajdhani(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFFFFA000),
+                          const SizedBox(height: 1),
+                          Text(
+                            event.organizerClub.isNotEmpty ? event.organizerClub : 'Concetto Premier',
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFFFFA000),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 3),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          physics: const BouncingScrollPhysics(),
-                          child: Row(
-                            children: (event.tags.isNotEmpty ? event.tags : [event.category, 'Concetto26']).take(2).map((tag) => Container(
-                              margin: const EdgeInsets.only(right: 4),
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFA000).withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(color: const Color(0xFFFFA000).withValues(alpha: 0.35), width: 0.6),
-                              ),
-                              child: Text(
-                                '#$tag',
-                                style: GoogleFonts.rajdhani(
-                                  fontSize: 8.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFFFFB300),
+                          const SizedBox(height: 3),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            child: Row(
+                              children: (event.tags.isNotEmpty ? event.tags : [event.category, 'Concetto26']).take(2).map((tag) => Container(
+                                margin: const EdgeInsets.only(right: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFA000).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: const Color(0xFFFFA000).withValues(alpha: 0.35), width: 0.6),
                                 ),
-                              ),
-                            )).toList(),
+                                child: Text(
+                                  '#$tag',
+                                  style: GoogleFonts.rajdhani(
+                                    fontSize: 8.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFFFFB300),
+                                  ),
+                                ),
+                              )).toList(),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     Row(
                       children: [

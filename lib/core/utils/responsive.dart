@@ -69,14 +69,21 @@ class Responsive {
   }
 
   /// Returns a clamped TextScaler for use in MediaQuery override.
-  /// This prevents the system-level font scale from compounding
-  /// with our own scaling and causing overflow.
+  /// This dynamically scales down on low-density or narrow screens
+  /// and prevents system-level font scale from overflowing card layouts.
   static TextScaler clampedTextScaler(BuildContext context) {
-    final systemScale = MediaQuery.textScalerOf(context).scale(1.0);
-    // Clamp the final effective scale so that very large system
-    // accessibility settings don't break the layout
-    final clamped = systemScale.clamp(0.85, 1.15);
-    return TextScaler.linear(clamped);
+    final mq = MediaQuery.of(context);
+    final systemScale = mq.textScaler.scale(1.0);
+    final width = mq.size.width;
+
+    // Adapt font scaling to screen width (design baseline: 390dp)
+    // On low-density or narrow screens (< 390dp), scale down slightly
+    // so fixed-width cards and labels fit without tearing/overflowing.
+    final densityFactor = (width / 390.0).clamp(0.85, 1.0);
+    final clampedSystem = systemScale.clamp(0.82, 1.02);
+    final effective = (clampedSystem * densityFactor).clamp(0.80, 1.0);
+
+    return TextScaler.linear(effective);
   }
 
   /// Whether the current screen is considered "small" (< 360dp wide)
