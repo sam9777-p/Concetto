@@ -516,16 +516,16 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
 
     final screenWidth = MediaQuery.of(context).size.width;
     final childAspectRatio = screenWidth < 360
-        ? 0.70
-        : (screenWidth < 400 ? 0.73 : 0.75);
+        ? 0.78
+        : (screenWidth < 400 ? 0.82 : 0.84);
 
     return GridView.builder(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
       physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
       gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: 260,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
         childAspectRatio: childAspectRatio,
       ),
       itemCount: filteredEvents.length,
@@ -695,25 +695,25 @@ class EventCard extends StatelessWidget {
             // Details
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                padding: const EdgeInsets.fromLTRB(8, 5, 8, 5),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       event.title,
                       style: GoogleFonts.rajdhani(
-                        fontSize: 13.5,
+                        fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 1),
                     Text(
                       event.organizerClub,
                       style: GoogleFonts.rajdhani(
-                        fontSize: 11,
+                        fontSize: 10.5,
                         fontWeight: FontWeight.bold,
                         color: AppTheme.cyberAmber,
                       ),
@@ -721,14 +721,14 @@ class EventCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     if (event.tags.isNotEmpty) ...[
-                      const SizedBox(height: 5),
+                      const SizedBox(height: 3),
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         physics: const BouncingScrollPhysics(),
                         child: Row(
                           children: event.tags.take(3).map((tag) => Container(
                             margin: const EdgeInsets.only(right: 4),
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(4),
@@ -737,7 +737,7 @@ class EventCard extends StatelessWidget {
                             child: Text(
                               '#$tag',
                               style: GoogleFonts.rajdhani(
-                                fontSize: 9,
+                                fontSize: 8.5,
                                 fontWeight: FontWeight.w700,
                                 color: Colors.white70,
                               ),
@@ -749,45 +749,45 @@ class EventCard extends StatelessWidget {
                     const Spacer(),
                     Row(
                       children: [
-                            Icon(Icons.calendar_today, size: 11, color: primaryColor),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                event.date,
-                                style: GoogleFonts.rajdhani(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.metallicMuted,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                        Icon(Icons.calendar_today, size: 10, color: primaryColor),
+                        const SizedBox(width: 3),
+                        Expanded(
+                          child: Text(
+                            event.date,
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.metallicMuted,
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            const Icon(Icons.location_on_outlined, size: 11, color: Colors.grey),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                event.venue,
-                                style: GoogleFonts.rajdhani(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.white54,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 1.5),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined, size: 10, color: Colors.grey),
+                        const SizedBox(width: 3),
+                        Expanded(
+                          child: Text(
+                            event.venue,
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white54,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
+              ),
+            ),
               ],
             ),
           ),

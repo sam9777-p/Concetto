@@ -6,9 +6,9 @@ class AppTheme {
   static const Color scaffoldBg = Color(0xFF080302);
   static const Color neonOrange = Color(0xFFFF4500);
   static const Color cyberAmber = Color(0xFFFFA000);
-  static const Color solarGold = Color(0xFFFFD700);
-  static const Color cyberYellow = Color(0xFFFFC107);
-  static const Color softYellowGlow = Color(0xFFFFD54F);
+  static const Color solarGold = Color(0xFFFFA000); // Warm orangish yellow (Centenary box amber)
+  static const Color cyberYellow = Color(0xFFFFB300);
+  static const Color softYellowGlow = Color(0xFFFFB74D);
   static const Color metallicSilver = Color(0xFFCFD8DC);
   static const Color metallicMuted = Color(0xFF90A4AE);
   static const Color translucentDark = Color(0xDD0B0403);
@@ -25,7 +25,7 @@ class AppTheme {
   );
 
   static const LinearGradient solarFireGradient = LinearGradient(
-    colors: [Color(0xFFFF7A00), solarGold],
+    colors: [Color(0xFFFF7A00), cyberAmber],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
