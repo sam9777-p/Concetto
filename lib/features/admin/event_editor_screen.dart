@@ -101,16 +101,18 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
 
   final List<String> _allCategories = [
     'Flagship',
-    'Robotics',
-    'Coding',
-    'Electronics',
-    'Management',
+    'Workshops',
+    'Pre-Events',
+    'Stage',
     'Departmental',
     'Clubs',
+    'Gaming & Fun',
+    'Robotics',
+    'Electronics',
+    'Coding',
+    'Management',
     'Design',
     'Aeromodelling',
-    'Stage',
-    'Gaming & Fun',
   ];
 
   final List<Map<String, String>> _officialPosterPresets = [
@@ -163,16 +165,19 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
     // Initial category selection
     _selectedCategories = {};
     if (e != null) {
-      if (e.category.isNotEmpty) _selectedCategories.add(e.category);
+      if (e.category.isNotEmpty) {
+        final matchedCat = _allCategories.firstWhere(
+          (c) => c.toLowerCase() == e.category.toLowerCase(),
+          orElse: () => e.category,
+        );
+        _selectedCategories.add(matchedCat);
+      }
       for (final t in e.tags) {
         if (_allCategories.any((c) => c.toLowerCase() == t.toLowerCase())) {
           final matched = _allCategories.firstWhere((c) => c.toLowerCase() == t.toLowerCase());
           _selectedCategories.add(matched);
         }
       }
-    }
-    if (_selectedCategories.isEmpty) {
-      _selectedCategories.add('Robotics');
     }
 
     _isFlagship = e?.isFlagship ?? false;
@@ -255,6 +260,13 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
           }
 
           _selectedCategories.clear();
+          if (fresh.category.isNotEmpty) {
+            final matchedCat = _allCategories.firstWhere(
+              (c) => c.toLowerCase() == fresh.category.toLowerCase(),
+              orElse: () => fresh.category,
+            );
+            _selectedCategories.add(matchedCat);
+          }
           for (final c in fresh.tags) {
             final matched = _allCategories.firstWhere(
               (cat) => cat.toLowerCase() == c.toLowerCase(),
@@ -262,7 +274,6 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
             );
             if (matched.isNotEmpty) _selectedCategories.add(matched);
           }
-          if (_selectedCategories.isEmpty) _selectedCategories.add('Robotics');
 
           _isFlagship = fresh.isFlagship;
           _isVisible = fresh.isVisible;
@@ -339,7 +350,16 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
         .where((t) => t.isNotEmpty && !_allCategories.any((c) => c.toLowerCase() == t.toLowerCase()))
         .toList();
 
-    final allCombined = [..._selectedCategories, ...existingCustomTags];
+    // Sort selected categories according to the official display priority order
+    final sortedSelected = _selectedCategories.toList()
+      ..sort((a, b) {
+        final rankA = EventItem.getCategoryPriority(a);
+        final rankB = EventItem.getCategoryPriority(b);
+        if (rankA != rankB) return rankA.compareTo(rankB);
+        return a.toLowerCase().compareTo(b.toLowerCase());
+      });
+
+    final allCombined = [...sortedSelected, ...existingCustomTags];
     _tagsController.text = allCombined.join(', ');
   }
 
@@ -804,9 +824,24 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
         .where((t) => t.isNotEmpty)
         .toList();
 
-    final primaryCategory = _selectedCategories.isNotEmpty
-        ? _selectedCategories.first
-        : 'General';
+    // Collect all unique candidate tags from checkboxes and tag field
+    final allTagsList = <String>[];
+    for (final c in _selectedCategories) {
+      if (!allTagsList.contains(c)) allTagsList.add(c);
+    }
+    for (final t in parsedTags) {
+      if (!allTagsList.contains(t)) allTagsList.add(t);
+    }
+
+    // Sort by official priority order
+    allTagsList.sort((a, b) {
+      final rankA = EventItem.getCategoryPriority(a);
+      final rankB = EventItem.getCategoryPriority(b);
+      if (rankA != rankB) return rankA.compareTo(rankB);
+      return a.toLowerCase().compareTo(b.toLowerCase());
+    });
+
+    final primaryCategory = allTagsList.isNotEmpty ? allTagsList.first : '';
 
     final cleanPosterUrl = _posterUrlController.text.trim().isNotEmpty
         ? _posterUrlController.text.trim()
@@ -848,7 +883,7 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
       title: _titleController.text.trim(),
       organizerClub: finalClub,
       category: primaryCategory,
-      tags: parsedTags.isNotEmpty ? parsedTags : _selectedCategories.toList(),
+      tags: allTagsList,
       venue: _venueController.text.trim(),
       time: _timeController.text.trim(),
       startTime: _startTimeController.text.trim(),
@@ -2291,9 +2326,7 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
       onTap: () {
         setState(() {
           if (isSelected) {
-            if (_selectedCategories.length > 1) {
-              _selectedCategories.remove(cat);
-            }
+            _selectedCategories.remove(cat);
           } else {
             _selectedCategories.add(cat);
           }

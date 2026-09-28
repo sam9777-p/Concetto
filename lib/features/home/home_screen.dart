@@ -1643,28 +1643,30 @@ extension _HomeScreenHelpers on _HomeScreenState {
                       ),
                     ),
                   ),
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: primaryColor,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        event.category.toUpperCase(),
-                        style: GoogleFonts.rajdhani(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.black,
-                          letterSpacing: 0.5,
+                  if (event.displayCategory.isNotEmpty)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: primaryColor,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          event.displayCategory.toUpperCase(),
+                          style: GoogleFonts.rajdhani(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black,
+                            letterSpacing: 0.5,
+                          ),
                         ),
                       ),
                     ),
-                  ),
                   if (event.prizePool.isNotEmpty &&
-                      event.category.toLowerCase() != 'workshops' &&
+                      event.displayCategory.toLowerCase() != 'workshops' &&
+                      !event.prioritizedTags.any((t) => t.toLowerCase().contains('workshop')) &&
                       !event.isStageExperience &&
                       !event.isWatchableOnly)
                     Positioned(
@@ -1730,30 +1732,32 @@ extension _HomeScreenHelpers on _HomeScreenState {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 3),
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            physics: const BouncingScrollPhysics(),
-                            child: Row(
-                              children: (event.tags.isNotEmpty ? event.tags : [event.category, 'Concetto26']).take(2).map((tag) => Container(
-                                margin: const EdgeInsets.only(right: 4),
-                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFFA000).withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(color: const Color(0xFFFFA000).withValues(alpha: 0.35), width: 0.6),
-                                ),
-                                child: Text(
-                                  '#$tag',
-                                  style: GoogleFonts.rajdhani(
-                                    fontSize: 8.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFFFFB300),
+                          if (event.prioritizedTags.isNotEmpty) ...[
+                            const SizedBox(height: 3),
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              child: Row(
+                                children: event.prioritizedTags.take(3).map((tag) => Container(
+                                  margin: const EdgeInsets.only(right: 4),
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFA000).withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(color: const Color(0xFFFFA000).withValues(alpha: 0.35), width: 0.6),
                                   ),
-                                ),
-                              )).toList(),
+                                  child: Text(
+                                    '#$tag',
+                                    style: GoogleFonts.rajdhani(
+                                      fontSize: 8.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFFFFB300),
+                                    ),
+                                  ),
+                                )).toList(),
+                              ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ),

@@ -24,17 +24,19 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
 
   final List<String> _categories = [
     'All',
+    'Flagship',
     'Workshops',
     'Pre-Events',
-    'Flagship',
-    'Robotics',
-    'Coding',
-    'Electronics',
-    'Management',
+    'Stage',
     'Departmental',
     'Clubs',
+    'Gaming & Fun',
+    'Robotics',
+    'Electronics',
+    'Coding',
+    'Management',
     'Design',
-    'Stage',
+    'Aeromodelling',
   ];
 
   @override
@@ -167,7 +169,8 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
               child: InkWell(
                 onTap: () {
                   setState(() {
-                    _selectedCategoryIndex = 1; // 'Pre-Events'
+                    final preIdx = _categories.indexOf('Pre-Events');
+                    _selectedCategoryIndex = preIdx != -1 ? preIdx : 1;
                   });
                 },
                 borderRadius: BorderRadius.circular(14),
@@ -392,21 +395,27 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
       } else if (selectedCategory == 'Workshops') {
         matchesCategory = event.category.toLowerCase().contains('workshop') ||
             event.tags.any((t) => t.toLowerCase().contains('workshop')) ||
+            event.title.toLowerCase().contains('workshop') ||
             event.title.toLowerCase().contains('biology') ||
-            event.title.toLowerCase().contains('agentic') ||
-            event.title.toLowerCase().contains('workshop');
+            event.title.toLowerCase().contains('agentic');
       } else if (selectedCategory == 'Pre-Events') {
         matchesCategory = isPreEvent;
-      } else if (selectedCategory == 'Flagship') {
-        matchesCategory = event.isFlagship ||
-            event.category.toLowerCase() == 'flagship' ||
-            event.tags.any((t) => t.toLowerCase() == 'flagship');
       } else if (selectedCategory == 'Departmental') {
         matchesCategory = event.category.toLowerCase() == 'departmental' ||
             event.tags.any((t) => t.toLowerCase() == 'departmental');
       } else if (selectedCategory == 'Clubs' || selectedCategory == 'Club') {
         matchesCategory = event.category.toLowerCase() == 'club' ||
             event.tags.any((t) => t.toLowerCase() == 'club' || t.toLowerCase() == 'clubs');
+      } else if (selectedCategory == 'Stage') {
+        matchesCategory = event.isStageExperience ||
+            event.isWatchableOnly ||
+            event.category.toLowerCase() == 'stage' ||
+            event.tags.any((t) => t.toLowerCase() == 'stage');
+      } else if (selectedCategory == 'Gaming & Fun') {
+        matchesCategory = event.category.toLowerCase().contains('game') ||
+            event.category.toLowerCase().contains('fun') ||
+            event.tags.any((t) => t.toLowerCase().contains('game') || t.toLowerCase().contains('fun')) ||
+            event.title.toLowerCase().contains('game');
       } else if (selectedCategory == 'Robotics') {
         matchesCategory = event.category.toLowerCase() == 'robotics' ||
             event.tags.any((t) => t.toLowerCase() == 'robotics') ||
@@ -414,14 +423,15 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
             event.title.toLowerCase().contains('robo') ||
             event.title.toLowerCase().contains('autonav') ||
             event.title.toLowerCase().contains('aeroglide');
-      } else if (selectedCategory == 'Electronics') {
-        matchesCategory = event.category.toLowerCase() == 'electronics' ||
-            event.tags.any((t) => t.toLowerCase() == 'electronics') ||
-            event.organizerClub.toLowerCase().contains('electronic') ||
-            event.organizerClub.toLowerCase().contains('see') ||
-            event.title.toLowerCase().contains('sparkathon') ||
-            event.title.toLowerCase().contains('gate craft') ||
-            event.title.toLowerCase().contains('fault hunt');
+      } else if (selectedCategory == 'Coding') {
+        matchesCategory = event.category.toLowerCase() == 'coding' ||
+            event.tags.any((t) => t.toLowerCase() == 'coding') ||
+            event.organizerClub.toLowerCase().contains('cyberlabs') ||
+            event.organizerClub.toLowerCase().contains('coding') ||
+            event.organizerClub.toLowerCase().contains('c3') ||
+            event.title.toLowerCase().contains('hack') ||
+            event.title.toLowerCase().contains('code') ||
+            event.title.toLowerCase().contains('ctf');
       } else if (selectedCategory == 'Management') {
         matchesCategory = event.category.toLowerCase() == 'management' ||
             event.tags.any((t) => t.toLowerCase() == 'management') ||
@@ -439,15 +449,23 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
             event.organizerClub.toLowerCase().contains('animation') ||
             event.title.toLowerCase().contains('pixel perfect') ||
             event.title.toLowerCase().contains('game jam');
-      } else if (selectedCategory == 'Coding') {
-        matchesCategory = event.category.toLowerCase() == 'coding' ||
-            event.tags.any((t) => t.toLowerCase() == 'coding') ||
-            event.organizerClub.toLowerCase().contains('cyberlabs') ||
-            event.organizerClub.toLowerCase().contains('coding') ||
-            event.organizerClub.toLowerCase().contains('c3') ||
-            event.title.toLowerCase().contains('hack') ||
-            event.title.toLowerCase().contains('code') ||
-            event.title.toLowerCase().contains('ctf');
+      } else if (selectedCategory == 'Aeromodelling') {
+        matchesCategory = event.category.toLowerCase().contains('aero') ||
+            event.tags.any((t) => t.toLowerCase().contains('aero')) ||
+            event.organizerClub.toLowerCase().contains('aero') ||
+            event.title.toLowerCase().contains('aero');
+      } else if (selectedCategory == 'Electronics') {
+        matchesCategory = event.category.toLowerCase() == 'electronics' ||
+            event.tags.any((t) => t.toLowerCase() == 'electronics') ||
+            event.organizerClub.toLowerCase().contains('electronic') ||
+            event.organizerClub.toLowerCase().contains('see') ||
+            event.title.toLowerCase().contains('sparkathon') ||
+            event.title.toLowerCase().contains('gate craft') ||
+            event.title.toLowerCase().contains('fault hunt');
+      } else if (selectedCategory == 'Flagship') {
+        matchesCategory = event.isFlagship ||
+            event.category.toLowerCase() == 'flagship' ||
+            event.tags.any((t) => t.toLowerCase() == 'flagship');
       } else {
         final sel = selectedCategory.toLowerCase();
         matchesCategory = event.category.toLowerCase() == sel ||
@@ -465,13 +483,12 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
       return matchesCategory && matchesSearch;
     }).toList();
 
-    // Keep stage / watchable events at the end of the list
+    // Sort events by the official priority order, then alphabetically
     filteredEvents.sort((a, b) {
-      final aIsStage = a.isWatchableOnly || a.category.toLowerCase() == 'stage';
-      final bIsStage = b.isWatchableOnly || b.category.toLowerCase() == 'stage';
-      if (aIsStage && !bIsStage) return 1;
-      if (!aIsStage && bIsStage) return -1;
-      return 0;
+      final rankA = EventItem.getCategoryPriority(a.displayCategory);
+      final rankB = EventItem.getCategoryPriority(b.displayCategory);
+      if (rankA != rankB) return rankA.compareTo(rankB);
+      return a.title.toLowerCase().compareTo(b.title.toLowerCase());
     });
 
     if (filteredEvents.isEmpty) {
@@ -551,23 +568,26 @@ class EventCard extends StatelessWidget {
 
   Color _getCategoryColor(String category) {
     final cat = category.toLowerCase();
-    if (cat.contains('flagship')) return const Color(0xFFFF4500);
-    if (cat.contains('coding')) return const Color(0xFF00E5FF);
-    if (cat.contains('robotics')) return const Color(0xFFFF9100);
-    if (cat.contains('management')) return const Color(0xFF00E676);
-    if (cat.contains('electronics')) return const Color(0xFFE040FB);
-    if (cat.contains('design')) return const Color(0xFFFFD600);
-    if (cat.contains('stage')) return const Color(0xFFFF8A80);
+    if (cat.contains('workshop')) return const Color(0xFF00E5FF);
     if (cat.contains('pre')) return const Color(0xFFFF5252);
     if (cat.contains('departmental')) return const Color(0xFF40C4FF);
-    if (cat.contains('fun')) return const Color(0xFFFFD54F);
-    return const Color(0xFFFF4500);
+    if (cat.contains('club')) return const Color(0xFFAB47BC);
+    if (cat.contains('stage')) return const Color(0xFFFF8A80);
+    if (cat.contains('game') || cat.contains('fun')) return const Color(0xFFFFD54F);
+    if (cat.contains('robot')) return const Color(0xFFFF9100);
+    if (cat.contains('code') || cat.contains('coding')) return const Color(0xFF00B0FF);
+    if (cat.contains('management')) return const Color(0xFF00E676);
+    if (cat.contains('design')) return const Color(0xFFFFD600);
+    if (cat.contains('aero')) return const Color(0xFF26A69A);
+    if (cat.contains('electronic')) return const Color(0xFFE040FB);
+    if (cat.contains('flagship')) return const Color(0xFFFF4500);
+    return const Color(0xFFFF9100);
   }
 
   @override
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).colorScheme.primary;
-    final catColor = _getCategoryColor(event.category);
+    final catColor = _getCategoryColor(event.displayCategory);
 
     return GestureDetector(
       onTap: () => context.push('/events/detail', extra: event),
@@ -636,34 +656,36 @@ class EventCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: catColor,
-                        borderRadius: BorderRadius.circular(6),
-                        boxShadow: [
-                          BoxShadow(
-                            color: catColor.withValues(alpha: 0.4),
-                            blurRadius: 6,
+                  if (event.displayCategory.isNotEmpty)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: catColor,
+                          borderRadius: BorderRadius.circular(6),
+                          boxShadow: [
+                            BoxShadow(
+                              color: catColor.withValues(alpha: 0.4),
+                              blurRadius: 6,
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          event.displayCategory.toUpperCase(),
+                          style: GoogleFonts.rajdhani(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.8,
+                            color: Colors.black,
                           ),
-                        ],
-                      ),
-                      child: Text(
-                        event.category.toUpperCase(),
-                        style: GoogleFonts.rajdhani(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.8,
-                          color: Colors.black,
                         ),
                       ),
                     ),
-                  ),
                   if (event.prizePool.isNotEmpty &&
-                      event.category != 'Workshops' &&
+                      event.displayCategory.toLowerCase() != 'workshops' &&
+                      !event.prioritizedTags.any((t) => t.toLowerCase().contains('workshop')) &&
                       !event.isStageExperience &&
                       !event.isWatchableOnly)
                     Positioned(
@@ -731,30 +753,32 @@ class EventCard extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 4),
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            physics: const BouncingScrollPhysics(),
-                            child: Row(
-                              children: (event.tags.isNotEmpty ? event.tags : [event.category, 'Concetto26']).take(3).map((tag) => Container(
-                                margin: const EdgeInsets.only(right: 4),
-                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFFA000).withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(color: const Color(0xFFFFA000).withValues(alpha: 0.35), width: 0.6),
-                                ),
-                                child: Text(
-                                  '#$tag',
-                                  style: GoogleFonts.rajdhani(
-                                    fontSize: 8.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFFFFB300),
+                          if (event.prioritizedTags.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              child: Row(
+                                children: event.prioritizedTags.take(3).map((tag) => Container(
+                                  margin: const EdgeInsets.only(right: 4),
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFA000).withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(color: const Color(0xFFFFA000).withValues(alpha: 0.35), width: 0.6),
                                   ),
-                                ),
-                              )).toList(),
+                                  child: Text(
+                                    '#$tag',
+                                    style: GoogleFonts.rajdhani(
+                                      fontSize: 8.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFFFFB300),
+                                    ),
+                                  ),
+                                )).toList(),
+                              ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ),

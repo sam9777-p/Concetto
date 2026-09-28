@@ -297,22 +297,24 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                               ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: primaryColor,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          event.category.toUpperCase(),
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 11,
+                      if (event.displayCategory.isNotEmpty) ...[
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: primaryColor,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            event.displayCategory.toUpperCase(),
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -348,12 +350,12 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                   ),
 
                   // Tags Cloud
-                  if (event.tags.isNotEmpty) ...[
+                  if (event.prioritizedTags.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 6,
                       runSpacing: 6,
-                      children: event.tags.map((tag) {
+                      children: event.prioritizedTags.map((tag) {
                         return Container(
                           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                           decoration: BoxDecoration(
@@ -421,7 +423,8 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                           event.prizePool != '0' &&
                           !event.isWatchableOnly &&
                           !event.isStageExperience &&
-                          event.category != 'Workshops')
+                          event.displayCategory.toLowerCase() != 'workshops' &&
+                          !event.prioritizedTags.any((t) => t.toLowerCase().contains('workshop')))
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -475,7 +478,9 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                         ],
                       ),
                     ),
-                  ] else if (event.category == 'Workshops' || event.registrationUrl.contains('razorpay.com')) ...[
+                  ] else if (event.displayCategory.toLowerCase() == 'workshops' ||
+                      event.prioritizedTags.any((t) => t.toLowerCase().contains('workshop')) ||
+                      event.registrationUrl.contains('razorpay.com')) ...[
                     Row(
                       children: [
                         Expanded(

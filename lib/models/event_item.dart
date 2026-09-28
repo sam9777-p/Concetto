@@ -85,6 +85,68 @@ class EventItem {
     return parts.length > 1 ? parts[1].trim() : '';
   }
 
+  /// Official festival display priority list
+  static const List<String> categoryPriorityOrder = [
+    'Flagship',
+    'Workshops',
+    'Pre-Events',
+    'Stage',
+    'Departmental',
+    'Clubs',
+    'Gaming & Fun',
+    'Robotics',
+    'Electronics',
+    'Coding',
+    'Management',
+    'Design',
+    'Aeromodelling',
+  ];
+
+  /// Resolves the integer priority rank for any tag or category name
+  static int getCategoryPriority(String categoryOrTag) {
+    final lower = categoryOrTag.trim().toLowerCase();
+    if (lower.contains('flagship')) return 1;
+    if (lower.contains('workshop')) return 2;
+    if (lower.contains('pre')) return 3;
+    if (lower == 'stage' || lower.contains('stage')) return 4;
+    if (lower.contains('departmental')) return 5;
+    if (lower.contains('club')) return 6;
+    if (lower.contains('game') || lower.contains('fun')) return 7;
+    if (lower.contains('robot')) return 8;
+    if (lower.contains('electronic')) return 9;
+    if (lower.contains('code') || lower.contains('coding')) return 10;
+    if (lower.contains('management')) return 11;
+    if (lower.contains('design')) return 12;
+    if (lower.contains('aero')) return 13;
+    return 999;
+  }
+
+  /// Returns all tags prioritized according to the official display priority order
+  List<String> get prioritizedTags {
+    final all = <String>{};
+    if (category.trim().isNotEmpty) all.add(category.trim());
+    for (final t in tags) {
+      if (t.trim().isNotEmpty) all.add(t.trim());
+    }
+    if (all.isEmpty) return const [];
+
+    final list = all.toList();
+    list.sort((a, b) {
+      final rankA = getCategoryPriority(a);
+      final rankB = getCategoryPriority(b);
+      if (rankA != rankB) return rankA.compareTo(rankB);
+      return a.toLowerCase().compareTo(b.toLowerCase());
+    });
+    return list;
+  }
+
+  /// Returns the highest-priority tag for primary display badges, or empty string if no tags exist
+  String get displayCategory {
+    final sorted = prioritizedTags;
+    if (sorted.isNotEmpty) return sorted.first;
+    return category.trim();
+  }
+
   /// Dynamically computed readable team size label
   String get displayTeamSize {
     if (isStageExperience || isWatchableOnly) return '';
