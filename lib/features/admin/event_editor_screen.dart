@@ -833,6 +833,11 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
       if (!allTagsList.contains(t)) allTagsList.add(t);
     }
 
+    // Ensure Flagship tag is present if Flagship toggle is enabled
+    if (_isFlagship && !allTagsList.any((t) => t.toLowerCase() == 'flagship')) {
+      allTagsList.add('Flagship');
+    }
+
     // Sort by official priority order
     allTagsList.sort((a, b) {
       final rankA = EventItem.getCategoryPriority(a);
@@ -1347,7 +1352,17 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
                         Switch(
                           value: _isFlagship,
                           activeThumbColor: AppTheme.neonOrange,
-                          onChanged: (val) => setState(() => _isFlagship = val),
+                          onChanged: (val) {
+                            setState(() {
+                              _isFlagship = val;
+                              if (val) {
+                                _selectedCategories.add('Flagship');
+                              } else {
+                                _selectedCategories.remove('Flagship');
+                              }
+                              _syncTagsWithCategories();
+                            });
+                          },
                         ),
                       ],
                     ),
@@ -2335,8 +2350,10 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
         setState(() {
           if (isSelected) {
             _selectedCategories.remove(cat);
+            if (cat.toLowerCase() == 'flagship') _isFlagship = false;
           } else {
             _selectedCategories.add(cat);
+            if (cat.toLowerCase() == 'flagship') _isFlagship = true;
           }
           _syncTagsWithCategories();
         });

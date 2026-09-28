@@ -1487,78 +1487,79 @@ extension _HomeScreenHelpers on _HomeScreenState {
     AsyncValue<List<EventItem>> eventsAsync,
     Color primaryColor,
   ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    const Icon(Icons.stars_rounded, size: 18, color: Color(0xFFFFA000)),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        'FLAGSHIP ARENAS & HIGHLIGHTS',
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.rajdhani(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.3,
-                          color: primaryColor,
+    return eventsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, _) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Text('Failed to load events: $err'),
+      ),
+      data: (events) {
+        // Strictly only keep events with the flagship tag or category
+        final flagshipEvents = events.where((e) {
+          if (!e.isVisible) return false;
+          final hasFlagshipTag = e.tags.any((t) => t.trim().toLowerCase() == 'flagship') ||
+              e.category.trim().toLowerCase() == 'flagship';
+          return hasFlagshipTag;
+        }).toList();
+
+        if (flagshipEvents.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final screenWidth = MediaQuery.of(context).size.width;
+        final carouselHeight = screenWidth < 360 ? 228.0 : 236.0;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const Icon(Icons.stars_rounded, size: 18, color: Color(0xFFFFA000)),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            'FLAGSHIP ARENAS & HIGHLIGHTS',
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.3,
+                              color: primaryColor,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              InkWell(
-                onTap: () => context.go('/events'),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'View All',
-                      style: GoogleFonts.rajdhani(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: primaryColor,
-                      ),
+                  ),
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: () => context.go('/events'),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'View All',
+                          style: GoogleFonts.rajdhani(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                          ),
+                        ),
+                        Icon(Icons.chevron_right, size: 16, color: primaryColor),
+                      ],
                     ),
-                    Icon(Icons.chevron_right, size: 16, color: primaryColor),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 10),
-        eventsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text('Failed to load events: $err'),
-          ),
-          data: (events) {
-            final flagshipEvents = events.where((e) =>
-              e.isVisible &&
-              (e.isFlagship ||
-               e.category.toLowerCase() == 'flagship' ||
-               e.tags.any((t) => t.toLowerCase() == 'flagship'))
-            ).toList();
-
-            if (flagshipEvents.isEmpty) {
-              return const SizedBox.shrink();
-            }
-
-            final screenWidth = MediaQuery.of(context).size.width;
-            final carouselHeight = screenWidth < 360 ? 228.0 : 236.0;
-
-            return SizedBox(
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
               height: carouselHeight,
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -1570,10 +1571,10 @@ extension _HomeScreenHelpers on _HomeScreenState {
                   return _buildFeaturedEventCard(event, primaryColor);
                 },
               ),
-            );
-          },
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 

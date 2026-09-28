@@ -24,6 +24,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
   String _searchQuery = '';
   int _selectedCategoryIndex = 0;
   int _randomSeed = DateTime.now().millisecondsSinceEpoch;
+  final Map<String, int> _frozenLikeCounts = {};
 
   final List<String> _categories = [
     'All',
@@ -319,6 +320,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
               onRefresh: () async {
                 setState(() {
                   _randomSeed = DateTime.now().millisecondsSinceEpoch;
+                  _frozenLikeCounts.clear();
                 });
                 try {
                   final _ = await ref.refresh(eventsProvider.future);
@@ -489,14 +491,18 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
       return matchesCategory && matchesSearch;
     }).toList();
 
-    ref.watch(eventLikesProvider);
     final likesNotifier = ref.read(eventLikesProvider.notifier);
+
+    // Freeze like counts at page load snapshot so tapping like never jumps or shifts card positions
+    for (final e in events) {
+      _frozenLikeCounts.putIfAbsent(e.id, () => likesNotifier.getEffectiveLikes(e));
+    }
 
     // Arrange priority by number of likes (highest likes first).
     // For ties with the same number of likes, arrange randomly.
     filteredEvents.sort((a, b) {
-      final likesA = likesNotifier.getEffectiveLikes(a);
-      final likesB = likesNotifier.getEffectiveLikes(b);
+      final likesA = _frozenLikeCounts[a.id] ?? a.likeCount;
+      final likesB = _frozenLikeCounts[b.id] ?? b.likeCount;
       if (likesA != likesB) {
         return likesB.compareTo(likesA); // Highest likes first
       }
