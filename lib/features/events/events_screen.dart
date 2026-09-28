@@ -556,10 +556,10 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
 
     final screenWidth = MediaQuery.of(context).size.width;
     final childAspectRatio = screenWidth < 350
-        ? 0.60
+        ? 0.66
         : (screenWidth < 380
-            ? 0.64
-            : (screenWidth < 420 ? 0.67 : 0.70));
+            ? 0.70
+            : (screenWidth < 420 ? 0.73 : 0.76));
 
     return GridView.builder(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),

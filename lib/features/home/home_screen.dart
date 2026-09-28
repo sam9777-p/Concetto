@@ -1507,7 +1507,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
         }
 
         final screenWidth = MediaQuery.of(context).size.width;
-        final carouselHeight = screenWidth < 360 ? 228.0 : 236.0;
+        final carouselHeight = screenWidth < 360 ? 210.0 : 218.0;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
