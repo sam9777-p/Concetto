@@ -378,13 +378,16 @@ class _NotificationSenderScreenState extends ConsumerState<NotificationSenderScr
       backgroundColor: AppTheme.scaffoldBg,
       appBar: AppBar(
         backgroundColor: AppTheme.scaffoldBg,
-        title: Text(
-          'BROADCAST NOTIFICATIONS',
-          style: GoogleFonts.orbitron(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.1,
-            color: Colors.white,
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'BROADCAST NOTIFICATIONS',
+            style: GoogleFonts.orbitron(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.1,
+              color: Colors.white,
+            ),
           ),
         ),
         actions: [

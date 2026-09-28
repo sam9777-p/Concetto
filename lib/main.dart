@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router.dart';
+import 'core/utils/responsive.dart';
 
 import 'core/network/cloudinary_config.dart';
 import 'services/notification_service.dart';
@@ -50,6 +51,19 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       routerConfig: goRouter,
+      builder: (context, child) {
+        // Initialize responsive scaling based on actual screen size
+        Responsive.init(context);
+
+        // Clamp the system text scaler to prevent overflow on devices
+        // with extreme font size or pixel density settings
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: Responsive.clampedTextScaler(context),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
   }
 }

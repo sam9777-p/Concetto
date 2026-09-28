@@ -567,13 +567,16 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                                 color: Colors.black,
                                 size: 18,
                               ),
-                              label: Text(
-                                event.maxTeamSize <= 1 ? 'VIEW REGISTRATION' : 'CHECK TEAM DETAILS',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                  letterSpacing: 0.8,
-                                  fontSize: 12,
+                              label: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  event.maxTeamSize <= 1 ? 'VIEW REGISTRATION' : 'CHECK TEAM DETAILS',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                    letterSpacing: 0.8,
+                                    fontSize: 12,
+                                  ),
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
@@ -648,13 +651,16 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                                 color: Colors.black,
                                 size: 18,
                               ),
-                              label: const Text(
-                                'REGISTER NOW',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                  letterSpacing: 0.8,
-                                  fontSize: 13,
+                              label: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  'REGISTER NOW',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                    letterSpacing: 0.8,
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(

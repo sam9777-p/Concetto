@@ -226,40 +226,45 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _getPassBadgeColor(user.passType, user.isGuest, user.isIitIsm).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: _getPassBadgeColor(user.passType, user.isGuest, user.isIitIsm),
-                    width: 0.8,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: _getPassBadgeColor(user.passType, user.isGuest, user.isIitIsm),
-                        shape: BoxShape.circle,
-                      ),
-                    )
-                        .animate(onPlay: (c) => c.repeat(reverse: true))
-                        .fade(begin: 0.4, end: 1.0, duration: 800.ms),
-                    const SizedBox(width: 6),
-                    Text(
-                      user.isGuest ? 'GUEST PASS' : user.passCategoryTitle,
-                      style: GoogleFonts.rajdhani(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: _getPassBadgeColor(user.passType, user.isGuest, user.isIitIsm),
-                        letterSpacing: 0.8,
-                      ),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _getPassBadgeColor(user.passType, user.isGuest, user.isIitIsm).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: _getPassBadgeColor(user.passType, user.isGuest, user.isIitIsm),
+                      width: 0.8,
                     ),
-                  ],
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: _getPassBadgeColor(user.passType, user.isGuest, user.isIitIsm),
+                            shape: BoxShape.circle,
+                          ),
+                        )
+                            .animate(onPlay: (c) => c.repeat(reverse: true))
+                            .fade(begin: 0.4, end: 1.0, duration: 800.ms),
+                        const SizedBox(width: 6),
+                        Text(
+                          user.isGuest ? 'GUEST PASS' : user.passCategoryTitle,
+                          style: GoogleFonts.rajdhani(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: _getPassBadgeColor(user.passType, user.isGuest, user.isIitIsm),
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -348,21 +353,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(color: primaryColor.withValues(alpha: 0.35), width: 0.8),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              user.passId,
-                              style: GoogleFonts.orbitron(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: primaryColor,
-                                letterSpacing: 1.2,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                user.passId,
+                                style: GoogleFonts.orbitron(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryColor,
+                                  letterSpacing: 1.2,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            Icon(Icons.copy, size: 12, color: primaryColor.withValues(alpha: 0.8)),
-                          ],
+                              const SizedBox(width: 6),
+                              Icon(Icons.copy, size: 12, color: primaryColor.withValues(alpha: 0.8)),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -649,7 +657,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(color: badgeColor, width: 1.5),
         ),
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(22),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1787,31 +1795,39 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: primaryColor.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(8),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: primaryColor.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  isSignUp ? Icons.badge_outlined : Icons.lock_open_rounded,
+                                  color: primaryColor,
+                                  size: 20,
+                                ),
                               ),
-                              child: Icon(
-                                isSignUp ? Icons.badge_outlined : Icons.lock_open_rounded,
-                                color: primaryColor,
-                                size: 20,
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    isSignUp ? 'REGISTER FEST PASS' : 'ATTENDEE SIGN IN',
+                                    style: GoogleFonts.orbitron(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      letterSpacing: 1.1,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              isSignUp ? 'REGISTER FEST PASS' : 'ATTENDEE SIGN IN',
-                              style: GoogleFonts.orbitron(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                letterSpacing: 1.1,
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         IconButton(
                           icon: const Icon(Icons.close, size: 20, color: Colors.white54),
@@ -2352,12 +2368,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 height: 22,
                                 child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2),
                               )
-                            : Text(
-                                isSignUp ? 'CREATE ACCOUNT & ISSUE PASS' : 'SIGN IN',
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1,
+                            : FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  isSignUp ? 'CREATE ACCOUNT & ISSUE PASS' : 'SIGN IN',
+                                  style: const TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1,
+                                  ),
                                 ),
                               ),
                       ),

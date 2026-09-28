@@ -62,13 +62,16 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
       appBar: AppBar(
         backgroundColor: AppTheme.scaffoldBg,
         surfaceTintColor: Colors.transparent,
-        title: Text(
-          'EVENTS DIRECTORY',
-          style: GoogleFonts.orbitron(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.5,
-            color: Colors.white,
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'EVENTS DIRECTORY',
+            style: GoogleFonts.orbitron(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
+              color: Colors.white,
+            ),
           ),
         ),
         centerTitle: false,
@@ -510,14 +513,19 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
       );
     }
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final childAspectRatio = screenWidth < 360
+        ? 0.59
+        : (screenWidth < 400 ? 0.63 : 0.66);
+
     return GridView.builder(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: 260,
         mainAxisSpacing: 14,
         crossAxisSpacing: 12,
-        childAspectRatio: 0.68,
+        childAspectRatio: childAspectRatio,
       ),
       itemCount: filteredEvents.length,
       itemBuilder: (context, index) {

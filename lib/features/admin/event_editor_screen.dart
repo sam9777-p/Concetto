@@ -475,9 +475,11 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
           children: [
             const Icon(Icons.timeline, color: AppTheme.neonOrange),
             const SizedBox(width: 8),
-            Text(
-              stage == null ? 'ADD STAGE / ROUND' : 'EDIT STAGE / ROUND',
-              style: GoogleFonts.orbitron(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+            Expanded(
+              child: Text(
+                stage == null ? 'ADD STAGE / ROUND' : 'EDIT STAGE / ROUND',
+                style: GoogleFonts.orbitron(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
             ),
           ],
         ),

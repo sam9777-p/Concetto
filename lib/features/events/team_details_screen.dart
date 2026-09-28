@@ -260,12 +260,15 @@ class _TeamDetailsScreenState extends ConsumerState<TeamDetailsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF0A0202),
       appBar: AppBar(
-        title: Text(
-          isSolo ? 'REGISTRATION DETAILS' : 'TEAM DETAILS',
-          style: GoogleFonts.orbitron(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            isSolo ? 'REGISTRATION DETAILS' : 'TEAM DETAILS',
+            style: GoogleFonts.orbitron(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
+            ),
           ),
         ),
         centerTitle: true,

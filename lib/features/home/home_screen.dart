@@ -324,44 +324,49 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
           const SizedBox(width: 8),
 
           // Date / Status Badge with Pulsing Live Beacon
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFF140604),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: primaryColor.withValues(alpha: 0.5)),
-              boxShadow: [
-                BoxShadow(
-                  color: primaryColor.withValues(alpha: 0.15),
-                  blurRadius: 10,
-                  spreadRadius: 1,
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 7,
-                  height: 7,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF00E676),
-                    shape: BoxShape.circle,
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF140604),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: primaryColor.withValues(alpha: 0.5)),
+                boxShadow: [
+                  BoxShadow(
+                    color: primaryColor.withValues(alpha: 0.15),
+                    blurRadius: 10,
+                    spreadRadius: 1,
                   ),
-                )
-                    .animate(onPlay: (c) => c.repeat(reverse: true))
-                    .fade(begin: 0.3, end: 1.0, duration: 800.ms),
-                const SizedBox(width: 6),
-                Text(
-                  'OCT 08 - 11',
-                  style: GoogleFonts.orbitron(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w800,
-                    color: primaryColor,
-                    letterSpacing: 0.8,
-                  ),
+                ],
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF00E676),
+                        shape: BoxShape.circle,
+                      ),
+                    )
+                        .animate(onPlay: (c) => c.repeat(reverse: true))
+                        .fade(begin: 0.3, end: 1.0, duration: 800.ms),
+                    const SizedBox(width: 6),
+                    Text(
+                      'OCT 08 - 11',
+                      style: GoogleFonts.orbitron(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w800,
+                        color: primaryColor,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ],
@@ -453,20 +458,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             const SizedBox(height: 14),
 
             // Hero Title
-            Text(
-              'Centauri Synapse',
-              style: GoogleFonts.orbitron(
-                fontSize: 27,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                letterSpacing: 0.6,
-                height: 1.15,
-                shadows: [
-                  Shadow(
-                    color: primaryColor.withValues(alpha: 0.6),
-                    blurRadius: 14,
-                  ),
-                ],
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Centauri Synapse',
+                style: GoogleFonts.orbitron(
+                  fontSize: 27,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: 0.6,
+                  height: 1.15,
+                  shadows: [
+                    Shadow(
+                      color: primaryColor.withValues(alpha: 0.6),
+                      blurRadius: 14,
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 6),
@@ -1078,7 +1087,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
       },
       borderRadius: BorderRadius.circular(14),
       child: Container(
-        width: 295,
+        width: MediaQuery.of(context).size.width * 0.75,
         margin: const EdgeInsets.symmetric(horizontal: 5),
         padding: const EdgeInsets.all(13),
         decoration: BoxDecoration(
@@ -1560,7 +1569,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
     return GestureDetector(
       onTap: () => context.push('/events/detail', extra: event),
       child: Container(
-        width: 260,
+        width: MediaQuery.of(context).size.width * 0.66,
         margin: const EdgeInsets.symmetric(horizontal: 6),
         decoration: BoxDecoration(
           color: const Color(0xFF120504),
@@ -1844,7 +1853,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                   borderRadius: BorderRadius.circular(16),
                   onTap: () => _showLeadershipMessageDialog(context, q, primaryColor),
                   child: Container(
-                    width: 300,
+                    width: MediaQuery.of(context).size.width * 0.75,
                     padding: const EdgeInsets.all(15),
                     decoration: BoxDecoration(
                       color: const Color(0xFF120504),
@@ -2171,7 +2180,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                   onTap: () => _showGlimpseViewer(context, item, primaryColor),
                   borderRadius: BorderRadius.circular(16),
                   child: Container(
-                    width: 250,
+                    width: MediaQuery.of(context).size.width * 0.64,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: primaryColor.withValues(alpha: 0.35)),

@@ -25,13 +25,16 @@ class _MerchandiseScreenState extends State<MerchandiseScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'STORE & MERCHANDISE',
-          style: GoogleFonts.orbitron(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.5,
-            color: Colors.white,
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'STORE & MERCHANDISE',
+            style: GoogleFonts.orbitron(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
+              color: Colors.white,
+            ),
           ),
         ),
         centerTitle: false,

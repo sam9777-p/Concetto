@@ -259,7 +259,7 @@ class _PassScannerScreenState extends State<PassScannerScreen> {
             borderRadius: BorderRadius.circular(20),
             side: BorderSide(color: badgeColor, width: 1.5),
           ),
-          child: Container(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(22),
             child: Column(
               mainAxisSize: MainAxisSize.min,

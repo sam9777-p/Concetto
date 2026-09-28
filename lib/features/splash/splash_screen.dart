@@ -139,28 +139,33 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: primaryOrange.withValues(alpha: 0.3)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.star, size: 14, color: primaryOrange),
-                              const SizedBox(width: 6),
-                              Text(
-                                "IIT (ISM) DHANBAD • CENTENARY EDITION",
-                                style: GoogleFonts.orbitron(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.5,
-                                  color: Colors.white70,
-                                ),
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: primaryOrange.withValues(alpha: 0.3)),
+                            ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.star, size: 14, color: primaryOrange),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    "IIT (ISM) DHANBAD • CENTENARY EDITION",
+                                    style: GoogleFonts.orbitron(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.5,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
                       ],
@@ -216,19 +221,22 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         const SizedBox(height: 28),
 
                         // App Title: Concetto'26
-                        Text(
-                          "CONCETTO '26",
-                          style: GoogleFonts.orbitron(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 4.0,
-                            color: Colors.white,
-                            shadows: [
-                              Shadow(
-                                color: primaryOrange.withValues(alpha: 0.9),
-                                blurRadius: 20,
-                              ),
-                            ],
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            "CONCETTO '26",
+                            style: GoogleFonts.orbitron(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 4.0,
+                              color: Colors.white,
+                              shadows: [
+                                Shadow(
+                                  color: primaryOrange.withValues(alpha: 0.9),
+                                  blurRadius: 20,
+                                ),
+                              ],
+                            ),
                           ),
                         )
                             .animate()
@@ -238,13 +246,16 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         const SizedBox(height: 8),
 
                         // Official Theme Tagline
-                        Text(
-                          "CENTAURI SYNAPSE",
-                          style: GoogleFonts.rajdhani(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 3.0,
-                            color: primaryOrange,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            "CENTAURI SYNAPSE",
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 3.0,
+                              color: primaryOrange,
+                            ),
                           ),
                         ).animate().fadeIn(delay: 500.ms, duration: 600.ms),
 
@@ -275,21 +286,24 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: primaryOrange.withValues(alpha: 0.4)),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.calendar_today, size: 14, color: primaryOrange),
-                              const SizedBox(width: 8),
-                              Text(
-                                "OCTOBER 08 – 11, 2026",
-                                style: GoogleFonts.orbitron(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1.5,
-                                  color: Colors.white,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.calendar_today, size: 14, color: primaryOrange),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "OCTOBER 08 – 11, 2026",
+                                  style: GoogleFonts.orbitron(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 1.5,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ).animate().fadeIn(delay: 800.ms, duration: 600.ms),
 

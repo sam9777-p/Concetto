@@ -276,13 +276,16 @@ class _EventOperationsScreenState extends ConsumerState<EventOperationsScreen> {
       backgroundColor: AppTheme.scaffoldBg,
       appBar: AppBar(
         backgroundColor: AppTheme.scaffoldBg,
-        title: Text(
-          'EVENT OPERATIONS',
-          style: GoogleFonts.orbitron(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-            color: Colors.white,
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'EVENT OPERATIONS',
+            style: GoogleFonts.orbitron(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+              color: Colors.white,
+            ),
           ),
         ),
         actions: [
@@ -490,7 +493,7 @@ class _EventOperationsScreenState extends ConsumerState<EventOperationsScreen> {
         onTap: () => setState(() => _visibilityFilter = filterKey),
         borderRadius: BorderRadius.circular(8),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
           decoration: BoxDecoration(
             color: isSelected ? color.withValues(alpha: 0.18) : AppTheme.cardSurface,
             borderRadius: BorderRadius.circular(8),
@@ -500,12 +503,15 @@ class _EventOperationsScreenState extends ConsumerState<EventOperationsScreen> {
             ),
           ),
           alignment: Alignment.center,
-          child: Text(
-            label,
-            style: GoogleFonts.rajdhani(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: isSelected ? color : AppTheme.metallicMuted,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: GoogleFonts.rajdhani(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: isSelected ? color : AppTheme.metallicMuted,
+              ),
             ),
           ),
         ),
@@ -545,22 +551,28 @@ class _EventOperationsScreenState extends ConsumerState<EventOperationsScreen> {
   Widget _buildMetricItem(String label, String value, Color color) {
     return Column(
       children: [
-        Text(
-          value,
-          style: GoogleFonts.orbitron(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: color,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            value,
+            style: GoogleFonts.orbitron(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
         ),
         const SizedBox(height: 2),
-        Text(
-          label,
-          style: GoogleFonts.rajdhani(
-            fontSize: 10.5,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.metallicMuted,
-            letterSpacing: 0.8,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            style: GoogleFonts.rajdhani(
+              fontSize: 10.5,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.metallicMuted,
+              letterSpacing: 0.8,
+            ),
           ),
         ),
       ],

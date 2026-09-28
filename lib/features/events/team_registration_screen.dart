@@ -288,12 +288,15 @@ class _TeamRegistrationScreenState
     return Scaffold(
       backgroundColor: const Color(0xFF0A0202),
       appBar: AppBar(
-        title: Text(
-          'TEAM REGISTRATION',
-          style: GoogleFonts.orbitron(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'TEAM REGISTRATION',
+            style: GoogleFonts.orbitron(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
           ),
         ),
         centerTitle: true,
@@ -393,13 +396,16 @@ class _TeamRegistrationScreenState
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  _isSolo ? 'PARTICIPANT DETAILS' : 'TEAM MEMBERS (${_members.length}/$_maxSize)',
-                  style: GoogleFonts.rajdhani(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: primaryColor,
-                    letterSpacing: 1,
+                Flexible(
+                  child: Text(
+                    _isSolo ? 'PARTICIPANT DETAILS' : 'TEAM MEMBERS (${_members.length}/$_maxSize)',
+                    style: GoogleFonts.rajdhani(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: primaryColor,
+                      letterSpacing: 1,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (!_isSolo && _members.length < _maxSize)

@@ -140,13 +140,16 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> with SingleTick
       appBar: AppBar(
         backgroundColor: AppTheme.scaffoldBg,
         surfaceTintColor: Colors.transparent,
-        title: Text(
-          'FESTIVAL TIMELINE',
-          style: GoogleFonts.orbitron(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.5,
-            color: Colors.white,
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'FESTIVAL TIMELINE',
+            style: GoogleFonts.orbitron(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
+              color: Colors.white,
+            ),
           ),
         ),
         centerTitle: false,
@@ -195,24 +198,30 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> with SingleTick
                         ),
                         child: Column(
                           children: [
-                            Text(
-                              dayInfo['day']!,
-                              style: GoogleFonts.orbitron(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.2,
-                                color: isSelected ? Colors.black : Colors.white,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                dayInfo['day']!,
+                                style: GoogleFonts.orbitron(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2,
+                                  color: isSelected ? Colors.black : Colors.white,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 2),
-                            Text(
-                              dayInfo['date']!,
-                              style: GoogleFonts.rajdhani(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: isSelected
-                                    ? Colors.black87
-                                    : AppTheme.metallicMuted,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                dayInfo['date']!,
+                                style: GoogleFonts.rajdhani(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: isSelected
+                                      ? Colors.black87
+                                      : AppTheme.metallicMuted,
+                                ),
                               ),
                             ),
                           ],

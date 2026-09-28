@@ -465,20 +465,23 @@ class _GuestPassDashboardScreenState extends State<GuestPassDashboardScreen> {
                               height: 22,
                               child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.black),
                             )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.save_rounded, size: 20),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'SAVE & UPDATE PASS IN CLOUD',
-                                  style: GoogleFonts.rajdhani(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 1.1,
+                          : FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.save_rounded, size: 20),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'SAVE & UPDATE PASS IN CLOUD',
+                                    style: GoogleFonts.rajdhani(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 1.1,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                     ),
                   ),
@@ -504,13 +507,16 @@ class _GuestPassDashboardScreenState extends State<GuestPassDashboardScreen> {
       backgroundColor: AppTheme.scaffoldBg,
       appBar: AppBar(
         backgroundColor: AppTheme.scaffoldBg,
-        title: Text(
-          'GUEST PASS DASHBOARD',
-          style: GoogleFonts.orbitron(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-            color: Colors.white,
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'GUEST PASS DASHBOARD',
+            style: GoogleFonts.orbitron(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+              color: Colors.white,
+            ),
           ),
         ),
         actions: [
@@ -736,31 +742,36 @@ class _GuestPassDashboardScreenState extends State<GuestPassDashboardScreen> {
             // Top Row: Pass Badge + Scan Count Indicator
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: badgeColor.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: badgeColor, width: 1),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.confirmation_number_outlined, size: 13, color: badgeColor),
-                      const SizedBox(width: 5),
-                      Text(
-                        categoryTitle,
-                        style: GoogleFonts.rajdhani(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: badgeColor,
-                          letterSpacing: 0.8,
-                        ),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: badgeColor.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: badgeColor, width: 1),
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.confirmation_number_outlined, size: 13, color: badgeColor),
+                          const SizedBox(width: 5),
+                          Text(
+                            categoryTitle,
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: badgeColor,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
@@ -841,19 +852,23 @@ class _GuestPassDashboardScreenState extends State<GuestPassDashboardScreen> {
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
                 // Edit Button
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.neonOrange.withValues(alpha: 0.2),
                     foregroundColor: AppTheme.neonOrange,
                     side: const BorderSide(color: AppTheme.neonOrange, width: 1),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   icon: const Icon(Icons.edit_note_rounded, size: 16),
-                  label: Text(
-                    'EDIT PASS',
-                    style: GoogleFonts.rajdhani(fontSize: 13, fontWeight: FontWeight.w800),
+                  label: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'EDIT PASS',
+                      style: GoogleFonts.rajdhani(fontSize: 13, fontWeight: FontWeight.w800),
+                    ),
                   ),
                   onPressed: () => _showEditPassDialog(attendee),
                 ),

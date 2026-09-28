@@ -167,13 +167,17 @@ class _RulebookPdfViewerScreenState extends State<RulebookPdfViewerScreen> {
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 2),
-            Text(
-              'OFFICIAL RULEBOOK & SYNOPSIS',
-              style: TextStyle(
-                color: primaryColor,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.2,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'OFFICIAL RULEBOOK & SYNOPSIS',
+                style: TextStyle(
+                  color: primaryColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
+                ),
               ),
             ),
           ],

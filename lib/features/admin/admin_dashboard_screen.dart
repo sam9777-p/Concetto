@@ -376,13 +376,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         backgroundColor: AppTheme.scaffoldBg,
         appBar: AppBar(
           backgroundColor: AppTheme.scaffoldBg,
-          title: Text(
-            'ORGANIZER COMMAND HUB',
-            style: GoogleFonts.orbitron(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
-              color: Colors.white,
+          title: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              'ORGANIZER COMMAND HUB',
+              style: GoogleFonts.orbitron(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+                color: Colors.white,
+              ),
             ),
           ),
           actions: [
@@ -510,20 +513,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
               // Security notice footer
               Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.lock_clock_outlined, size: 14, color: AppTheme.metallicMuted.withValues(alpha: 0.5)),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Multi-tier cryptographic protection active. Zero unauthorized access.',
-                      style: GoogleFonts.rajdhani(
-                        fontSize: 12,
-                        color: AppTheme.metallicMuted.withValues(alpha: 0.6),
-                        fontWeight: FontWeight.w600,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.lock_clock_outlined, size: 14, color: AppTheme.metallicMuted.withValues(alpha: 0.5)),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Multi-tier cryptographic protection active. Zero unauthorized access.',
+                        style: GoogleFonts.rajdhani(
+                          fontSize: 12,
+                          color: AppTheme.metallicMuted.withValues(alpha: 0.6),
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
