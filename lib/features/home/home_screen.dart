@@ -201,14 +201,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                         .animate()
                         .fadeIn(duration: 450.ms, delay: 340.ms),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 22),
 
                     // Flagship Arenas Carousel
                     _buildFeaturedEventsSection(eventsAsync, primaryColor)
                         .animate()
                         .fadeIn(duration: 450.ms, delay: 400.ms),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 22),
 
                     // Voices of Concetto (Leadership Speeches with 5-6 lines preview)
                     _buildLeadershipVoicesSection(primaryColor)
@@ -1365,7 +1365,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                 child: _buildActionTile(
                   icon: Icons.event_available,
                   title: 'All Events',
-                  subtitle: '100+ Contests & Arenas',
+                  subtitle: 'Contests & Arenas',
                   accentColor: primaryColor,
                   onTap: () => context.go('/events'),
                 ),
@@ -1374,7 +1374,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
               Expanded(
                 child: _buildActionTile(
                   icon: Icons.schedule,
-                  title: 'Festival Timeline',
+                  title: 'Fest Timeline',
                   subtitle: 'Day 0 to Day 3 Flow',
                   accentColor: const Color(0xFF00E5FF),
                   onTap: () => context.go('/schedule'),
@@ -1521,7 +1521,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'View All 100+',
+                      'View All',
                       style: GoogleFonts.rajdhani(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -1535,7 +1535,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         eventsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (err, _) => Padding(
@@ -1547,7 +1547,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
             final displayEvents = flagshipEvents.isNotEmpty ? flagshipEvents : events.take(6).toList();
 
             return SizedBox(
-              height: 295,
+              height: 215,
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 scrollDirection: Axis.horizontal,
@@ -1566,20 +1566,23 @@ extension _HomeScreenHelpers on _HomeScreenState {
   }
 
   Widget _buildFeaturedEventCard(EventItem event, Color primaryColor) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final cardWidth = (screenWidth * 0.52).clamp(185.0, 215.0);
+
     return GestureDetector(
       onTap: () => context.push('/events/detail', extra: event),
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.66,
-        margin: const EdgeInsets.symmetric(horizontal: 6),
+        width: cardWidth,
+        margin: const EdgeInsets.symmetric(horizontal: 5),
         decoration: BoxDecoration(
           color: const Color(0xFF120504),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: primaryColor.withValues(alpha: 0.4)),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: primaryColor.withValues(alpha: 0.4), width: 0.8),
           boxShadow: [
             BoxShadow(
               color: primaryColor.withValues(alpha: 0.12),
-              blurRadius: 10,
-              spreadRadius: 1,
+              blurRadius: 8,
+              spreadRadius: 0,
             ),
           ],
         ),
@@ -1587,9 +1590,9 @@ extension _HomeScreenHelpers on _HomeScreenState {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 3:2 rectangle ratio poster
+            // 16:10 rectangle ratio poster for compact height
             AspectRatio(
-              aspectRatio: 3 / 2,
+              aspectRatio: 16 / 10,
               child: Stack(
                 children: [
                   Positioned.fill(
@@ -1609,8 +1612,8 @@ extension _HomeScreenHelpers on _HomeScreenState {
                               color: const Color(0xFF140604),
                               child: const Center(
                                 child: SizedBox(
-                                  width: 20,
-                                  height: 20,
+                                  width: 18,
+                                  height: 18,
                                   child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.neonOrange),
                                 ),
                               ),
@@ -1637,21 +1640,21 @@ extension _HomeScreenHelpers on _HomeScreenState {
                     ),
                   ),
                   Positioned(
-                    top: 8,
-                    right: 8,
+                    top: 6,
+                    right: 6,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                       decoration: BoxDecoration(
                         color: primaryColor,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         event.category.toUpperCase(),
                         style: GoogleFonts.rajdhani(
-                          fontSize: 9.5,
+                          fontSize: 9,
                           fontWeight: FontWeight.w900,
                           color: Colors.black,
-                          letterSpacing: 0.6,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
@@ -1661,24 +1664,24 @@ extension _HomeScreenHelpers on _HomeScreenState {
                       !event.isStageExperience &&
                       !event.isWatchableOnly)
                     Positioned(
-                      bottom: 8,
-                      left: 8,
+                      bottom: 6,
+                      left: 6,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(5),
                           border: Border.all(color: primaryColor.withValues(alpha: 0.6)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.emoji_events, size: 12, color: Color(0xFFFFD700)),
-                            const SizedBox(width: 4),
+                            const Icon(Icons.emoji_events, size: 11, color: Color(0xFFFFD700)),
+                            const SizedBox(width: 3),
                             Text(
                               event.prizePool,
                               style: GoogleFonts.orbitron(
-                                fontSize: 9.5,
+                                fontSize: 9,
                                 fontWeight: FontWeight.bold,
                                 color: primaryColor,
                               ),
@@ -1692,48 +1695,53 @@ extension _HomeScreenHelpers on _HomeScreenState {
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          event.title,
-                          style: GoogleFonts.rajdhani(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (event.tags.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: Text(
-                              event.tags.take(2).map((t) => '#$t').join(' '),
-                              style: GoogleFonts.rajdhani(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.cyberAmber,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                      ],
+                    Text(
+                      event.title,
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: 1),
+                    if (event.organizerClub.isNotEmpty) ...[
+                      Text(
+                        event.organizerClub,
+                        style: GoogleFonts.rajdhani(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.cyberAmber,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ] else if (event.tags.isNotEmpty) ...[
+                      Text(
+                        event.tags.take(2).map((t) => '#$t').join(' '),
+                        style: GoogleFonts.rajdhani(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white60,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    const Spacer(),
                     Row(
                       children: [
-                        const Icon(Icons.calendar_today, size: 11, color: Colors.grey),
-                        const SizedBox(width: 4),
+                        const Icon(Icons.calendar_today, size: 10, color: Colors.grey),
+                        const SizedBox(width: 3),
                         Expanded(
                           child: Text(
                             event.date,
-                            style: GoogleFonts.rajdhani(fontSize: 10.5, color: Colors.grey),
+                            style: GoogleFonts.rajdhani(fontSize: 9.5, color: Colors.grey),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1741,7 +1749,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                         Text(
                           'EXPLORE →',
                           style: GoogleFonts.rajdhani(
-                            fontSize: 10.5,
+                            fontSize: 9.5,
                             fontWeight: FontWeight.bold,
                             color: primaryColor,
                           ),
