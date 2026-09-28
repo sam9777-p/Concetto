@@ -1916,16 +1916,29 @@ extension _HomeScreenHelpers on _HomeScreenState {
                         // Speaker Avatar + Name + Role Header
                         Row(
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(1.5),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: primaryColor.withValues(alpha: 0.6), width: 1.2),
+                            GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => _showFullPersonImage(
+                                context,
+                                name: q['name']!,
+                                role: q['role']!,
+                                imagePath: q['image']!,
+                                primaryColor: primaryColor,
                               ),
-                              child: CircleAvatar(
-                                radius: 20,
-                                backgroundImage: AssetImage(q['image']!),
-                                backgroundColor: primaryColor.withValues(alpha: 0.2),
+                              child: Tooltip(
+                                message: 'Tap to view full photo',
+                                child: Container(
+                                  padding: const EdgeInsets.all(1.5),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: primaryColor.withValues(alpha: 0.6), width: 1.2),
+                                  ),
+                                  child: CircleAvatar(
+                                    radius: 20,
+                                    backgroundImage: AssetImage(q['image']!),
+                                    backgroundColor: primaryColor.withValues(alpha: 0.2),
+                                  ),
+                                ),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -2059,10 +2072,23 @@ extension _HomeScreenHelpers on _HomeScreenState {
               children: [
                 Row(
                   children: [
-                    CircleAvatar(
-                      radius: 26,
-                      backgroundImage: AssetImage(q['image']!),
-                      backgroundColor: primaryColor.withValues(alpha: 0.2),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _showFullPersonImage(
+                        context,
+                        name: q['name']!,
+                        role: q['role']!,
+                        imagePath: q['image']!,
+                        primaryColor: primaryColor,
+                      ),
+                      child: Tooltip(
+                        message: 'Tap to view full photo',
+                        child: CircleAvatar(
+                          radius: 26,
+                          backgroundImage: AssetImage(q['image']!),
+                          backgroundColor: primaryColor.withValues(alpha: 0.2),
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -2159,6 +2185,171 @@ extension _HomeScreenHelpers on _HomeScreenState {
                         letterSpacing: 1,
                       ),
                     ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showFullPersonImage(
+    BuildContext context, {
+    required String name,
+    required String role,
+    required String imagePath,
+    required Color primaryColor,
+  }) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.85),
+      builder: (ctx) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
+            decoration: BoxDecoration(
+              color: const Color(0xFF140605),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: primaryColor.withValues(alpha: 0.5), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: primaryColor.withValues(alpha: 0.25),
+                  blurRadius: 24,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 12, 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.person, size: 18, color: primaryColor),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              style: GoogleFonts.rajdhani(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              role,
+                              style: GoogleFonts.rajdhani(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: primaryColor,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
+                Flexible(
+                  child: InteractiveViewer(
+                    panEnabled: true,
+                    minScale: 0.8,
+                    maxScale: 4.0,
+                    child: Center(
+                      child: imagePath.startsWith('assets/')
+                          ? Image.asset(
+                              imagePath,
+                              fit: BoxFit.contain,
+                              errorBuilder: (c, e, s) => Container(
+                                height: 250,
+                                color: Colors.black26,
+                                child: const Center(
+                                  child: Icon(Icons.broken_image, size: 40, color: Colors.white38),
+                                ),
+                              ),
+                            )
+                          : CachedNetworkImage(
+                              imageUrl: imagePath,
+                              fit: BoxFit.contain,
+                              placeholder: (c, u) => const Center(
+                                child: SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              ),
+                              errorWidget: (c, u, e) => Container(
+                                height: 250,
+                                color: Colors.black26,
+                                child: const Center(
+                                  child: Icon(Icons.broken_image, size: 40, color: Colors.white38),
+                                ),
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
+                Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.pinch_rounded, size: 14, color: Colors.white38),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Pinch to zoom photo',
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 11,
+                              color: Colors.white38,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      TextButton.icon(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        icon: Icon(Icons.check_rounded, size: 16, color: primaryColor),
+                        label: Text(
+                          'CLOSE',
+                          style: GoogleFonts.rajdhani(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/network/repositories.dart';
 import '../../core/theme/app_theme.dart';
+import '../../models/event_item.dart';
 import '../../services/notification_service.dart';
 
 class NotificationSenderScreen extends ConsumerStatefulWidget {
@@ -81,6 +82,48 @@ class _NotificationSenderScreenState extends ConsumerState<NotificationSenderScr
     return _selectedCategory;
   }
 
+  EventItem? _getSelectedEvent(List<EventItem>? events) {
+    if (events == null || events.isEmpty) return null;
+    if (_selectedEventId == null || _selectedEventId!.isEmpty) {
+      return events.first;
+    }
+    return events.firstWhere(
+      (e) => e.id == _selectedEventId,
+      orElse: () => events.first,
+    );
+  }
+
+  Widget _buildImagePreview(String url, {double height = 110, double? width, BoxFit fit = BoxFit.cover}) {
+    if (url.trim().isEmpty) return const SizedBox.shrink();
+    final clean = url.trim();
+    if (clean.startsWith('assets/')) {
+      return Image.asset(
+        clean,
+        height: height,
+        width: width ?? double.infinity,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) => Container(
+          height: height,
+          color: Colors.red.withValues(alpha: 0.1),
+          alignment: Alignment.center,
+          child: const Text('Asset image not found', style: TextStyle(color: Colors.redAccent, fontSize: 11)),
+        ),
+      );
+    }
+    return Image.network(
+      clean,
+      height: height,
+      width: width ?? double.infinity,
+      fit: fit,
+      errorBuilder: (context, error, stackTrace) => Container(
+        height: height,
+        color: Colors.red.withValues(alpha: 0.1),
+        alignment: Alignment.center,
+        child: const Text('Invalid image link', style: TextStyle(color: Colors.redAccent, fontSize: 11)),
+      ),
+    );
+  }
+
   String get _computedTargetRoute {
     if (_selectedRouteType == 'none') {
       return '';
@@ -107,9 +150,15 @@ class _NotificationSenderScreenState extends ConsumerState<NotificationSenderScr
   Future<void> _handlePublish() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final events = ref.read(eventsProvider).asData?.value;
+    final selectedEvent = _getSelectedEvent(events);
+
     final title = _titleController.text.trim();
     final body = _bodyController.text.trim();
-    final imageUrl = _imageUrlController.text.trim();
+    String imageUrl = _imageUrlController.text.trim();
+    if (_selectedRouteType == 'exact_event' && selectedEvent != null && selectedEvent.posterUrl.isNotEmpty) {
+      imageUrl = selectedEvent.posterUrl.trim();
+    }
     final contentUrl = _computedContentUrl;
     final category = _effectiveCategory;
     final targetRoute = _computedTargetRoute;
@@ -179,6 +228,13 @@ class _NotificationSenderScreenState extends ConsumerState<NotificationSenderScr
                   Text(title, style: GoogleFonts.rajdhani(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
                   const SizedBox(height: 4),
                   Text(body, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                  if (imageUrl.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: _buildImagePreview(imageUrl, height: 80),
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   if (targetRoute.isNotEmpty)
                     Text('🎯 Target Destination: $targetRoute', style: GoogleFonts.rajdhani(fontSize: 11, color: const Color(0xFF00E5FF)))
@@ -439,7 +495,7 @@ class _NotificationSenderScreenState extends ConsumerState<NotificationSenderScr
     );
   }
 
-  Widget _buildComposeTab(AsyncValue<List<dynamic>> eventsAsync, Color accentColor) {
+  Widget _buildComposeTab(AsyncValue<List<EventItem>> eventsAsync, Color accentColor) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Form(
@@ -585,15 +641,88 @@ class _NotificationSenderScreenState extends ConsumerState<NotificationSenderScr
               style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: accentColor, letterSpacing: 0.8),
             ),
             const SizedBox(height: 8),
+            if (_selectedRouteType == 'exact_event') ...[
+              Builder(
+                builder: (context) {
+                  final events = eventsAsync.asData?.value;
+                  final ev = _getSelectedEvent(events);
+                  final poster = ev?.posterUrl.trim() ?? '';
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00E5FF).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFF00E5FF).withValues(alpha: 0.4)),
+                    ),
+                    child: Row(
+                      children: [
+                        if (poster.isNotEmpty)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: _buildImagePreview(poster, height: 44, width: 44, fit: BoxFit.cover),
+                          ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'LINKED TO EVENT POSTER',
+                                style: GoogleFonts.orbitron(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF00E5FF),
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                ev != null ? ev.title : 'Selected Event',
+                                style: GoogleFonts.rajdhani(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                'Event picture is automatically locked as the notification banner.',
+                                style: GoogleFonts.rajdhani(
+                                  color: Colors.white54,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
             TextFormField(
               controller: _imageUrlController,
-              style: const TextStyle(color: Colors.white, fontSize: 13.5),
+              readOnly: _selectedRouteType == 'exact_event',
+              style: TextStyle(
+                color: _selectedRouteType == 'exact_event' ? Colors.white60 : Colors.white,
+                fontSize: 13.5,
+              ),
               decoration: InputDecoration(
-                labelText: 'Banner Image URL (HTTPS link)',
-                labelStyle: GoogleFonts.rajdhani(color: Colors.white70),
+                labelText: _selectedRouteType == 'exact_event'
+                    ? 'Banner Image (Auto-linked to Event Poster)'
+                    : 'Banner Image URL (HTTPS link)',
+                labelStyle: GoogleFonts.rajdhani(
+                  color: _selectedRouteType == 'exact_event' ? const Color(0xFF00E5FF) : Colors.white70,
+                ),
                 hintText: 'https://images.unsplash.com/...',
                 hintStyle: const TextStyle(color: Colors.white30, fontSize: 12.5),
-                prefixIcon: const Icon(Icons.image, color: Color(0xFF00E5FF)),
+                prefixIcon: Icon(
+                  _selectedRouteType == 'exact_event' ? Icons.lock : Icons.image,
+                  color: const Color(0xFF00E5FF),
+                ),
                 filled: true,
                 fillColor: const Color(0xFF140706),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -604,23 +733,15 @@ class _NotificationSenderScreenState extends ConsumerState<NotificationSenderScr
               ),
               onChanged: (_) => setState(() {}),
             ),
-            const SizedBox(height: 8),
-            _buildPresetBanners(),
+            if (_selectedRouteType != 'exact_event') ...[
+              const SizedBox(height: 8),
+              _buildPresetBanners(),
+            ],
             if (_imageUrlController.text.trim().isNotEmpty) ...[
               const SizedBox(height: 10),
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  _imageUrlController.text.trim(),
-                  height: 110,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    padding: const EdgeInsets.all(8),
-                    color: Colors.red.withValues(alpha: 0.1),
-                    child: const Text('Invalid image link', style: TextStyle(color: Colors.redAccent, fontSize: 11)),
-                  ),
-                ),
+                child: _buildImagePreview(_imageUrlController.text.trim(), height: 110),
               ),
             ],
             const SizedBox(height: 18),
@@ -657,6 +778,16 @@ class _NotificationSenderScreenState extends ConsumerState<NotificationSenderScr
                     if (val != null) {
                       setState(() {
                         _selectedRouteType = val;
+                        if (val == 'exact_event') {
+                          final events = eventsAsync.asData?.value;
+                          if (events != null && events.isNotEmpty) {
+                            _selectedEventId ??= events.first.id;
+                            final ev = _getSelectedEvent(events);
+                            if (ev != null && ev.posterUrl.isNotEmpty) {
+                              _imageUrlController.text = ev.posterUrl;
+                            }
+                          }
+                        }
                       });
                     }
                   },
@@ -672,6 +803,20 @@ class _NotificationSenderScreenState extends ConsumerState<NotificationSenderScr
                   if (events.isEmpty) {
                     return const Text('No events found in database.', style: TextStyle(color: Colors.white54, fontSize: 12));
                   }
+                  final currentEventId = _selectedEventId ?? events.first.id;
+                  if (_selectedEventId == null || _imageUrlController.text.trim().isEmpty) {
+                    final ev = events.firstWhere((e) => e.id == currentEventId, orElse: () => events.first);
+                    if (ev.posterUrl.isNotEmpty && _imageUrlController.text.trim() != ev.posterUrl) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted && _selectedRouteType == 'exact_event') {
+                          setState(() {
+                            _selectedEventId = currentEventId;
+                            _imageUrlController.text = ev.posterUrl;
+                          });
+                        }
+                      });
+                    }
+                  }
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                     decoration: BoxDecoration(
@@ -681,12 +826,12 @@ class _NotificationSenderScreenState extends ConsumerState<NotificationSenderScr
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
-                        value: _selectedEventId ?? (events.isNotEmpty ? events.first.id : null),
+                        value: currentEventId,
                         isExpanded: true,
                         dropdownColor: const Color(0xFF180A09),
                         hint: const Text('Choose Exact Event / Hackathon *', style: TextStyle(color: Colors.white70)),
                         items: events.map<DropdownMenuItem<String>>((e) {
-                          final club = e.organizerClub ?? '';
+                          final club = e.organizerClub;
                           return DropdownMenuItem<String>(
                             value: e.id,
                             child: Text(
@@ -699,6 +844,12 @@ class _NotificationSenderScreenState extends ConsumerState<NotificationSenderScr
                         onChanged: (val) {
                           setState(() {
                             _selectedEventId = val;
+                            if (val != null) {
+                              final ev = events.firstWhere((e) => e.id == val, orElse: () => events.first);
+                              if (ev.posterUrl.isNotEmpty) {
+                                _imageUrlController.text = ev.posterUrl;
+                              }
+                            }
                           });
                         },
                       ),
@@ -903,14 +1054,19 @@ class _NotificationSenderScreenState extends ConsumerState<NotificationSenderScr
   }
 
   Widget _buildLivePhonePreview(Color accentColor) {
+    final events = ref.watch(eventsProvider).asData?.value;
+    final selectedEvent = _getSelectedEvent(events);
+
     final title = _titleController.text.trim().isEmpty ? 'Concetto \'26 Official Announcement' : _titleController.text.trim();
     final body = _bodyController.text.trim().isEmpty ? 'Tap to view new festival announcements and competition schedules.' : _bodyController.text.trim();
-    final img = _imageUrlController.text.trim();
+    final img = (_selectedRouteType == 'exact_event' && selectedEvent != null && selectedEvent.posterUrl.isNotEmpty)
+        ? selectedEvent.posterUrl.trim()
+        : _imageUrlController.text.trim();
     final category = _effectiveCategory;
     final dest = _selectedRouteType == 'none'
         ? 'Tap: Shows Details'
         : _selectedRouteType == 'exact_event'
-            ? 'Tap: Exact Event'
+            ? 'Tap: ${selectedEvent != null ? selectedEvent.title : 'Exact Event'}'
             : _selectedRouteType == 'external'
                 ? 'Tap: Open External Link'
                 : 'Tap: $_selectedRouteType';
@@ -982,13 +1138,7 @@ class _NotificationSenderScreenState extends ConsumerState<NotificationSenderScr
                 const SizedBox(height: 8),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    img,
-                    height: 90,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
-                  ),
+                  child: _buildImagePreview(img, height: 90),
                 ),
               ],
               const SizedBox(height: 8),

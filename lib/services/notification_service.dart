@@ -140,6 +140,10 @@ class NotificationService {
 
       // 2. Retrieve FCM Device Token and register to Firestore
       try {
+        if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+          final apns = await _messaging.getAPNSToken();
+          debugPrint('[FCM iOS] APNs Token status: ${apns != null ? "Ready" : "Pending"}');
+        }
         fcmToken = await _messaging.getToken();
         debugPrint('[FCM] Device Token: $fcmToken');
         if (fcmToken != null && fcmToken!.isNotEmpty) {
@@ -151,6 +155,18 @@ class NotificationService {
         });
       } catch (e) {
         debugPrint('[FCM] Notice retrieving token: $e');
+        if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+          Future.delayed(const Duration(seconds: 3), () async {
+            try {
+              final token = await _messaging.getToken();
+              if (token != null && token.isNotEmpty) {
+                fcmToken = token;
+                await _registerDeviceToken(token);
+                debugPrint('[FCM iOS] Device Token retrieved on retry: $token');
+              }
+            } catch (_) {}
+          });
+        }
       }
 
       // 3. Subscribe all devices to the festival broadcast topics (mobile only)
@@ -613,7 +629,7 @@ class NotificationService {
               'notification': {
                 'title': title.trim(),
                 'body': body.trim(),
-                if (imageUrl.trim().isNotEmpty) 'image': imageUrl.trim(),
+                if (imageUrl.trim().isNotEmpty && imageUrl.trim().startsWith('http')) 'image': imageUrl.trim(),
               },
               'data': {
                 if (broadcastId != null && broadcastId.isNotEmpty) 'broadcastId': broadcastId,
@@ -634,7 +650,7 @@ class NotificationService {
                   'notification_priority': 'PRIORITY_HIGH',
                   'default_vibrate_timings': true,
                   'tag': effectiveTag,
-                  if (imageUrl.trim().isNotEmpty) 'image': imageUrl.trim(),
+                  if (imageUrl.trim().isNotEmpty && imageUrl.trim().startsWith('http')) 'image': imageUrl.trim(),
                 },
               },
               'apns': {
@@ -1007,13 +1023,21 @@ class _InAppNotificationBannerState extends State<_InAppNotificationBanner> with
                   if (widget.imageUrl != null && widget.imageUrl!.trim().isNotEmpty) ...[
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        widget.imageUrl!.trim(),
-                        width: 48,
-                        height: 48,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => _fallbackIcon(),
-                      ),
+                      child: widget.imageUrl!.trim().startsWith('assets/')
+                          ? Image.asset(
+                              widget.imageUrl!.trim(),
+                              width: 48,
+                              height: 48,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => _fallbackIcon(),
+                            )
+                          : Image.network(
+                              widget.imageUrl!.trim(),
+                              width: 48,
+                              height: 48,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => _fallbackIcon(),
+                            ),
                     ),
                     const SizedBox(width: 12),
                   ] else ...[
