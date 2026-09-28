@@ -72,12 +72,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
           isCross: isCross,
           twinkleSpeed: random.nextDouble() * 3 + 1,
           color: isCross
-              ? (random.nextBool()
-                  ? const Color(0xFFFFD700).withValues(alpha: 0.85)
-                  : const Color(0xFFFF9100).withValues(alpha: 0.75))
-              : (random.nextDouble() > 0.65
-                  ? const Color(0xFFFFE082).withValues(alpha: 0.55)
-                  : Colors.white.withValues(alpha: random.nextDouble() * 0.5 + 0.3)),
+              ? const Color(0xFFFF5722).withValues(alpha: 0.75)
+              : Colors.white.withValues(alpha: random.nextDouble() * 0.5 + 0.3),
         ),
       );
     }
@@ -111,25 +107,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFFFFD700).withValues(alpha: 0.14),
-                    primaryColor.withValues(alpha: 0.10),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 240,
-            right: -50,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    const Color(0xFFFFC107).withValues(alpha: 0.07),
+                    primaryColor.withValues(alpha: 0.18),
                     Colors.transparent,
                   ],
                 ),
@@ -280,7 +258,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                     gradient: LinearGradient(
                       colors: [
                         primaryColor.withValues(alpha: 0.8),
-                        const Color(0xFFFFD700).withValues(alpha: 0.5),
+                        Colors.black,
                         secondaryColor.withValues(alpha: 0.6),
                       ],
                       begin: Alignment.topLeft,
@@ -352,10 +330,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
               decoration: BoxDecoration(
                 color: const Color(0xFF140604),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFFFD700).withValues(alpha: 0.45)),
+                border: Border.all(color: primaryColor.withValues(alpha: 0.5)),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFFFD700).withValues(alpha: 0.12),
+                    color: primaryColor.withValues(alpha: 0.15),
                     blurRadius: 10,
                     spreadRadius: 1,
                   ),
@@ -382,7 +360,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                       style: GoogleFonts.orbitron(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFFFFD54F),
+                        color: primaryColor,
                         letterSpacing: 0.8,
                       ),
                     ),
@@ -436,12 +414,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFFFFD700), Color(0xFFFF8F00)],
+                          colors: [Color(0xFFFF5722), Color(0xFFFFA000)],
                         ),
                         borderRadius: BorderRadius.circular(6),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFFFD700).withValues(alpha: 0.35),
+                            color: const Color(0xFFFF5722).withValues(alpha: 0.4),
                             blurRadius: 8,
                           ),
                         ],
@@ -508,7 +486,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
               style: GoogleFonts.rajdhani(
                 fontSize: 14.5,
                 fontWeight: FontWeight.w800,
-                color: const Color(0xFFFFD54F),
+                color: primaryColor,
                 letterSpacing: 0.8,
               ),
             ),
@@ -530,43 +508,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             Row(
               children: [
                 Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFF8F00), Color(0xFFFFD700)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                  child: ElevatedButton.icon(
+                    onPressed: () => context.go('/events'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFFD700).withValues(alpha: 0.35),
-                          blurRadius: 12,
-                          spreadRadius: 1,
-                        ),
-                      ],
+                      elevation: 4,
+                      shadowColor: primaryColor.withValues(alpha: 0.6),
                     ),
-                    child: ElevatedButton.icon(
-                      onPressed: () => context.go('/events'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      icon: const Icon(Icons.bolt, size: 16, color: Colors.black),
-                      label: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          'EXPLORE EVENTS',
-                          style: GoogleFonts.rajdhani(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1,
-                          ),
+                    icon: const Icon(Icons.bolt, size: 16, color: Colors.black),
+                    label: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'EXPLORE EVENTS',
+                        style: GoogleFonts.rajdhani(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1,
                         ),
                       ),
                     ),
@@ -577,14 +539,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                   child: OutlinedButton.icon(
                     onPressed: () => context.go('/schedule'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFFFD54F),
-                      side: BorderSide(color: const Color(0xFFFFC107).withValues(alpha: 0.7), width: 1.2),
+                      foregroundColor: Colors.white,
+                      side: BorderSide(color: primaryColor.withValues(alpha: 0.6), width: 1.2),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    icon: const Icon(Icons.calendar_month, size: 16, color: Color(0xFFFFD54F)),
+                    icon: Icon(Icons.calendar_month, size: 16, color: primaryColor),
                     label: FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
@@ -664,7 +626,7 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
               Expanded(
                 child: Row(
                   children: [
-                    const Icon(Icons.radar, size: 16, color: Color(0xFFFFCA28)),
+                    Icon(Icons.radar, size: 16, color: widget.primaryColor),
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
@@ -674,7 +636,7 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1.3,
-                          color: const Color(0xFFFFCA28),
+                          color: widget.primaryColor,
                         ),
                       ),
                     ),
@@ -685,16 +647,16 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFC107).withValues(alpha: 0.16),
+                  color: widget.primaryColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: const Color(0xFFFFC107).withValues(alpha: 0.5), width: 0.6),
+                  border: Border.all(color: widget.primaryColor.withValues(alpha: 0.4), width: 0.6),
                 ),
                 child: Text(
                   'T-MINUS',
                   style: GoogleFonts.orbitron(
                     fontSize: 9.5,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFFFFD54F),
+                    color: widget.primaryColor,
                     letterSpacing: 1,
                   ),
                 ),
@@ -723,7 +685,7 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
             decoration: BoxDecoration(
               color: const Color(0xFF0F0403),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFFFD700).withValues(alpha: 0.3)),
+              border: Border.all(color: widget.primaryColor.withValues(alpha: 0.25)),
             ),
             child: Row(
               children: [
@@ -753,7 +715,7 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
             style: GoogleFonts.orbitron(
               fontSize: 9.5,
               fontWeight: FontWeight.w800,
-              color: isCurrent ? const Color(0xFFFFD700) : Colors.white60,
+              color: isCurrent ? widget.primaryColor : Colors.white60,
             ),
           ),
         ),
@@ -764,7 +726,7 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
             style: GoogleFonts.rajdhani(
               fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: isCurrent ? const Color(0xFFFFD54F) : Colors.white38,
+              color: isCurrent ? Colors.white : Colors.white38,
             ),
           ),
         ),
@@ -777,24 +739,23 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
       width: 12,
       height: 1,
       margin: const EdgeInsets.symmetric(horizontal: 2),
-      color: const Color(0xFFFFD700).withValues(alpha: 0.35),
+      color: widget.primaryColor.withValues(alpha: 0.35),
     );
   }
 
   Widget _buildDigitBox(String digits, String label, {bool isLive = false}) {
-    const digitColor = Color(0xFFFFD700);
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
       decoration: BoxDecoration(
         color: const Color(0xFF140604),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isLive ? const Color(0xFFFFD700) : const Color(0xFFFFD700).withValues(alpha: 0.45),
+          color: isLive ? widget.primaryColor : widget.primaryColor.withValues(alpha: 0.45),
           width: isLive ? 1.0 : 0.8,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFFD700).withValues(alpha: isLive ? 0.22 : 0.08),
+            color: widget.primaryColor.withValues(alpha: isLive ? 0.2 : 0.08),
             blurRadius: 10,
             spreadRadius: 1,
           ),
@@ -810,11 +771,11 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
               style: GoogleFonts.orbitron(
                 fontSize: 24,
                 fontWeight: FontWeight.w800,
-                color: isLive ? const Color(0xFFFFEE58) : digitColor,
+                color: isLive ? const Color(0xFFFF7043) : widget.primaryColor,
                 letterSpacing: 1.2,
                 shadows: [
                   Shadow(
-                    color: const Color(0xFFFFD700).withValues(alpha: 0.7),
+                    color: widget.primaryColor.withValues(alpha: 0.7),
                     blurRadius: 12,
                   ),
                 ],
@@ -829,7 +790,7 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
               style: GoogleFonts.rajdhani(
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
-                color: const Color(0xFFFFE082),
+                color: AppTheme.metallicMuted,
                 letterSpacing: 1.2,
               ),
             ),
@@ -840,14 +801,14 @@ class _ConcettoCountdownTimerState extends State<ConcettoCountdownTimer> {
   }
 
   Widget _buildTimerSeparator() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 3),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 3),
       child: Text(
         ':',
         style: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
-          color: Color(0xFFFFD700),
+          color: widget.primaryColor.withValues(alpha: 0.65),
         ),
       ),
     );
@@ -872,7 +833,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
               Expanded(
                 child: Row(
                   children: [
-                    const Icon(Icons.campaign, size: 18, color: Color(0xFFFFCA28)),
+                    Icon(Icons.campaign, size: 18, color: primaryColor),
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
@@ -882,7 +843,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                           fontSize: 13.5,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1.3,
-                          color: const Color(0xFFFFCA28),
+                          color: primaryColor,
                         ),
                       ),
                     ),
@@ -1291,7 +1252,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
         children: [
           Row(
             children: [
-              const Icon(Icons.auto_graph_rounded, size: 16, color: Color(0xFFFFC107)),
+              Icon(Icons.auto_graph_rounded, size: 16, color: primaryColor),
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
@@ -1301,7 +1262,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.3,
-                    color: const Color(0xFFFFC107),
+                    color: primaryColor,
                   ),
                 ),
               ),
@@ -1310,13 +1271,13 @@ extension _HomeScreenHelpers on _HomeScreenState {
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _buildStatItem('20K+', 'Footfall', Icons.people_alt, const Color(0xFFFF9100))),
+              Expanded(child: _buildStatItem('20K+', 'Footfall', Icons.people_alt, primaryColor)),
               const SizedBox(width: 8),
-              Expanded(child: _buildStatItem('100+', 'Events', Icons.emoji_events, const Color(0xFFFFD700))),
+              Expanded(child: _buildStatItem('100+', 'Events', Icons.emoji_events, primaryColor)),
               const SizedBox(width: 8),
-              Expanded(child: _buildStatItem('150+', 'Colleges', Icons.school, const Color(0xFFFFCA28))),
+              Expanded(child: _buildStatItem('150+', 'Colleges', Icons.school, primaryColor)),
               const SizedBox(width: 8),
-              Expanded(child: _buildStatItem('₹15L+', 'Prizes', Icons.monetization_on, const Color(0xFFFFEB3B))),
+              Expanded(child: _buildStatItem('₹15L+', 'Prizes', Icons.monetization_on, primaryColor)),
             ],
           ),
         ],
@@ -1330,10 +1291,10 @@ extension _HomeScreenHelpers on _HomeScreenState {
       decoration: BoxDecoration(
         color: const Color(0xFF120504),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: primaryColor.withValues(alpha: 0.38)),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
         boxShadow: [
           BoxShadow(
-            color: primaryColor.withValues(alpha: 0.12),
+            color: primaryColor.withValues(alpha: 0.08),
             blurRadius: 8,
           ),
         ],
@@ -1350,9 +1311,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
               style: GoogleFonts.orbitron(
                 fontSize: 13.5,
                 fontWeight: FontWeight.w800,
-                color: (primaryColor == const Color(0xFFFFD700) || primaryColor == const Color(0xFFFFEB3B))
-                    ? primaryColor
-                    : Colors.white,
+                color: Colors.white,
               ),
             ),
           ),
@@ -1383,7 +1342,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
         children: [
           Row(
             children: [
-              const Icon(Icons.dashboard_customize, size: 16, color: Color(0xFFFFCA28)),
+              Icon(Icons.dashboard_customize, size: 16, color: primaryColor),
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
@@ -1393,7 +1352,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.3,
-                    color: const Color(0xFFFFCA28),
+                    color: primaryColor,
                   ),
                 ),
               ),
@@ -1407,7 +1366,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                   icon: Icons.event_available,
                   title: 'All Events',
                   subtitle: '100+ Contests & Arenas',
-                  accentColor: const Color(0xFFFFD700),
+                  accentColor: primaryColor,
                   onTap: () => context.go('/events'),
                 ),
               ),
@@ -1548,7 +1507,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                           fontSize: 13.5,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1.3,
-                          color: const Color(0xFFFFCA28),
+                          color: primaryColor,
                         ),
                       ),
                     ),
@@ -1566,10 +1525,10 @@ extension _HomeScreenHelpers on _HomeScreenState {
                       style: GoogleFonts.rajdhani(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFFFFD700),
+                        color: primaryColor,
                       ),
                     ),
-                    const Icon(Icons.chevron_right, size: 16, color: Color(0xFFFFD700)),
+                    Icon(Icons.chevron_right, size: 16, color: primaryColor),
                   ],
                 ),
               ),
@@ -1709,7 +1668,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.85),
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFFFFD700).withValues(alpha: 0.65)),
+                          border: Border.all(color: primaryColor.withValues(alpha: 0.6)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -1721,7 +1680,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                               style: GoogleFonts.orbitron(
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.bold,
-                                color: const Color(0xFFFFD700),
+                                color: primaryColor,
                               ),
                             ),
                           ],
@@ -1784,7 +1743,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                           style: GoogleFonts.rajdhani(
                             fontSize: 10.5,
                             fontWeight: FontWeight.bold,
-                            color: const Color(0xFFFFD54F),
+                            color: primaryColor,
                           ),
                         ),
                       ],
@@ -1860,7 +1819,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [
-              const Icon(Icons.format_quote_rounded, size: 18, color: Color(0xFFFFCA28)),
+              Icon(Icons.format_quote_rounded, size: 18, color: primaryColor),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -1869,7 +1828,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                     fontSize: 13.5,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.3,
-                    color: const Color(0xFFFFCA28),
+                    color: primaryColor,
                   ),
                 ),
               ),
@@ -1917,7 +1876,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                               padding: const EdgeInsets.all(1.5),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                border: Border.all(color: const Color(0xFFFFD700).withValues(alpha: 0.6), width: 1.2),
+                                border: Border.all(color: primaryColor.withValues(alpha: 0.6), width: 1.2),
                               ),
                               child: CircleAvatar(
                                 radius: 20,
@@ -2188,7 +2147,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [
-              const Icon(Icons.photo_library_rounded, size: 18, color: Color(0xFFFFCA28)),
+              Icon(Icons.photo_library_rounded, size: 18, color: primaryColor),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -2197,7 +2156,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                     fontSize: 13.5,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.3,
-                    color: const Color(0xFFFFCA28),
+                    color: primaryColor,
                   ),
                 ),
               ),
@@ -2270,7 +2229,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                               shape: BoxShape.circle,
                               border: Border.all(color: primaryColor.withValues(alpha: 0.5)),
                             ),
-                            child: const Icon(Icons.fullscreen_rounded, size: 14, color: Color(0xFFFFD54F)),
+                            child: Icon(Icons.fullscreen_rounded, size: 14, color: primaryColor),
                           ),
                         ),
                         Positioned(
@@ -2292,7 +2251,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                                 item['subtitle']!,
                                 style: GoogleFonts.rajdhani(
                                   fontSize: 11,
-                                  color: const Color(0xFFFFD54F),
+                                  color: primaryColor,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -2678,7 +2637,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                     color: primaryColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.account_balance, size: 16, color: Color(0xFFFFCA28)),
+                  child: Icon(Icons.account_balance, size: 16, color: primaryColor),
                 ),
                 const SizedBox(width: 8),
                 Flexible(
@@ -2688,7 +2647,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
                     style: GoogleFonts.rajdhani(
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFFFFCA28),
+                      color: primaryColor,
                       letterSpacing: 1.2,
                     ),
                   ),
@@ -2709,7 +2668,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
             const SizedBox(height: 14),
             Row(
               children: [
-                const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFFFFD54F)),
+                Icon(Icons.location_on_outlined, size: 16, color: primaryColor),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -2722,7 +2681,7 @@ extension _HomeScreenHelpers on _HomeScreenState {
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(Icons.email_outlined, size: 16, color: Color(0xFFFFD54F)),
+                Icon(Icons.email_outlined, size: 16, color: primaryColor),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
