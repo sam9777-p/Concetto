@@ -30,10 +30,21 @@ class NotificationService {
   /// Global callback hook for displaying in-app foreground notification banner
   static void Function(RemoteMessage message)? onForegroundMessageReceived;
 
-  /// Set of notification IDs already shown on this device in-app
+  /// Set of notification IDs and content hashes already shown on this device in-app
   static final Set<String> _shownNotificationIds = {};
   static StreamSubscription? _realtimeBroadcastSub;
   static final DateTime _appStartTime = DateTime.now();
+
+  /// Safely marks a notification as shown to prevent duplicate in-app heads-up banners
+  static bool _markNotificationAsShown({String? id, required String title, required String body}) {
+    final normalized = '${title.trim().toLowerCase()}__${body.trim().toLowerCase()}';
+    if (_shownNotificationIds.contains(normalized)) return false;
+    if (id != null && id.isNotEmpty && _shownNotificationIds.contains(id)) return false;
+
+    _shownNotificationIds.add(normalized);
+    if (id != null && id.isNotEmpty) _shownNotificationIds.add(id);
+    return true;
+  }
 
   /// Saves the FCM device token to Firestore collection 'admin_config' doc 'fcm_tokens_registry'
   static Future<void> _registerDeviceToken(String token) async {
@@ -65,9 +76,10 @@ class NotificationService {
           if (change.type == DocumentChangeType.added) {
             final doc = change.doc;
             final docId = doc.id;
-            if (_shownNotificationIds.contains(docId)) continue;
-
             final data = doc.data() ?? {};
+            final title = data['title'] as String? ?? 'Concetto \'26 Announcement';
+            final body = data['body'] as String? ?? data['description'] as String? ?? '';
+
             final sentAt = (data['sentAt'] as Timestamp?)?.toDate() ??
                 (data['timestamp'] as Timestamp?)?.toDate();
 
@@ -80,13 +92,17 @@ class NotificationService {
               }
             }
 
-            _shownNotificationIds.add(docId);
-            debugPrint('[Realtime Broadcast] New announcement received: ${data['title']}');
+            // Deduplicate: if banner was already shown (e.g. via FCM onMessage), skip
+            if (!_markNotificationAsShown(id: docId, title: title, body: body)) {
+              continue;
+            }
+
+            debugPrint('[Realtime Broadcast] New announcement received: $title');
 
             showInAppHeadsUpBannerFromData(
               docId: docId,
-              title: data['title'] as String? ?? 'Concetto \'26 Announcement',
-              body: data['body'] as String? ?? data['description'] as String? ?? '',
+              title: title,
+              body: body,
               category: data['category'] as String? ?? 'Announcement',
               imageUrl: data['imageUrl'] as String?,
               data: Map<String, dynamic>.from(data),
@@ -160,11 +176,17 @@ class NotificationService {
 
       // 6. Handle foreground FCM notifications
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        final id = message.messageId ?? message.data['title'] ?? '';
-        if (id.isNotEmpty && _shownNotificationIds.contains(id)) return;
-        if (id.isNotEmpty) _shownNotificationIds.add(id);
+        final title = message.notification?.title ?? message.data['title'] ?? 'Concetto \'26 Announcement';
+        final body = message.notification?.body ?? message.data['body'] ?? '';
+        final broadcastId = message.data['broadcastId'] as String? ?? message.messageId;
 
-        debugPrint('[FCM Foreground] Title: ${message.notification?.title}, Body: ${message.notification?.body}');
+        // Deduplicate: if banner was already shown (e.g. via Firestore realtime), skip
+        if (!_markNotificationAsShown(id: broadcastId, title: title, body: body)) {
+          debugPrint('[FCM Foreground] Duplicate banner skipped for: $title');
+          return;
+        }
+
+        debugPrint('[FCM Foreground] Title: $title, Body: $body');
         if (onForegroundMessageReceived != null) {
           onForegroundMessageReceived!(message);
         } else {
@@ -191,15 +213,44 @@ class NotificationService {
     }
   }
 
+  static OverlayEntry? _currentBannerEntry;
+
+  /// Retrieves the root overlay state directly from the root Navigator
+  static OverlayState? _getOverlayState() {
+    final navState = goRouter.routerDelegate.navigatorKey.currentState;
+    if (navState?.overlay != null) {
+      return navState!.overlay;
+    }
+    final ctx = goRouter.routerDelegate.navigatorKey.currentContext;
+    if (ctx != null) {
+      return Overlay.maybeOf(ctx);
+    }
+    return null;
+  }
+
+  /// Displays the in-app banner entry safely with smooth replacement
+  static void _displayBannerEntry(OverlayEntry newEntry) {
+    try {
+      _currentBannerEntry?.remove();
+    } catch (_) {}
+    _currentBannerEntry = newEntry;
+
+    final overlay = _getOverlayState();
+    if (overlay != null) {
+      overlay.insert(newEntry);
+    } else {
+      Future.delayed(const Duration(milliseconds: 400), () {
+        final delayedOverlay = _getOverlayState();
+        if (delayedOverlay != null && _currentBannerEntry == newEntry) {
+          delayedOverlay.insert(newEntry);
+        }
+      });
+    }
+  }
+
   /// Displays an in-app heads-up notification banner if the user is actively viewing the app
   static void showInAppHeadsUpBanner(RemoteMessage message) {
     try {
-      final context = goRouter.routerDelegate.navigatorKey.currentContext;
-      if (context == null) return;
-
-      final overlay = Overlay.maybeOf(context);
-      if (overlay == null) return;
-
       final title = message.notification?.title ?? message.data['title'] ?? 'Concetto \'26 Announcement';
       final body = message.notification?.body ?? message.data['body'] ?? '';
       final category = message.data['category'] as String? ?? 'General';
@@ -216,19 +267,21 @@ class NotificationService {
           imageUrl: imageUrl,
           onTap: () {
             try {
+              if (_currentBannerEntry == entry) _currentBannerEntry = null;
               entry.remove();
             } catch (_) {}
             handleNotificationNavigation(message.data);
           },
           onDismiss: () {
             try {
+              if (_currentBannerEntry == entry) _currentBannerEntry = null;
               entry.remove();
             } catch (_) {}
           },
         ),
       );
 
-      overlay.insert(entry);
+      _displayBannerEntry(entry);
     } catch (e) {
       debugPrint('Failed to display in-app notification banner: $e');
     }
@@ -244,24 +297,6 @@ class NotificationService {
     required Map<String, dynamic> data,
   }) {
     try {
-      final context = goRouter.routerDelegate.navigatorKey.currentContext;
-      if (context == null) {
-        Future.delayed(const Duration(milliseconds: 600), () {
-          showInAppHeadsUpBannerFromData(
-            docId: docId,
-            title: title,
-            body: body,
-            category: category,
-            imageUrl: imageUrl,
-            data: data,
-          );
-        });
-        return;
-      }
-
-      final overlay = Overlay.maybeOf(context);
-      if (overlay == null) return;
-
       late OverlayEntry entry;
       entry = OverlayEntry(
         builder: (ctx) => _InAppNotificationBanner(
@@ -271,19 +306,21 @@ class NotificationService {
           imageUrl: imageUrl,
           onTap: () {
             try {
+              if (_currentBannerEntry == entry) _currentBannerEntry = null;
               entry.remove();
             } catch (_) {}
             handleNotificationNavigation(data);
           },
           onDismiss: () {
             try {
+              if (_currentBannerEntry == entry) _currentBannerEntry = null;
               entry.remove();
             } catch (_) {}
           },
         ),
       );
 
-      overlay.insert(entry);
+      _displayBannerEntry(entry);
     } catch (e) {
       debugPrint('Failed to display in-app notification banner from data: $e');
     }
@@ -513,8 +550,10 @@ class NotificationService {
     }
   }
 
-  /// Sends a direct FCM message to all users on topic 'all_users' using HTTP v1 API
-  /// This works 100% identically to Cloud Functions on both Android and iOS!
+  /// Sends a direct FCM message to active device tokens using HTTP v1 API.
+  /// Dispatches directly to registered device tokens for instant (<1s) reliable delivery,
+  /// attaches duplicate-prevention tags ('tag' and 'apns-collapse-id'),
+  /// and automatically prunes expired/uninstalled tokens from Firestore.
   static Future<({bool success, String? error, String? messageId})> sendFcmDirectBroadcast({
     required String title,
     required String body,
@@ -522,6 +561,7 @@ class NotificationService {
     String route = '',
     String contentUrl = '',
     String category = 'Fest Highlights',
+    String? broadcastId,
   }) async {
     try {
       final credsMap = await getServiceAccountCredentials();
@@ -543,78 +583,209 @@ class NotificationService {
       final dio = Dio();
       final effectiveRoute = (route == 'none' || route.isEmpty) ? '' : route.trim();
       final effectiveContentUrl = contentUrl.trim();
+      final effectiveTag = 'concetto_${broadcastId ?? title.trim().hashCode}';
 
-      final payload = {
-        'message': {
-          'topic': 'all_users',
-          'notification': {
-            'title': title.trim(),
-            'body': body.trim(),
-            if (imageUrl.trim().isNotEmpty) 'image': imageUrl.trim(),
-          },
-          'data': {
-            'title': title.trim(),
-            'body': body.trim(),
-            'category': category.trim(),
-            'route': effectiveRoute,
-            'contentUrl': effectiveContentUrl,
-            'externalUrl': effectiveContentUrl,
-            'imageUrl': imageUrl.trim(),
-            'click_action': 'FLUTTER_NOTIFICATION_CLICK',
-          },
-          'android': {
-            'priority': 'HIGH',
+      // 1. Fetch registered device tokens from Firestore
+      final db = FirestoreConfig.instance;
+      Set<String> tokens = {};
+      try {
+        final tokensDoc = await db.collection('admin_config').doc('fcm_tokens_registry').get();
+        final rawList = tokensDoc.data()?['tokens'] as List<dynamic>? ?? [];
+        tokens = rawList
+            .map((t) => t?.toString().trim() ?? '')
+            .where((t) => t.isNotEmpty)
+            .toSet();
+      } catch (e) {
+        debugPrint('[FCM Direct v1] Notice reading token registry: $e');
+      }
+
+      int successCount = 0;
+      String? lastMessageId;
+      final deadTokens = <String>[];
+
+      if (tokens.isNotEmpty) {
+        debugPrint('[FCM Direct v1] Dispatching instant push to ${tokens.length} registered device tokens...');
+
+        final sendFutures = tokens.map((devToken) async {
+          final devPayload = {
+            'message': {
+              'token': devToken,
+              'notification': {
+                'title': title.trim(),
+                'body': body.trim(),
+                if (imageUrl.trim().isNotEmpty) 'image': imageUrl.trim(),
+              },
+              'data': {
+                if (broadcastId != null && broadcastId.isNotEmpty) 'broadcastId': broadcastId,
+                'title': title.trim(),
+                'body': body.trim(),
+                'category': category.trim(),
+                'route': effectiveRoute,
+                'contentUrl': effectiveContentUrl,
+                'externalUrl': effectiveContentUrl,
+                'imageUrl': imageUrl.trim(),
+                'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+              },
+              'android': {
+                'priority': 'HIGH',
+                'notification': {
+                  'sound': 'default',
+                  'channel_id': 'concetto_broadcasts',
+                  'notification_priority': 'PRIORITY_HIGH',
+                  'default_vibrate_timings': true,
+                  'tag': effectiveTag,
+                  if (imageUrl.trim().isNotEmpty) 'image': imageUrl.trim(),
+                },
+              },
+              'apns': {
+                'headers': {
+                  'apns-priority': '10',
+                  'apns-collapse-id': effectiveTag,
+                },
+                'payload': {
+                  'aps': {
+                    'alert': {
+                      'title': title.trim(),
+                      'body': body.trim(),
+                    },
+                    'sound': 'default',
+                    'badge': 1,
+                    'mutable-content': 1,
+                    'content-available': 1,
+                  },
+                },
+                if (imageUrl.trim().isNotEmpty)
+                  'fcm_options': {
+                    'image': imageUrl.trim(),
+                  },
+              },
+            },
+          };
+
+          try {
+            final res = await dio.post(
+              'https://fcm.googleapis.com/v1/projects/$projectId/messages:send',
+              options: Options(
+                headers: {
+                  'Authorization': 'Bearer $accessToken',
+                  'Content-Type': 'application/json; charset=UTF-8',
+                },
+              ),
+              data: devPayload,
+            );
+            if (res.statusCode == 200) {
+              successCount++;
+              lastMessageId = res.data['name'] as String?;
+            }
+          } on DioException catch (de) {
+            final respData = de.response?.data;
+            if (de.response?.statusCode == 404 ||
+                (respData != null && respData.toString().contains('UNREGISTERED'))) {
+              deadTokens.add(devToken);
+              debugPrint('[FCM Direct v1] Token unregistered/stale: ${devToken.substring(0, devToken.length > 12 ? 12 : devToken.length)}...');
+            } else {
+              debugPrint('[FCM Direct v1] Token dispatch notice: ${de.message}');
+            }
+          } catch (e) {
+            debugPrint('[FCM Direct v1] Token dispatch notice: $e');
+          }
+        });
+
+        await Future.wait(sendFutures);
+        debugPrint('[FCM Direct v1] Completed: $successCount delivered, ${deadTokens.length} dead tokens found.');
+
+        // Clean up dead/uninstalled tokens from Firestore so the registry stays lean and fast
+        if (deadTokens.isNotEmpty) {
+          try {
+            await db.collection('admin_config').doc('fcm_tokens_registry').update({
+              'tokens': FieldValue.arrayRemove(deadTokens),
+            });
+            debugPrint('[FCM Direct v1] Cleaned ${deadTokens.length} dead tokens from registry.');
+          } catch (e) {
+            debugPrint('[FCM Direct v1] Notice cleaning dead tokens: $e');
+          }
+        }
+      } else {
+        // Fallback to topic 'all_users' only if no individual device tokens are registered yet
+        debugPrint('[FCM Direct v1] No registered device tokens found, falling back to topic "all_users"...');
+        final topicPayload = {
+          'message': {
+            'topic': 'all_users',
             'notification': {
-              'sound': 'default',
-              'channel_id': 'concetto_broadcasts',
-              'notification_priority': 'PRIORITY_HIGH',
-              'default_vibrate_timings': true,
+              'title': title.trim(),
+              'body': body.trim(),
               if (imageUrl.trim().isNotEmpty) 'image': imageUrl.trim(),
             },
-          },
-          'apns': {
-            'headers': {
-              'apns-priority': '10',
+            'data': {
+              if (broadcastId != null && broadcastId.isNotEmpty) 'broadcastId': broadcastId,
+              'title': title.trim(),
+              'body': body.trim(),
+              'category': category.trim(),
+              'route': effectiveRoute,
+              'contentUrl': effectiveContentUrl,
+              'externalUrl': effectiveContentUrl,
+              'imageUrl': imageUrl.trim(),
+              'click_action': 'FLUTTER_NOTIFICATION_CLICK',
             },
-            'payload': {
-              'aps': {
-                'alert': {
-                  'title': title.trim(),
-                  'body': body.trim(),
-                },
+            'android': {
+              'priority': 'HIGH',
+              'notification': {
                 'sound': 'default',
-                'badge': 1,
-                'mutable-content': 1,
-                'content-available': 1,
+                'channel_id': 'concetto_broadcasts',
+                'notification_priority': 'PRIORITY_HIGH',
+                'default_vibrate_timings': true,
+                'tag': effectiveTag,
+                if (imageUrl.trim().isNotEmpty) 'image': imageUrl.trim(),
               },
             },
-            if (imageUrl.trim().isNotEmpty)
-              'fcm_options': {
-                'image': imageUrl.trim(),
+            'apns': {
+              'headers': {
+                'apns-priority': '10',
+                'apns-collapse-id': effectiveTag,
               },
+              'payload': {
+                'aps': {
+                  'alert': {
+                    'title': title.trim(),
+                    'body': body.trim(),
+                  },
+                  'sound': 'default',
+                  'badge': 1,
+                  'mutable-content': 1,
+                  'content-available': 1,
+                },
+              },
+              if (imageUrl.trim().isNotEmpty)
+                'fcm_options': {
+                  'image': imageUrl.trim(),
+                },
+            },
           },
-        },
-      };
+        };
 
-      final response = await dio.post(
-        'https://fcm.googleapis.com/v1/projects/$projectId/messages:send',
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-            'Content-Type': 'application/json; charset=UTF-8',
-          },
-        ),
-        data: payload,
-      );
+        final response = await dio.post(
+          'https://fcm.googleapis.com/v1/projects/$projectId/messages:send',
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $accessToken',
+              'Content-Type': 'application/json; charset=UTF-8',
+            },
+          ),
+          data: topicPayload,
+        );
+
+        if (response.statusCode == 200) {
+          lastMessageId = response.data['name'] as String?;
+          successCount++;
+        }
+      }
 
       authClient.close();
 
-      if (response.statusCode == 200) {
-        final messageName = response.data['name'] as String?;
-        debugPrint('[FCM Direct v1] Topic push sent successfully: $messageName');
-        return (success: true, error: null, messageId: messageName);
+      if (successCount > 0) {
+        return (success: true, error: null, messageId: lastMessageId);
       } else {
-        return (success: false, error: 'FCM status ${response.statusCode}: ${response.data}', messageId: null);
+        return (success: false, error: 'Could not deliver to any registered device tokens.', messageId: null);
       }
     } catch (e) {
       String errMsg = e.toString();
@@ -700,6 +871,7 @@ class NotificationService {
         route: effectiveRoute,
         contentUrl: effectiveContentUrl,
         category: category,
+        broadcastId: createdId,
       );
 
       if (fcmRes.success && createdId != null) {
