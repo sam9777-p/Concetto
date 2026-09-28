@@ -245,7 +245,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
 
           // Horizontal Category Filter Chips
           SizedBox(
-            height: 46,
+            height: 38,
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               scrollDirection: Axis.horizontal,
@@ -263,14 +263,15 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                         _selectedCategoryIndex = index;
                       });
                     },
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+                      alignment: Alignment.center,
                       decoration: BoxDecoration(
                         gradient: isSelected ? AppTheme.electricFireGradient : null,
                         color: isSelected ? null : const Color(0xFF140604),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: isSelected ? Colors.transparent : primaryColor.withValues(alpha: 0.3),
                           width: 0.8,
@@ -300,7 +301,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
             ),
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
 
           // Events Grid
           Expanded(
@@ -515,15 +516,15 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
 
     final screenWidth = MediaQuery.of(context).size.width;
     final childAspectRatio = screenWidth < 360
-        ? 0.59
-        : (screenWidth < 400 ? 0.63 : 0.66);
+        ? 0.70
+        : (screenWidth < 400 ? 0.73 : 0.75);
 
     return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
       physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
       gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: 260,
-        mainAxisSpacing: 14,
+        mainAxisSpacing: 12,
         crossAxisSpacing: 12,
         childAspectRatio: childAspectRatio,
       ),
@@ -697,66 +698,57 @@ class EventCard extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          event.title,
-                          style: GoogleFonts.rajdhani(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          event.organizerClub,
-                          style: GoogleFonts.rajdhani(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.cyberAmber,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                    Text(
+                      event.title,
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (event.tags.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              physics: const BouncingScrollPhysics(),
-                              child: Row(
-                                children: event.tags.take(3).map((tag) => Container(
-                                  margin: const EdgeInsets.only(right: 4),
-                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.08),
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: Colors.white12, width: 0.5),
-                                  ),
-                                  child: Text(
-                                    '#$tag',
-                                    style: GoogleFonts.rajdhani(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white70,
-                                    ),
-                                  ),
-                                )).toList(),
+                    const SizedBox(height: 2),
+                    Text(
+                      event.organizerClub,
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.cyberAmber,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (event.tags.isNotEmpty) ...[
+                      const SizedBox(height: 5),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        child: Row(
+                          children: event.tags.take(3).map((tag) => Container(
+                            margin: const EdgeInsets.only(right: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: Colors.white12, width: 0.5),
+                            ),
+                            child: Text(
+                              '#$tag',
+                              style: GoogleFonts.rajdhani(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white70,
                               ),
                             ),
-                          ),
-                        Row(
-                          children: [
+                          )).toList(),
+                        ),
+                      ),
+                    ],
+                    const Spacer(),
+                    Row(
+                      children: [
                             Icon(Icons.calendar_today, size: 11, color: primaryColor),
                             const SizedBox(width: 4),
                             Expanded(
@@ -794,13 +786,11 @@ class EventCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
-    );
+          ),
+        );
   }
 }

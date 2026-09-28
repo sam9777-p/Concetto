@@ -6,6 +6,9 @@ class AppTheme {
   static const Color scaffoldBg = Color(0xFF080302);
   static const Color neonOrange = Color(0xFFFF4500);
   static const Color cyberAmber = Color(0xFFFFA000);
+  static const Color solarGold = Color(0xFFFFD700);
+  static const Color cyberYellow = Color(0xFFFFC107);
+  static const Color softYellowGlow = Color(0xFFFFD54F);
   static const Color metallicSilver = Color(0xFFCFD8DC);
   static const Color metallicMuted = Color(0xFF90A4AE);
   static const Color translucentDark = Color(0xDD0B0403);
@@ -17,6 +20,12 @@ class AppTheme {
   // Gradient tokens
   static const LinearGradient electricFireGradient = LinearGradient(
     colors: [neonOrange, cyberAmber],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient solarFireGradient = LinearGradient(
+    colors: [Color(0xFFFF7A00), solarGold],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

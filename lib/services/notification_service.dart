@@ -563,11 +563,11 @@ class NotificationService {
             'click_action': 'FLUTTER_NOTIFICATION_CLICK',
           },
           'android': {
-            'priority': 'high',
+            'priority': 'HIGH',
             'notification': {
               'sound': 'default',
               'channel_id': 'concetto_broadcasts',
-              'priority': 'high',
+              'notification_priority': 'PRIORITY_HIGH',
               'default_vibrate_timings': true,
               if (imageUrl.trim().isNotEmpty) 'image': imageUrl.trim(),
             },
@@ -641,11 +641,11 @@ class NotificationService {
                   'click_action': 'FLUTTER_NOTIFICATION_CLICK',
                 },
                 'android': {
-                  'priority': 'high',
+                  'priority': 'HIGH',
                   'notification': {
                     'sound': 'default',
                     'channel_id': 'concetto_broadcasts',
-                    'priority': 'high',
+                    'notification_priority': 'PRIORITY_HIGH',
                     'default_vibrate_timings': true,
                     if (imageUrl.trim().isNotEmpty) 'image': imageUrl.trim(),
                   },
@@ -697,8 +697,12 @@ class NotificationService {
         return (success: false, error: 'FCM status ${response.statusCode}: ${response.data}', messageId: null);
       }
     } catch (e) {
-      debugPrint('[FCM Direct v1] Error sending message: $e');
-      return (success: false, error: e.toString(), messageId: null);
+      String errMsg = e.toString();
+      if (e is DioException && e.response?.data != null) {
+        errMsg = '${e.response?.data}';
+      }
+      debugPrint('[FCM Direct v1] Error sending message: $errMsg');
+      return (success: false, error: errMsg, messageId: null);
     }
   }
 
