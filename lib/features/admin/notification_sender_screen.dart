@@ -238,25 +238,72 @@ class _NotificationSenderScreenState extends ConsumerState<NotificationSenderScr
           backgroundColor: const Color(0xFF140706),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: Color(0xFF00E676), width: 1.2),
+            side: BorderSide(
+              color: res.fcmSent ? const Color(0xFF00E676) : const Color(0xFFFFB300),
+              width: 1.2,
+            ),
           ),
           title: Row(
             children: [
-              const Icon(Icons.check_circle_rounded, color: Color(0xFF00E676), size: 24),
+              Icon(
+                res.fcmSent ? Icons.check_circle_rounded : Icons.warning_rounded,
+                color: res.fcmSent ? const Color(0xFF00E676) : const Color(0xFFFFB300),
+                size: 24,
+              ),
               const SizedBox(width: 10),
-              Text('BROADCAST DISPATCHED!', style: GoogleFonts.orbitron(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+              Expanded(
+                child: Text(
+                  res.fcmSent ? 'BROADCAST DISPATCHED!' : 'SAVED — FCM ISSUE',
+                  style: GoogleFonts.orbitron(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+              ),
             ],
           ),
-          content: Text(
-            _keepInAnnouncementFeed
-                ? 'Notification successfully sent to all attendee devices and published in the Announcement Feed!'
-                : 'One-time push notification sent to all attendee devices (not saved in Announcement Feed).',
-            style: GoogleFonts.rajdhani(fontSize: 13.5, color: Colors.white70),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (res.fcmSent) ...[
+                Text(
+                  _keepInAnnouncementFeed
+                      ? 'Push notification sent to ALL attendee devices and saved to Announcement Feed!'
+                      : 'One-time push notification sent to ALL attendee devices (not saved in feed).',
+                  style: GoogleFonts.rajdhani(fontSize: 13.5, color: Colors.white70),
+                ),
+              ] else ...[
+                Text(
+                  'Announcement was saved to Firestore but the FCM push notification could not be delivered.',
+                  style: GoogleFonts.rajdhani(fontSize: 13.5, color: Colors.white70),
+                ),
+                if (res.error != null) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E0A08),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFFFB300).withValues(alpha: 0.5)),
+                    ),
+                    child: Text(
+                      'Error: ${res.error}',
+                      style: GoogleFonts.rajdhani(fontSize: 11.5, color: const Color(0xFFFFB300)),
+                    ),
+                  ),
+                ],
+              ],
+              if (res.broadcastId != null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  'Broadcast ID: ${res.broadcastId}',
+                  style: GoogleFonts.rajdhani(fontSize: 11, color: Colors.white38),
+                ),
+              ],
+            ],
           ),
           actions: [
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00E676),
+                backgroundColor: res.fcmSent ? const Color(0xFF00E676) : const Color(0xFFFFB300),
                 foregroundColor: Colors.black,
               ),
               onPressed: () => Navigator.of(ctx).pop(),
@@ -266,8 +313,58 @@ class _NotificationSenderScreenState extends ConsumerState<NotificationSenderScr
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to publish broadcast: ${res.error}')),
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: const Color(0xFF140706),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Color(0xFFE50914), width: 1.2),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.error_rounded, color: Color(0xFFE50914), size: 24),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'BROADCAST FAILED',
+                  style: GoogleFonts.orbitron(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Failed to publish broadcast notification.',
+                style: GoogleFonts.rajdhani(fontSize: 13.5, color: Colors.white70),
+              ),
+              if (res.error != null) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E0A08),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE50914).withValues(alpha: 0.5)),
+                  ),
+                  child: Text(
+                    res.error!,
+                    style: GoogleFonts.rajdhani(fontSize: 11.5, color: const Color(0xFFE50914)),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text('CLOSE', style: GoogleFonts.rajdhani(color: Colors.white54, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
       );
     }
   }
