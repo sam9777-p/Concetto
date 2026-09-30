@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — Concetto'26 | IIT (ISM) Dhanbad</title>
+  <meta name="description"
+    content="Privacy Policy for the official Concetto'26 mobile application (com.iitismdhn.concetto).">
+  <style>
+    :root {
+      --primary: #FF4500;
+      --bg: #0A0201;
+      --surface: #140503;
+      --surface-border: #2D0E08;
+      --text: #F5EAE8;
+      --muted: #A8908C;
+      --accent: #FF8A00;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      padding: 32px 16px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 20px;
+      padding: 40px 32px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    header {
+      border-bottom: 1px solid var(--surface-border);
+      padding-bottom: 24px;
+      margin-bottom: 28px;
+    }
+
+    h1 {
+      color: var(--primary);
+      font-size: 28px;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    h2 {
+      color: var(--accent);
+      font-size: 20px;
+      margin-top: 28px;
+      margin-bottom: 12px;
+    }
+
+    p {
+      color: var(--text);
+      margin-bottom: 14px;
+      font-size: 15px;
+    }
+
+    ul {
+      margin-left: 20px;
+      margin-bottom: 16px;
+    }
+
+    li {
+      margin-bottom: 8px;
+      font-size: 15px;
+      color: #E2D3D0;
+    }
+
+    strong {
+      color: #FFF;
+    }
+
+    a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .badge {
+      display: inline-block;
+      background: rgba(255, 69, 0, 0.15);
+      color: var(--primary);
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid var(--surface-border);
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <span class="badge">com.iitismdhn.concetto</span>
+      <h1>Privacy Policy for Concetto'26</h1>
+      <p class="meta">Effective Date: September 30, 2026 | Last Updated: September 30, 2026</p>
+    </header>
+
+    <section>
+      <h2>1. Introduction</h2>
+      <p>
+        This Privacy Policy explains how <strong>Concetto'26</strong> ("we", "our", or "us"), the official annual
+        techno-management festival of <strong>Indian Institute of Technology (Indian School of Mines), Dhanbad</strong>,
+        collects, uses, and safeguards information when you use our mobile application (Package:
+        <code>com.iitismdhn.concetto</code>).
+      </p>
+      <p>
+        By using the Concetto'26 app, you consent to the data collection and practices described in this policy.
+      </p>
+
+      <h2>2. Information We Collect</h2>
+      <p>We collect information that you voluntarily provide to us when you register, participate in events, or contact
+        organizers:</p>
+      <ul>
+        <li><strong>Account & Profile Information:</strong> Name, email address, phone number, college/institution name,
+          and enrollment details provided during account creation and event sign-up.</li>
+        <li><strong>Event Registrations & Team Data:</strong> Teams you create or join, member lists, events registered,
+          and participation schedules.</li>
+        <li><strong>Passes & Ticketing:</strong> Unique participant identifiers and digital QR pass data generated for
+          fest entry.</li>
+        <li><strong>Device Identifiers & FCM Tokens:</strong> Firebase Cloud Messaging (FCM) tokens to deliver festival
+          announcements, schedule changes, and security updates.</li>
+      </ul>
+
+      <h2>3. Device Permissions & How They Are Used</h2>
+      <p>The app requests the following optional device permissions strictly for functional fest utilities:</p>
+      <ul>
+        <li><strong>Camera Permission (<code>android.permission.CAMERA</code>):</strong> Used solely by fest organizers
+          and attendees to scan QR codes on festival passes for verification. The app does not record, store, or stream
+          photos or videos to external servers.</li>
+        <li><strong>Notification Permission (<code>android.permission.POST_NOTIFICATIONS</code>):</strong> Used to
+          deliver real-time festival notifications, broadcast alerts, schedule changes, and emergency updates. Users can
+          disable notifications at any time via device settings.</li>
+      </ul>
+
+      <h2>4. Advertising ID Declaration</h2>
+      <p>
+        The Concetto'26 application <strong>does not display advertisements</strong> and <strong>does not collect,
+          track, or share any Advertising ID (AAID)</strong>.
+      </p>
+
+      <h2>5. Third-Party Service Providers</h2>
+      <p>We use reputable third-party services to securely host our backend infrastructure:</p>
+      <ul>
+        <li><strong>Google Firebase (Authentication, Cloud Firestore, Cloud Storage, Cloud Messaging):</strong> Used to
+          authenticate users, store event registration data, and deliver broadcast notifications. All data transmission
+          is encrypted using industry-standard SSL/TLS. (<a href="https://policies.google.com/privacy" target="_blank"
+            rel="noopener">Google Privacy Policy</a>)</li>
+        <li><strong>Cloudinary:</strong> Used for secure media and image hosting. (<a
+            href="https://cloudinary.com/privacy" target="_blank" rel="noopener">Cloudinary Privacy Policy</a>)</li>
+      </ul>
+
+      <h2>6. Data Security</h2>
+      <p>
+        We implement rigorous administrative and technical security measures to protect your personal information
+        against unauthorized access, loss, alteration, or disclosure. All communication between the app and cloud
+        services occurs over secure HTTPS.
+      </p>
+
+      <h2>7. Data Retention & Account Deletion</h2>
+      <p>
+        We retain user and registration data only for the duration necessary to manage Concetto festival operations and
+        verify certifications. You have the right to request access to or deletion of your account and personal data at
+        any time by contacting us at the email provided below.
+      </p>
+
+      <h2>8. Children's Privacy</h2>
+      <p>
+        Our app is intended for university students, school participants, and tech festival attendees aged 13 and older.
+        We do not knowingly collect personal identifiable information from children under 13.
+      </p>
+
+      <h2>9. Contact Us</h2>
+      <p>If you have any questions or concerns regarding this Privacy Policy or wish to request data deletion, please
+        contact:</p>
+      <ul>
+        <li><strong>Organization:</strong> Concetto Organizing Committee</li>
+        <li><strong>Institution:</strong> Indian Institute of Technology (Indian School of Mines), Dhanbad</li>
+        <li><strong>Address:</strong> IIT (ISM) Dhanbad, Jharkhand - 826004, India</li>
+        <li><strong>Email:</strong> <a href="mailto:concetto@iitism.ac.in">concetto@iitism.ac.in</a></li>
+        <li><strong>Website:</strong> <a href="https://www.concetto.in/" target="_blank"
+            rel="noopener">https://www.concetto.in/</a></li>
+      </ul>
+    </section>
+
+    <footer>
+      &copy; 2026 Concetto, IIT (ISM) Dhanbad. All rights reserved.
+    </footer>
+  </div>
+</body>
+
+</html>
